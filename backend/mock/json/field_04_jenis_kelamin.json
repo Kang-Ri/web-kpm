@@ -1,0 +1,10 @@
+{
+    "namaField": "jenis_kelamin",
+    "tipeField": "radio",
+    "nilaiPilihan": "[\"Laki-laki\", \"Perempuan\"]",
+    "required": true,
+    "textDescription": "Jenis Kelamin",
+    "textWarning": "Pilih jenis kelamin",
+    "placeholder": null,
+    "orderIndex": 4
+}

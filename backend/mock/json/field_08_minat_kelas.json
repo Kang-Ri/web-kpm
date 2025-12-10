@@ -1,0 +1,10 @@
+{
+    "namaField": "minat_kelas",
+    "tipeField": "checkbox",
+    "nilaiPilihan": "[\"Web Development\", \"Mobile Development\", \"Data Science\", \"UI/UX Design\", \"Digital Marketing\"]",
+    "required": false,
+    "textDescription": "Minat Kelas (Pilih lebih dari 1)",
+    "textWarning": null,
+    "placeholder": null,
+    "orderIndex": 8
+}

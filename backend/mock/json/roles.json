@@ -1,0 +1,17 @@
+[
+    {
+        "namaRole": "Super Admin"
+    },
+    {
+        "namaRole": "Admin"
+    },
+    {
+        "namaRole": "Guru"
+    },
+    {
+        "namaRole": "PJ"
+    },
+    {
+        "namaRole": "Siswa"
+    }
+]

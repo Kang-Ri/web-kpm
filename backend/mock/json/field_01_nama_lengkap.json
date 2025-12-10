@@ -1,0 +1,10 @@
+{
+    "namaField": "nama_lengkap",
+    "tipeField": "text",
+    "nilaiPilihan": null,
+    "required": true,
+    "textDescription": "Nama Lengkap",
+    "textWarning": "Nama lengkap wajib diisi",
+    "placeholder": "Masukkan nama lengkap Anda",
+    "orderIndex": 1
+}

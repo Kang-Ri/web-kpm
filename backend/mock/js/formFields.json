@@ -1,0 +1,22 @@
+[
+    {
+        "namaField": "NISN",
+        "tipeField": "text",
+        "nilaiPilihan": null,
+        "required": true,
+        "textDescription": "Nomor Induk Siswa Nasional",
+        "textWarning": "Nomor wajib diisi",
+        "placeholder": "Masukkan NISN Anda",
+        "orderIndex": 1
+    },
+    {
+        "namaField": "nama_lengkap",
+        "tipeField": "text",
+        "nilaiPilihan": null,
+        "required": true,
+        "textDescription": "Nama Lengkap",
+        "textWarning": "Nama lengkap wajib diisi",
+        "placeholder": "Masukkan nama lengkap Anda",
+        "orderIndex": 1
+    }
+]

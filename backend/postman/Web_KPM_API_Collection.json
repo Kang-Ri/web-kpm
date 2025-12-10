@@ -1,0 +1,1001 @@
+{
+    "info": {
+        "_postman_id": "web-kpm-api-2025",
+        "name": "Web KPM API - Complete Testing",
+        "description": "Complete API testing collection for Web KPM backend with Form Builder and Order Management",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "1. Authentication",
+            "item": [
+                {
+                    "name": "Login Super Admin",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Login Super Admin successful\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData).to.have.property('token');",
+                                    "    ",
+                                    "    pm.environment.set(\"superAdminToken\", jsonData.token);",
+                                    "    pm.environment.set(\"accessToken\", jsonData.token);",
+                                    "    ",
+                                    "    console.log(\"Super Admin Token saved\");",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"admin@kpm.com\",\n  \"password\": \"Admin123!\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/signin",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "signin"
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "2. Forms Management",
+            "item": [
+                {
+                    "name": "Create Form",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Form created successfully\", function () {",
+                                    "    pm.response.to.have.status(201);",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData.data).to.have.property('idForm');",
+                                    "    ",
+                                    "    pm.environment.set(\"formId\", jsonData.data.idForm);",
+                                    "    console.log(\"Form ID saved:\", jsonData.data.idForm);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"namaForm\": \"Form Pendaftaran Kelas Online 2025\",\n  \"descForm\": \"Formulir untuk pendaftaran kelas online tahun 2025 dengan berbagai pilihan kelas\",\n  \"statusForm\": \"Aktif\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/forms",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "forms"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get All Forms",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Get forms successful\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData.data).to.be.an('array');",
+                                    "    console.log(\"Total forms:\", jsonData.data.length);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/forms",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "forms"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Form Detail",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Get form detail successful\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData.data).to.have.property('idForm');",
+                                    "    pm.expect(jsonData.data).to.have.property('fields');",
+                                    "    console.log(\"Form fields count:\", jsonData.data.fields ? jsonData.data.fields.length : 0);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/forms/{{formId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "forms",
+                                "{{formId}}"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Form",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Form updated successfully\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData.data.namaForm).to.include(\"Updated\");",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"namaForm\": \"Form Pendaftaran Kelas Online 2025 (Updated)\",\n  \"descForm\": \"Formulir untuk pendaftaran kelas online tahun 2025 - Sudah Diupdate\",\n  \"statusForm\": \"Aktif\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/forms/{{formId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "forms",
+                                "{{formId}}"
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "3. Form Fields Management",
+            "item": [
+                {
+                    "name": "Add Field - Nama Lengkap",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Field 1 (Nama) created\", function () {",
+                                    "    pm.response.to.have.status(201);",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.environment.set(\"field1Id\", jsonData.data.idField);",
+                                    "    console.log(\"Field 1 ID:\", jsonData.data.idField);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"namaField\": \"nama_lengkap\",\n  \"tipeField\": \"text\",\n  \"nilaiPilihan\": null,\n  \"required\": true,\n  \"textDescription\": \"Nama Lengkap\",\n  \"textWarning\": \"Nama lengkap wajib diisi\",\n  \"placeholder\": \"Masukkan nama lengkap Anda\",\n  \"orderIndex\": 1\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/forms/{{formId}}/fields",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "forms",
+                                "{{formId}}",
+                                "fields"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Add Field - Email",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Field 2 (Email) created\", function () {",
+                                    "    pm.response.to.have.status(201);",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.environment.set(\"field2Id\", jsonData.data.idField);",
+                                    "    console.log(\"Field 2 ID:\", jsonData.data.idField);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"namaField\": \"email\",\n  \"tipeField\": \"email\",\n  \"nilaiPilihan\": null,\n  \"required\": true,\n  \"textDescription\": \"Alamat Email\",\n  \"textWarning\": \"Email tidak valid atau wajib diisi\",\n  \"placeholder\": \"contoh@email.com\",\n  \"orderIndex\": 2\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/forms/{{formId}}/fields",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "forms",
+                                "{{formId}}",
+                                "fields"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Add Field - Nomor Telepon",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Field 3 (Phone) created\", function () {",
+                                    "    pm.response.to.have.status(201);",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.environment.set(\"field3Id\", jsonData.data.idField);",
+                                    "    console.log(\"Field 3 ID:\", jsonData.data.idField);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"namaField\": \"nomor_telepon\",\n  \"tipeField\": \"number\",\n  \"nilaiPilihan\": null,\n  \"required\": true,\n  \"textDescription\": \"Nomor Telepon/WhatsApp\",\n  \"textWarning\": \"Nomor telepon wajib diisi\",\n  \"placeholder\": \"08123456789\",\n  \"orderIndex\": 3\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/forms/{{formId}}/fields",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "forms",
+                                "{{formId}}",
+                                "fields"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Add Field - Jenis Kelamin",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Field created successfully\", function () {",
+                                    "    pm.response.to.have.status(201);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"namaField\": \"jenis_kelamin\",\n  \"tipeField\": \"radio\",\n  \"nilaiPilihan\": \"[\\\"Laki-laki\\\", \\\"Perempuan\\\"]\",\n  \"required\": true,\n  \"textDescription\": \"Jenis Kelamin\",\n  \"textWarning\": \"Pilih jenis kelamin\",\n  \"placeholder\": null,\n  \"orderIndex\": 4\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/forms/{{formId}}/fields",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "forms",
+                                "{{formId}}",
+                                "fields"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Add Field - Tanggal Lahir",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Field created successfully\", function () {",
+                                    "    pm.response.to.have.status(201);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"namaField\": \"tanggal_lahir\",\n  \"tipeField\": \"date\",\n  \"nilaiPilihan\": null,\n  \"required\": true,\n  \"textDescription\": \"Tanggal Lahir\",\n  \"textWarning\": \"Tanggal lahir wajib diisi\",\n  \"placeholder\": null,\n  \"orderIndex\": 5\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/forms/{{formId}}/fields",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "forms",
+                                "{{formId}}",
+                                "fields"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Add Field - Pendidikan",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Field created successfully\", function () {",
+                                    "    pm.response.to.have.status(201);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"namaField\": \"pendidikan_terakhir\",\n  \"tipeField\": \"select\",\n  \"nilaiPilihan\": \"[\\\"SD\\\", \\\"SMP\\\", \\\"SMA/SMK\\\", \\\"D3\\\", \\\"S1\\\", \\\"S2\\\", \\\"S3\\\"]\",\n  \"required\": true,\n  \"textDescription\": \"Pendidikan Terakhir\",\n  \"textWarning\": \"Pilih pendidikan terakhir\",\n  \"placeholder\": \"Pilih pendidikan\",\n  \"orderIndex\": 6\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/forms/{{formId}}/fields",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "forms",
+                                "{{formId}}",
+                                "fields"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Add Field - Alamat",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Field created successfully\", function () {",
+                                    "    pm.response.to.have.status(201);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"namaField\": \"alamat_lengkap\",\n  \"tipeField\": \"textarea\",\n  \"nilaiPilihan\": null,\n  \"required\": true,\n  \"textDescription\": \"Alamat Lengkap\",\n  \"textWarning\": \"Alamat wajib diisi minimal 10 karakter\",\n  \"placeholder\": \"Masukkan alamat lengkap Anda\",\n  \"orderIndex\": 7\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/forms/{{formId}}/fields",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "forms",
+                                "{{formId}}",
+                                "fields"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Add Field - Minat Kelas",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Field created successfully\", function () {",
+                                    "    pm.response.to.have.status(201);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"namaField\": \"minat_kelas\",\n  \"tipeField\": \"checkbox\",\n  \"nilaiPilihan\": \"[\\\"Web Development\\\", \\\"Mobile Development\\\", \\\"Data Science\\\", \\\"UI/UX Design\\\", \\\"Digital Marketing\\\"]\",\n  \"required\": false,\n  \"textDescription\": \"Minat Kelas (Pilih lebih dari 1)\",\n  \"textWarning\": null,\n  \"placeholder\": null,\n  \"orderIndex\": 8\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/forms/{{formId}}/fields",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "forms",
+                                "{{formId}}",
+                                "fields"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Add Field - Motivasi",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Field created successfully\", function () {",
+                                    "    pm.response.to.have.status(201);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"namaField\": \"motivasi\",\n  \"tipeField\": \"textarea\",\n  \"nilaiPilihan\": null,\n  \"required\": false,\n  \"textDescription\": \"Motivasi Mengikuti Kelas\",\n  \"textWarning\": null,\n  \"placeholder\": \"Ceritakan motivasi Anda...\",\n  \"orderIndex\": 9\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/forms/{{formId}}/fields",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "forms",
+                                "{{formId}}",
+                                "fields"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get All Fields",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Get fields successful\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData.data).to.be.an('array');",
+                                    "    pm.expect(jsonData.data.length).to.be.at.least(9);",
+                                    "    console.log(\"Total fields:\", jsonData.data.length);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/forms/{{formId}}/fields",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "forms",
+                                "{{formId}}",
+                                "fields"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Field",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Field updated successfully\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData.data.textDescription).to.include(\"Updated\");",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"textDescription\": \"Nama Lengkap (Updated)\",\n  \"required\": true\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/forms/{{formId}}/fields/{{field1Id}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "forms",
+                                "{{formId}}",
+                                "fields",
+                                "{{field1Id}}"
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "4. Orders Management",
+            "item": [
+                {
+                    "name": "Create Order",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Order created successfully\", function () {",
+                                    "    pm.response.to.have.status(201);",
+                                    "    var jsonData = pm.response.json();",
+                                    "    ",
+                                    "    pm.expect(jsonData.data).to.have.property('idOrder');",
+                                    "    pm.expect(jsonData.data).to.have.property('namaProduk');",
+                                    "    pm.expect(jsonData.data).to.have.property('namaPembeli');",
+                                    "    pm.expect(jsonData.data).to.have.property('emailPembeli');",
+                                    "    pm.expect(jsonData.data).to.have.property('noHpPembeli');",
+                                    "    pm.expect(jsonData.data).to.have.property('hargaFinal');",
+                                    "    ",
+                                    "    pm.environment.set(\"orderId\", jsonData.data.idOrder);",
+                                    "    console.log(\"Order ID saved:\", jsonData.data.idOrder);",
+                                    "    ",
+                                    "    pm.expect(jsonData.data.namaPembeli).to.equal(\"Ahmad Rizki Pratama\");",
+                                    "    pm.expect(jsonData.data.emailPembeli).to.equal(\"ahmad.rizki@email.com\");",
+                                    "    pm.expect(jsonData.data.noHpPembeli).to.equal(\"081234567890\");",
+                                    "    ",
+                                    "    console.log(\"Snapshot verified:\", {",
+                                    "        nama: jsonData.data.namaPembeli,",
+                                    "        email: jsonData.data.emailPembeli,",
+                                    "        hp: jsonData.data.noHpPembeli",
+                                    "    });",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"idUser\": 1,\n  \"idProduk\": 1,\n  \"jumlahBeli\": 1,\n  \"diskon\": 0,\n  \"formResponses\": [\n    {\n      \"idField\": {{field1Id}},\n      \"namaField\": \"nama_lengkap\",\n      \"nilaiJawaban\": \"Ahmad Rizki Pratama\"\n    },\n    {\n      \"idField\": {{field2Id}},\n      \"namaField\": \"email\",\n      \"nilaiJawaban\": \"ahmad.rizki@email.com\"\n    },\n    {\n      \"idField\": {{field3Id}},\n      \"namaField\": \"nomor_telepon\",\n      \"nilaiJawaban\": \"081234567890\"\n    }\n  ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/orders",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "orders"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get All Orders",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Get orders successful\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData.data).to.be.an('array');",
+                                    "    console.log(\"Total orders:\", jsonData.data.length);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/orders",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "orders"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Order Detail",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Get order detail successful\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData.data).to.have.property('formResponses');",
+                                    "    pm.expect(jsonData.data.formResponses).to.be.an('array');",
+                                    "    console.log(\"Form responses count:\", jsonData.data.formResponses.length);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/orders/{{orderId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "orders",
+                                "{{orderId}}"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Order Status",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Order status updated\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData.data.statusOrder).to.equal(\"Confirmed\");",
+                                    "    console.log(\"Status updated to:\", jsonData.data.statusOrder);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"statusOrder\": \"Confirmed\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/orders/{{orderId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "orders",
+                                "{{orderId}}"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Payment Status",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Payment status updated\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "    var jsonData = pm.response.json();",
+                                    "    pm.expect(jsonData.data.statusPembayaran).to.equal(\"Paid\");",
+                                    "    pm.expect(jsonData.data.midtransTransactionId).to.exist;",
+                                    "    pm.expect(jsonData.data.paidAt).to.exist;",
+                                    "    ",
+                                    "    console.log(\"Payment completed:\", {",
+                                    "        status: jsonData.data.statusPembayaran,",
+                                    "        method: jsonData.data.paymentMethod,",
+                                    "        paidAt: jsonData.data.paidAt",
+                                    "    });",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{accessToken}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"statusPembayaran\": \"Paid\",\n  \"midtransTransactionId\": \"TRX-20251209-12345\",\n  \"paymentMethod\": \"Bank Transfer BCA\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/orders/{{orderId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "orders",
+                                "{{orderId}}"
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:5000/api/v1/cms",
+            "type": "string"
+        }
+    ]
+}

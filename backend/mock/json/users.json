@@ -1,0 +1,86 @@
+[
+    {
+        "email": "admin@kpm.com",
+        "password": "Admin123!",
+        "namaLengkap": "Super Administrator",
+        "idRole": 1,
+        "status": "Aktif"
+    },
+    {
+        "email": "admin.sekolah@kpm.com",
+        "password": "Admin123!",
+        "namaLengkap": "Admin Sekolah",
+        "idRole": 2,
+        "status": "Aktif"
+    },
+    {
+        "email": "guru.matematika@kpm.com",
+        "password": "Guru123!",
+        "namaLengkap": "Budi Santoso",
+        "idRole": 3,
+        "status": "Aktif"
+    },
+    {
+        "email": "guru.bahasa@kpm.com",
+        "password": "Guru123!",
+        "namaLengkap": "Siti Aminah",
+        "idRole": 3,
+        "status": "Aktif"
+    },
+    {
+        "email": "pj.kelas10@kpm.com",
+        "password": "PJ123!",
+        "namaLengkap": "Ahmad Fauzi",
+        "idRole": 4,
+        "status": "Aktif"
+    },
+    {
+        "email": "siswa1@kpm.com",
+        "password": "Siswa123!",
+        "namaLengkap": "Andi Pratama",
+        "idRole": 5,
+        "status": "Aktif"
+    },
+    {
+        "email": "siswa2@kpm.com",
+        "password": "Siswa123!",
+        "namaLengkap": "Dewi Lestari",
+        "idRole": 5,
+        "status": "Aktif"
+    },
+    {
+        "email": "siswa3@kpm.com",
+        "password": "Siswa123!",
+        "namaLengkap": "Rizki Ramadhan",
+        "idRole": 5,
+        "status": "Aktif"
+    },
+    {
+        "email": "siswa4@kpm.com",
+        "password": "Siswa123!",
+        "namaLengkap": "Putri Maharani",
+        "idRole": 5,
+        "status": "Aktif"
+    },
+    {
+        "email": "siswa5@kpm.com",
+        "password": "Siswa123!",
+        "namaLengkap": "Fajar Nugroho",
+        "idRole": 5,
+        "status": "Aktif"
+    },
+    {
+        "email": "guru.ipa@kpm.com",
+        "password": "Guru123!",
+        "namaLengkap": "Dr. Hendra Wijaya",
+        "idRole": 3,
+        "status": "Aktif"
+    },
+    {
+        "email": "siswa6@kpm.com",
+        "password": "Siswa123!",
+        "namaLengkap": "Maya Sari",
+        "idRole": 5,
+        "status": "Non-Aktif"
+    }
+]

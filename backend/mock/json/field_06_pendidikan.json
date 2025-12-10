@@ -1,0 +1,10 @@
+{
+    "namaField": "pendidikan_terakhir",
+    "tipeField": "select",
+    "nilaiPilihan": "[\"SD\", \"SMP\", \"SMA/SMK\", \"D3\", \"S1\", \"S2\", \"S3\"]",
+    "required": true,
+    "textDescription": "Pendidikan Terakhir",
+    "textWarning": "Pilih pendidikan terakhir",
+    "placeholder": "Pilih pendidikan",
+    "orderIndex": 6
+}

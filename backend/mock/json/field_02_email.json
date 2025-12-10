@@ -1,0 +1,10 @@
+{
+    "namaField": "email",
+    "tipeField": "email",
+    "nilaiPilihan": null,
+    "required": true,
+    "textDescription": "Alamat Email",
+    "textWarning": "Email tidak valid atau wajib diisi",
+    "placeholder": "contoh@email.com",
+    "orderIndex": 2
+}

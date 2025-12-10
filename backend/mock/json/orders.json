@@ -1,0 +1,86 @@
+[
+    {
+        "idUser": 1,
+        "idProduk": 1,
+        "statusOrder": "Completed",
+        "totalHarga": 500000,
+        "tglOrder": "2025-01-15T10:30:00Z"
+    },
+    {
+        "idUser": 2,
+        "idProduk": 2,
+        "statusOrder": "Confirmed",
+        "totalHarga": 750000,
+        "tglOrder": "2025-01-20T14:15:00Z"
+    },
+    {
+        "idUser": 3,
+        "idProduk": 3,
+        "statusOrder": "Pending",
+        "totalHarga": 300000,
+        "tglOrder": "2025-02-01T09:00:00Z"
+    },
+    {
+        "idUser": 1,
+        "idProduk": 4,
+        "statusOrder": "Completed",
+        "totalHarga": 1200000,
+        "tglOrder": "2025-02-05T16:45:00Z"
+    },
+    {
+        "idUser": 4,
+        "idProduk": 5,
+        "statusOrder": "Confirmed",
+        "totalHarga": 450000,
+        "tglOrder": "2025-02-10T11:20:00Z"
+    },
+    {
+        "idUser": 5,
+        "idProduk": 1,
+        "statusOrder": "Pending",
+        "totalHarga": 500000,
+        "tglOrder": "2025-02-12T08:30:00Z"
+    },
+    {
+        "idUser": 2,
+        "idProduk": 6,
+        "statusOrder": "Cancelled",
+        "totalHarga": 600000,
+        "tglOrder": "2025-02-14T13:00:00Z"
+    },
+    {
+        "idUser": 6,
+        "idProduk": 7,
+        "statusOrder": "Completed",
+        "totalHarga": 850000,
+        "tglOrder": "2025-02-18T15:30:00Z"
+    },
+    {
+        "idUser": 3,
+        "idProduk": 8,
+        "statusOrder": "Confirmed",
+        "totalHarga": 950000,
+        "tglOrder": "2025-02-20T10:00:00Z"
+    },
+    {
+        "idUser": 7,
+        "idProduk": 9,
+        "statusOrder": "Pending",
+        "totalHarga": 400000,
+        "tglOrder": "2025-02-22T14:45:00Z"
+    },
+    {
+        "idUser": 8,
+        "idProduk": 10,
+        "statusOrder": "Completed",
+        "totalHarga": 1500000,
+        "tglOrder": "2025-02-25T09:15:00Z"
+    },
+    {
+        "idUser": 4,
+        "idProduk": 2,
+        "statusOrder": "Confirmed",
+        "totalHarga": 750000,
+        "tglOrder": "2025-02-28T12:00:00Z"
+    }
+]

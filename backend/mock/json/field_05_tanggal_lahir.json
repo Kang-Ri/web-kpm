@@ -1,0 +1,10 @@
+{
+    "namaField": "tanggal_lahir",
+    "tipeField": "date",
+    "nilaiPilihan": null,
+    "required": true,
+    "textDescription": "Tanggal Lahir",
+    "textWarning": "Tanggal lahir wajib diisi",
+    "placeholder": null,
+    "orderIndex": 5
+}

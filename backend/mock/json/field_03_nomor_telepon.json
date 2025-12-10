@@ -1,0 +1,10 @@
+{
+    "namaField": "nomor_telepon",
+    "tipeField": "number",
+    "nilaiPilihan": null,
+    "required": true,
+    "textDescription": "Nomor Telepon/WhatsApp",
+    "textWarning": "Nomor telepon wajib diisi",
+    "placeholder": "08123456789",
+    "orderIndex": 3
+}

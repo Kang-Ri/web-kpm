@@ -1,0 +1,145 @@
+[
+    {
+        "idForm": 1,
+        "namaField": "nama_lengkap",
+        "tipeField": "text",
+        "nilaiPilihan": null,
+        "required": true,
+        "textDescription": "Nama Lengkap",
+        "textWarning": "Nama lengkap wajib diisi",
+        "placeholder": "Masukkan nama lengkap Anda",
+        "orderIndex": 1
+    },
+    {
+        "idForm": 1,
+        "namaField": "email",
+        "tipeField": "email",
+        "nilaiPilihan": null,
+        "required": true,
+        "textDescription": "Alamat Email",
+        "textWarning": "Email tidak valid",
+        "placeholder": "contoh@email.com",
+        "orderIndex": 2
+    },
+    {
+        "idForm": 1,
+        "namaField": "nomor_telepon",
+        "tipeField": "number",
+        "nilaiPilihan": null,
+        "required": true,
+        "textDescription": "Nomor Telepon/WhatsApp",
+        "textWarning": "Nomor telepon wajib diisi",
+        "placeholder": "08123456789",
+        "orderIndex": 3
+    },
+    {
+        "idForm": 1,
+        "namaField": "jenis_kelamin",
+        "tipeField": "radio",
+        "nilaiPilihan": "[\"Laki-laki\", \"Perempuan\"]",
+        "required": true,
+        "textDescription": "Jenis Kelamin",
+        "textWarning": "Pilih jenis kelamin",
+        "placeholder": null,
+        "orderIndex": 4
+    },
+    {
+        "idForm": 1,
+        "namaField": "tanggal_lahir",
+        "tipeField": "date",
+        "nilaiPilihan": null,
+        "required": true,
+        "textDescription": "Tanggal Lahir",
+        "textWarning": "Tanggal lahir wajib diisi",
+        "placeholder": null,
+        "orderIndex": 5
+    },
+    {
+        "idForm": 1,
+        "namaField": "pendidikan_terakhir",
+        "tipeField": "select",
+        "nilaiPilihan": "[\"SD\", \"SMP\", \"SMA/SMK\", \"D3\", \"S1\", \"S2\", \"S3\"]",
+        "required": true,
+        "textDescription": "Pendidikan Terakhir",
+        "textWarning": "Pilih pendidikan terakhir",
+        "placeholder": "Pilih pendidikan",
+        "orderIndex": 6
+    },
+    {
+        "idForm": 1,
+        "namaField": "alamat_lengkap",
+        "tipeField": "textarea",
+        "nilaiPilihan": null,
+        "required": true,
+        "textDescription": "Alamat Lengkap",
+        "textWarning": "Alamat wajib diisi minimal 10 karakter",
+        "placeholder": "Masukkan alamat lengkap Anda",
+        "orderIndex": 7
+    },
+    {
+        "idForm": 1,
+        "namaField": "minat_kelas",
+        "tipeField": "checkbox",
+        "nilaiPilihan": "[\"Web Development\", \"Mobile Development\", \"Data Science\", \"UI/UX Design\", \"Digital Marketing\"]",
+        "required": false,
+        "textDescription": "Minat Kelas (Pilih lebih dari 1)",
+        "textWarning": null,
+        "placeholder": null,
+        "orderIndex": 8
+    },
+    {
+        "idForm": 1,
+        "namaField": "foto_ktp",
+        "tipeField": "file",
+        "nilaiPilihan": null,
+        "required": true,
+        "textDescription": "Upload Foto KTP",
+        "textWarning": "File wajib diupload (max 2MB)",
+        "placeholder": null,
+        "orderIndex": 9
+    },
+    {
+        "idForm": 1,
+        "namaField": "motivasi",
+        "tipeField": "textarea",
+        "nilaiPilihan": null,
+        "required": false,
+        "textDescription": "Motivasi Mengikuti Kelas",
+        "textWarning": null,
+        "placeholder": "Ceritakan motivasi Anda...",
+        "orderIndex": 10
+    },
+    {
+        "idForm": 2,
+        "namaField": "rating_materi",
+        "tipeField": "select",
+        "nilaiPilihan": "[\"1 - Sangat Buruk\", \"2 - Buruk\", \"3 - Cukup\", \"4 - Baik\", \"5 - Sangat Baik\"]",
+        "required": true,
+        "textDescription": "Rating Kualitas Materi",
+        "textWarning": "Rating wajib dipilih",
+        "placeholder": "Pilih rating",
+        "orderIndex": 1
+    },
+    {
+        "idForm": 2,
+        "namaField": "rating_pengajar",
+        "tipeField": "select",
+        "nilaiPilihan": "[\"1 - Sangat Buruk\", \"2 - Buruk\", \"3 - Cukup\", \"4 - Baik\", \"5 - Sangat Baik\"]",
+        "required": true,
+        "textDescription": "Rating Kualitas Pengajar",
+        "textWarning": "Rating wajib dipilih",
+        "placeholder": "Pilih rating",
+        "orderIndex": 2
+    },
+    {
+        "idForm": 2,
+        "namaField": "saran_perbaikan",
+        "tipeField": "textarea",
+        "nilaiPilihan": null,
+        "required": false,
+        "textDescription": "Saran dan Kritik",
+        "textWarning": null,
+        "placeholder": "Berikan saran untuk perbaikan...",
+        "orderIndex": 3
+    }
+]

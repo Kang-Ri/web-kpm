@@ -1,0 +1,10 @@
+{
+    "namaField": "alamat_lengkap",
+    "tipeField": "textarea",
+    "nilaiPilihan": null,
+    "required": true,
+    "textDescription": "Alamat Lengkap",
+    "textWarning": "Alamat wajib diisi minimal 10 karakter",
+    "placeholder": "Masukkan alamat lengkap Anda",
+    "orderIndex": 7
+}

@@ -1,0 +1,123 @@
+-- 1. Tabel Roles (Dasar untuk Otorisasi)
+CREATE TABLE Roles (
+    idRole INT PRIMARY KEY AUTO_INCREMENT,
+    namaRole VARCHAR(50) NOT NULL UNIQUE
+);
+
+-- 2. Tabel Users (Untuk Sign In, Sign Up)
+CREATE TABLE Users (
+    idUser INT PRIMARY KEY AUTO_INCREMENT,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    namaLengkap VARCHAR(100),
+    idRole INT NOT NULL,
+    status ENUM('Aktif', 'Non-Aktif') DEFAULT 'Aktif',
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (idRole) REFERENCES Roles(idRole)
+);
+
+-- 3. Tabel ParentProduct1 (Menu Utama/Kategori Level 1)
+CREATE TABLE ParentProduct1 (
+    idParent1 INT PRIMARY KEY AUTO_INCREMENT,
+    namaParent1 VARCHAR(100) NOT NULL,
+    descParent1 TEXT,
+    tglPublish DATETIME,
+    status ENUM('Aktif', 'Non-Aktif') DEFAULT 'Non-Aktif',
+    tautanProduk ENUM('Kelas Periodik', 'Kelas Insidental', 'Produk Komersial', '-') DEFAULT '-'
+);
+
+-- 4. Tabel ParentProduct2 (Kategori Level 2)
+CREATE TABLE ParentProduct2 (
+    idParent2 INT PRIMARY KEY AUTO_INCREMENT,
+    idParent1 INT NOT NULL,
+    namaParent2 VARCHAR(100) NOT NULL,
+    descParent2 TEXT,
+    tglPublish DATETIME,
+    status ENUM('Aktif', 'Non-Aktif') DEFAULT 'Non-Aktif',
+    kelasTersedia VARCHAR(50) COMMENT 'Contoh: 1, 3, 5 (Dipisahkan koma)',
+    FOREIGN KEY (idParent1) REFERENCES ParentProduct1(idParent1)
+);
+
+-- 5. Tabel Form (Untuk Form Order Kustom)
+CREATE TABLE Form (
+    idForm INT PRIMARY KEY AUTO_INCREMENT,
+    namaForm VARCHAR(100) NOT NULL,
+    tglDibuat DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 6. Tabel FormField (Definisi Field dalam Form)
+CREATE TABLE FormField (
+    idField INT PRIMARY KEY AUTO_INCREMENT,
+    idForm INT NOT NULL,
+    namaField VARCHAR(100) NOT NULL,
+    tipeField ENUM('Text', 'Number', 'Date', 'Radio', 'Checkbox', 'Dropdown') NOT NULL,
+    nilaiPilihan TEXT COMMENT 'Pilihan untuk Radio/Dropdown (dipisahkan koma)',
+    required BOOLEAN DEFAULT FALSE,
+    textDescription TEXT COMMENT 'Teks deskripsi/panduan untuk field (optional)',
+    textWarning TEXT COMMENT 'Teks peringatan jika validasi gagal',
+    FOREIGN KEY (idForm) REFERENCES Form(idForm)
+);
+
+-- 7. Tabel Product (Entitas Utama)
+CREATE TABLE Product (
+    idProduk INT PRIMARY KEY AUTO_INCREMENT,
+    idParent2 INT NOT NULL,
+    namaProduk VARCHAR(100) NOT NULL,
+    descProduk TEXT,
+    kategoriHarga ENUM('Gratis', 'Seikhlasnya', 'Bernominal') NOT NULL,
+    hargaModal DECIMAL(10, 2) DEFAULT 0.00,
+    hargaJual DECIMAL(10, 2) DEFAULT 0.00,
+    jenisProduk ENUM('Materi', 'Produk', 'Lainnya') DEFAULT 'Materi',
+    authProduk ENUM('Umum', 'Khusus') DEFAULT 'Umum',
+    idFormOrder INT NULL, -- Bisa NULL jika produk tidak memerlukan form kustom
+    refCode VARCHAR(50),
+    statusProduk ENUM('Draft', 'Publish') DEFAULT 'Draft',
+    FOREIGN KEY (idParent2) REFERENCES ParentProduct2(idParent2),
+    FOREIGN KEY (idFormOrder) REFERENCES Form(idForm)
+);
+
+-- 8. Tabel Order (Header Transaksi)
+CREATE TABLE `Order` (
+    idOrder INT PRIMARY KEY AUTO_INCREMENT,
+    idProduk INT NOT NULL,
+    idUser INT NULL, -- NULL jika pembeli tidak memiliki akun (guest)
+    noHpPembeli VARCHAR(15) NOT NULL, -- Wajib diisi untuk rekap/tracking
+    namaPembeli VARCHAR(100) NOT NULL,
+    hargaTransaksi DECIMAL(10, 2) NOT NULL,
+    statusOrder ENUM('Menunggu Pembayaran', 'Pending', 'Sukses', 'Gagal') DEFAULT 'Menunggu Pembayaran',
+    midtransTransactionId VARCHAR(255) UNIQUE,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (idProduk) REFERENCES Product(idProduk),
+    FOREIGN KEY (idUser) REFERENCES Users(idUser)
+);
+
+-- 9. Tabel OrderFormResponse (Jawaban dari Form Kustom saat Order)
+CREATE TABLE OrderFormResponse (
+    idResponse INT PRIMARY KEY AUTO_INCREMENT,
+    idOrder INT NOT NULL,
+    idField INT NOT NULL,
+    nilaiJawaban TEXT,
+    FOREIGN KEY (idOrder) REFERENCES `Order`(idOrder),
+    FOREIGN KEY (idField) REFERENCES FormField(idField)
+);
+
+CREATE TABLE PasswordResetTokens (
+    idToken INT PRIMARY KEY AUTO_INCREMENT,
+    idUser INT NOT NULL,
+    token VARCHAR(255) NOT NULL UNIQUE COMMENT 'Token unik yang dikirim via email',
+    expiryDate DATETIME NOT NULL COMMENT 'Batas waktu validitas token',
+    isUsed BOOLEAN DEFAULT FALSE COMMENT 'Status apakah token sudah digunakan untuk reset',
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (idUser) REFERENCES Users(idUser)
+);
+
+CREATE TABLE RefreshTokens (
+    idRefreshToken INT PRIMARY KEY AUTO_INCREMENT,
+    idUser INT NOT NULL,
+    token VARCHAR(255) NOT NULL UNIQUE COMMENT 'Refresh Token yang disimpan di database',
+    expiryDate DATETIME NOT NULL COMMENT 'Batas waktu kedaluwarsa refresh token',
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (idUser) REFERENCES Users(idUser)
+);

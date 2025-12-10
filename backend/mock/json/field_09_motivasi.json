@@ -1,0 +1,10 @@
+{
+    "namaField": "motivasi",
+    "tipeField": "textarea",
+    "nilaiPilihan": null,
+    "required": false,
+    "textDescription": "Motivasi Mengikuti Kelas",
+    "textWarning": null,
+    "placeholder": "Ceritakan motivasi Anda...",
+    "orderIndex": 9
+}

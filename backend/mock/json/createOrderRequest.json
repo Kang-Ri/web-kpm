@@ -1,0 +1,53 @@
+{
+    "idUser": 1,
+    "idProduk": 1,
+    "jumlahBeli": 2,
+    "diskon": 50000,
+    "formResponses": [
+        {
+            "idField": 1,
+            "namaField": "nama_lengkap",
+            "nilaiJawaban": "Ahmad Rizki Pratama"
+        },
+        {
+            "idField": 2,
+            "namaField": "email",
+            "nilaiJawaban": "ahmad.rizki@email.com"
+        },
+        {
+            "idField": 3,
+            "namaField": "nomor_telepon",
+            "nilaiJawaban": "081234567890"
+        },
+        {
+            "idField": 4,
+            "namaField": "jenis_kelamin",
+            "nilaiJawaban": "Laki-laki"
+        },
+        {
+            "idField": 5,
+            "namaField": "tanggal_lahir",
+            "nilaiJawaban": "1995-05-15"
+        },
+        {
+            "idField": 6,
+            "namaField": "pendidikan_terakhir",
+            "nilaiJawaban": "S1"
+        },
+        {
+            "idField": 7,
+            "namaField": "alamat_lengkap",
+            "nilaiJawaban": "Jl. Merdeka No. 123, Jakarta Selatan, DKI Jakarta 12345"
+        },
+        {
+            "idField": 8,
+            "namaField": "minat_kelas",
+            "nilaiJawaban": "[\"Web Development\", \"Mobile Development\"]"
+        },
+        {
+            "idField": 10,
+            "namaField": "motivasi",
+            "nilaiJawaban": "Saya ingin meningkatkan skill programming untuk karir yang lebih baik"
+        }
+    ]
+}
