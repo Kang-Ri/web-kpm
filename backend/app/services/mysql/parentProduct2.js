@@ -1,6 +1,7 @@
 const ParentProduct2 = require('../../api/v1/parentProduct2/model');
 const ParentProduct1 = require('../../api/v1/parentProduct1/model');
 const { NotFoundError, BadRequestError } = require('../../errors');
+const { Op } = require('sequelize'); // Add Op for filtering
 
 // Helper untuk validasi ParentProduct1
 const checkingParentProduct1 = async (idParent1) => {
@@ -15,7 +16,21 @@ const checkingParentProduct1 = async (idParent1) => {
 
 // --- 1. GET ALL PARENT PRODUCT 2 (readAll) ---
 const getAllParentProduct2 = async (req) => {
+    // Support filtering by idParent1 and status
+    const { idParent1, status } = req.query;
+
+    let whereClause = {};
+
+    if (idParent1) {
+        whereClause.idParent1 = idParent1;
+    }
+
+    if (status) {
+        whereClause.status = status;
+    }
+
     const result = await ParentProduct2.findAll({
+        where: whereClause,
         include: {
             model: ParentProduct1,
             as: 'parentProduct1',  // WAJIB ADA
@@ -89,7 +104,7 @@ const updateParentProduct2 = async (req) => {
         const checkName = await ParentProduct2.findOne({
             where: {
                 namaParent2: updateFields.namaParent2,
-                idParent2: { [ParentProduct2.sequelize.Op.ne]: id } // Kecuali ID yang sedang diupdate
+                idParent2: { [Op.ne]: id } // Use Op directly, already imported
             },
         });
 
