@@ -4,6 +4,7 @@ const { isRefreshTokenValid } = require('../../utils'); // Menggunakan utils/ind
 
 // --- CREATE REFRESH TOKEN ---
 const createRefreshToken = async (payload) => {
+    console.log("payload in createRefreshToken", payload);
     const { idUser, token, expiryDate } = payload;
 
     // 1. Cek apakah user sudah punya token (kita hanya ingin satu token aktif per user)
@@ -11,14 +12,14 @@ const createRefreshToken = async (payload) => {
     await RefreshTokens.destroy({
         where: { idUser: idUser }
     });
-
+    console.log("destroyed");
     // 2. Buat token baru di database menggunakan Sequelize .create()
     const result = await RefreshTokens.create({
         idUser,
         token,
         expiryDate,
     });
-    
+    console.log("created", result);
     return result;
 };
 
@@ -43,8 +44,8 @@ const getOneRefreshToken = async (req) => {
 
     // 2. Cari token di database (pastikan token tersebut ada dan belum digunakan)
     const result = await RefreshTokens.findOne({
-        where: { 
-            token: refreshToken, 
+        where: {
+            token: refreshToken,
             idUser: payload.idUser // Pastikan idUser sesuai dengan payload
         }
     });

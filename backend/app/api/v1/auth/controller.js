@@ -26,8 +26,9 @@ const register = async (req, res, next) => {
 // --- 2. Login (Sign In) ---
 const login = async (req, res, next) => {
     try {
+        console.log("result controller.js");
         const result = await signIn(req);
-
+        console.log("result", result);
         // Pasang Refresh Token ke cookie
         attachCookiesToResponse({ res, user: result.user, refreshToken: result.refreshToken });
 

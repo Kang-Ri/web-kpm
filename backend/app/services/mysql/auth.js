@@ -4,18 +4,18 @@ const RefreshTokens = require('../../api/v1/userRefreshTokens/model');
 const PasswordResetTokens = require('../../api/v1/passwordResetTokens/model'); // Asumsi: Model ini sudah dibuat
 
 const { BadRequestError, UnauthenticatedError, NotFoundError } = require('../../errors');
-const bcrypt = require('bcryptjs'); 
+const bcrypt = require('bcryptjs');
 const crypto = require('crypto'); // Untuk generate OTP
 const { sendEmail } = require('../../services/email'); // Asumsi: Utility email ini sudah ada
 
 // Mengimpor semua utilitas dari index.js
-const { 
-    createJWT, 
-    createRefreshToken: createTokenString, 
-    createTokenUser 
-} = require('../../utils'); 
+const {
+    createJWT,
+    createRefreshToken: createTokenString,
+    createTokenUser
+} = require('../../utils');
 
-const { createRefreshToken, getOneRefreshToken } = require('./userRefreshToken'); 
+const { createRefreshToken, getOneRefreshToken } = require('./userRefreshToken');
 
 
 const ROLE_ID_TO_NAME = {
@@ -50,12 +50,12 @@ const signUp = async (req) => {
         email,
         password: hashedPassword,
         namaLengkap,
-        idRole: 5, 
+        idRole: 5,
         status: 'Aktif',
     });
 
-    delete result.dataValues.password; 
-    return result; 
+    delete result.dataValues.password;
+    return result;
 };
 
 
@@ -67,14 +67,14 @@ const signIn = async (req) => {
         throw new BadRequestError('Mohon sediakan email dan password.');
     }
 
-    const result = await Users.findOne({ 
+    const result = await Users.findOne({
         where: { email },
     });
 
     if (!result) {
         throw new UnauthenticatedError('Email Anda salah!');
     }
-    
+
     if (result.status !== 'Aktif') {
         throw new UnauthenticatedError('Akun Anda belum aktif. Silakan hubungi administrator.');
     }
@@ -85,17 +85,30 @@ const signIn = async (req) => {
         throw new UnauthenticatedError('Password Anda salah!');
     }
 
-    const tokenUser = createTokenUser(result);
-    const token = createJWT({ payload: tokenUser });
+    // // Get role name from Roles table
+    const role = await Roles.findByPk(result.idRole, {
+        attributes: ['namaRole']
+    });
 
-    const refreshTokenString = createTokenString({ payload: tokenUser }); 
+    // // Attach role name to user object for createTokenUser
+    // // IMPORTANT: Use dataValues to ensure it's accessible
+    // result.dataValues.namaRole = role ? role.namaRole : 'Unknown';
+    result.dataValues.namaRole = role ? role.dataValues.namaRole : 'Unknown';
+    console.log("result", result);
+
+    const tokenUser = createTokenUser(result.dataValues);
+    const token = createJWT({ payload: tokenUser });
+    console.log("tokenUser", tokenUser);
+    const refreshTokenString = createTokenString({ payload: tokenUser });
+    console.log("refreshTokenString", refreshTokenString);
 
     const payloadRefreshToken = {
-        idUser: result.idUser, 
+        idUser: result.idUser,
         token: refreshTokenString,
-        expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) 
+        expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
     };
 
+    console.log("payloadRefreshToken", payloadRefreshToken);
     // Simpan/Update Refresh Token ke Database
     await createRefreshToken(payloadRefreshToken);
 
@@ -106,7 +119,7 @@ const signIn = async (req) => {
             idUser: result.idUser,
             email: result.email,
             namaLengkap: result.namaLengkap,
-            role: tokenUser.role, 
+            role: tokenUser.role,
         }
     };
 };
@@ -123,13 +136,13 @@ const logout = async (req) => {
     // Hapus token dari database (Service userRefreshToken harus menyediakan fungsi destroy)
     await RefreshTokens.destroy({ where: { token: refreshToken } });
 
-    return true; 
+    return true;
 };
 
 // --- 4. FORGOT PASSWORD (Kirim OTP) ---
 const forgotPassword = async (req) => {
     const { email } = req.body;
-    
+
     const user = await Users.findOne({ where: { email } });
 
     if (!user) {
@@ -137,7 +150,7 @@ const forgotPassword = async (req) => {
     }
 
     // 1. Buat Token OTP (6 digit angka)
-    const otpToken = crypto.randomInt(100000, 999999).toString(); 
+    const otpToken = crypto.randomInt(100000, 999999).toString();
     const expires = new Date(Date.now() + 10 * 60 * 1000); // Kedaluwarsa dalam 10 menit
 
     // 2. Hapus token lama & Simpan token baru ke tabel PasswordResetTokens
@@ -198,7 +211,7 @@ const resetPassword = async (req) => {
     });
 
     // 6. Hapus Token Reset setelah berhasil
-    await resetRecord.destroy(); 
+    await resetRecord.destroy();
 
     return true;
 };
@@ -212,8 +225,8 @@ const refreshToken = async (req) => {
     console.log("tokenRecord", tokenRecord)
 
     // 2. Dapatkan data User dari idUser yang ada di record token
-    const user = await Users.findOne({ 
-        where: { idUser: tokenRecord.idUser } 
+    const user = await Users.findOne({
+        where: { idUser: tokenRecord.idUser }
     });
 
     if (!user) {
@@ -234,7 +247,7 @@ const refreshToken = async (req) => {
             idUser: user.idUser,
             email: user.email,
             namaLengkap: user.namaLengkap,
-            role: tokenUser.role, 
+            role: tokenUser.role,
         }
     };
 };

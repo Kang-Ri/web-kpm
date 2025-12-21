@@ -120,18 +120,23 @@ function SiswaListContent() {
             setIsImporting(true);
             const response = await siswaService.bulkImport(file);
 
-            if (response.data.success.length > 0) {
-                showSuccess(`Berhasil mengimport ${response.data.success.length} siswa`);
+            // Handle both possible response structures
+            const importResult: BulkImportResponse = (response.data as any).data || response.data as BulkImportResponse;
+
+            if (importResult.success && importResult.success.length > 0) {
+                showSuccess(`Berhasil mengimport ${importResult.success.length} siswa`);
                 fetchSiswa();
             }
 
-            if (response.data.failed.length > 0) {
-                showError(`${response.data.failed.length} data gagal diimport`);
+            if (importResult.failed && importResult.failed.length > 0) {
+                showError(`${importResult.failed.length} data gagal diimport`);
             }
 
-            return response.data;
+            return importResult;
         } catch (error: any) {
-            showError(error.response?.data?.message || 'Gagal mengimport data siswa');
+            console.error('Bulk import error:', error);
+            const errorMessage = error.response?.data?.message || error.message || 'Gagal mengimport data siswa';
+            showError(errorMessage);
             throw error;
         } finally {
             setIsImporting(false);

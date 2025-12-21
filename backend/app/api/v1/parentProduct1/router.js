@@ -46,7 +46,7 @@ router.patch(
 router.delete(
     `${productParent1Prefix}/:id`,
     authenticatedUser,
-    authorizeRoles("Super Admin"), // Biasanya hanya Super Admin yang boleh DELETE
+    authorizeRoles("Super Admin", "Admin"), // Allow both Super Admin and Admin
     destroy
 );
 

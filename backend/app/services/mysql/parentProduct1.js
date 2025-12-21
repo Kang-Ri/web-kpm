@@ -43,12 +43,24 @@ const createParentProduct1 = async (req) => {
 
 // --- READ ALL ---
 const getAllParentProduct1 = async (req) => {
-    // Implementasi filtering/searching (opsional: dari query params req.query)
-    // Untuk saat ini, ambil semua data
+    // Support filtering by tautanProduk and status
+    const { tautanProduk, status } = req.query;
+
+    let whereClause = {};
+
+    if (tautanProduk) {
+        whereClause.tautanProduk = tautanProduk;
+    }
+
+    if (status) {
+        whereClause.status = status;
+    }
+
     const result = await ParentProduct1.findAll({
-        order: [['idParent1', 'DESC']] // Mengganti ORDER BY SQL
+        where: whereClause,
+        order: [['idParent1', 'DESC']]
     });
-    
+
     return result;
 };
 
@@ -69,17 +81,17 @@ const getOneParentProduct1 = async (req) => {
 const updateParentProduct1 = async (req) => {
     const { id } = req.params;
     const updateFields = req.body;
-    
+
     // 1. Pengecekan Keberadaan
     // Menggunakan fungsi getOneParentProduct1 (yang akan melempar error jika tidak ditemukan)
-    const current = await getOneParentProduct1(req); 
+    const current = await getOneParentProduct1(req);
 
     // 2. Pengecekan Duplikasi Nama (Hanya jika namaParent1 disertakan dalam request body)
     if (updateFields.namaParent1) {
         const checkName = await ParentProduct1.findOne({
-            where: { 
-                namaParent1: updateFields.namaParent1, 
-                idParent1: { [ParentProduct1.sequelize.Op.ne]: id } // Kecuali ID yang sedang diupdate
+            where: {
+                namaParent1: updateFields.namaParent1,
+                idParent1: { [Op.ne]: id } // Use Op directly, already imported
             },
         });
 
@@ -87,16 +99,16 @@ const updateParentProduct1 = async (req) => {
             throw new BadRequestError('Nama kategori produk induk sudah terdaftar di entitas lain.');
         }
     }
-    
+
     // 3. Update Database menggunakan .update()
-    // Karena kita menggunakan .update(), Sequelize akan otomatis hanya mengambil field 
+    // Karena kita menggunakan .update(), Sequelize akan otomatis hanya mengambil field
     // yang didefinisikan di Model dari objek 'updateFields' (req.body)
     await ParentProduct1.update(updateFields, {
         where: { idParent1: id }
     });
 
     // 4. Dapatkan data yang sudah di-update
-    return getOneParentProduct1(req); 
+    return getOneParentProduct1(req);
 };
 
 // --- DELETE ---
@@ -107,10 +119,10 @@ const deleteParentProduct1 = async (req) => {
     const result = await getOneParentProduct1(req); // Akan throw error jika tidak ada
 
     // 2. Hapus dari Database menggunakan .destroy()
-    await result.destroy(); 
-    
+    await result.destroy();
+
     // Atau: await ParentProduct1.destroy({ where: { idParent1: id } });
-    
+
     return result;
 };
 
