@@ -1,0 +1,293 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { DashboardLayout } from '@/components/layouts';
+import { Card, CardHeader, CardBody } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { Plus, Eye, Edit, Trash2, Search, Filter } from 'lucide-react';
+import { siswaService, Siswa, CreateSiswaDto } from '@/lib/api/siswa.service';
+import { SiswaFormModal } from '@/components/siswa/SiswaFormModal';
+import { showSuccess, showError } from '@/lib/utils/toast';
+
+function SiswaListContent() {
+    const [siswaList, setSiswaList] = useState<Siswa[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState<string>('');
+
+    // Modal states
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedSiswa, setSelectedSiswa] = useState<Siswa | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        fetchSiswa();
+    }, [statusFilter]);
+
+    const fetchSiswa = async () => {
+        try {
+            setLoading(true);
+            console.log('🔍 Fetching siswa data...');
+            console.log('Status filter:', statusFilter);
+
+            const params = statusFilter ? { statusAktif: statusFilter } : undefined;
+            console.log('Request params:', params);
+
+            const response = await siswaService.getAll(params);
+            console.log('✅ Siswa data received:', response);
+
+            setSiswaList(response.data);
+        } catch (error: any) {
+            console.error('❌ Error fetching siswa:', error);
+            console.error('Error details:', {
+                message: error.message,
+                response: error.response,
+                stack: error.stack
+            });
+            showError('Gagal memuat data siswa');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCreate = () => {
+        setSelectedSiswa(null); // Clear any previous selection
+        setIsModalOpen(true);
+    };
+
+    const handleEdit = (siswa: Siswa) => {
+        setSelectedSiswa(siswa);
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setSelectedSiswa(null); // Clear selection when closing
+    };
+
+    const handleSubmit = async (data: CreateSiswaDto) => {
+        try {
+            setIsSubmitting(true);
+
+            // Clean data: convert empty strings to undefined
+            const cleanedData = Object.fromEntries(
+                Object.entries(data).map(([key, value]) => [
+                    key,
+                    value === '' ? undefined : value
+                ])
+            ) as CreateSiswaDto;
+
+            console.log('📤 Original data:', data);
+            console.log('🧹 Cleaned data:', cleanedData);
+            console.log('Is edit mode:', !!selectedSiswa);
+            if (selectedSiswa) {
+                console.log('Selected siswa ID:', selectedSiswa.idSiswa);
+            }
+
+            if (selectedSiswa) {
+                // Update
+                console.log('Calling siswaService.update...');
+                await siswaService.update(selectedSiswa.idSiswa, cleanedData);
+                showSuccess('Data siswa berhasil diperbarui');
+            } else {
+                // Create
+                console.log('Calling siswaService.create...');
+                await siswaService.create(cleanedData);
+                showSuccess('Siswa baru berhasil ditambahkan');
+            }
+
+            setIsModalOpen(false);
+            fetchSiswa(); // Refresh list
+        } catch (error: any) {
+            console.error('❌ Error submitting siswa:', error);
+            console.error('Error details:', {
+                message: error.message,
+                response: error.response?.data,
+                status: error.response?.status,
+                stack: error.stack
+            });
+            showError(error.response?.data?.msg || error.message || 'Gagal menyimpan data siswa');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleDelete = async (id: number) => {
+        if (!confirm('Apakah Anda yakin ingin menghapus data siswa ini?')) return;
+
+        try {
+            await siswaService.delete(id);
+            showSuccess('Data siswa berhasil dihapus');
+            fetchSiswa(); // Refresh list
+        } catch (error) {
+            console.error('Error deleting siswa:', error);
+            showError('Gagal menghapus data siswa');
+        }
+    };
+
+    // Filter by search term
+    const filteredSiswa = siswaList.filter((siswa) =>
+        siswa.namaLengkap.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        siswa.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        siswa.nisn?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    return (
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-900">Data Siswa</h1>
+                    <p className="text-gray-600 mt-1">Kelola data siswa dan informasi terkait</p>
+                </div>
+                <Button variant="primary" icon={Plus} onClick={handleCreate}>
+                    Tambah Siswa
+                </Button>
+            </div>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Card>
+                    <CardBody>
+                        <p className="text-sm text-gray-600">Total Siswa</p>
+                        <p className="text-3xl font-bold text-gray-900 mt-1">{siswaList.length}</p>
+                    </CardBody>
+                </Card>
+                <Card>
+                    <CardBody>
+                        <p className="text-sm text-gray-600">Siswa Aktif</p>
+                        <p className="text-3xl font-bold text-green-600 mt-1">
+                            {siswaList.filter(s => s.statusAktif === 'Aktif').length}
+                        </p>
+                    </CardBody>
+                </Card>
+                <Card>
+                    <CardBody>
+                        <p className="text-sm text-gray-600">Siswa Non-Aktif</p>
+                        <p className="text-3xl font-bold text-gray-600 mt-1">
+                            {siswaList.filter(s => s.statusAktif === 'Non-Aktif').length}
+                        </p>
+                    </CardBody>
+                </Card>
+            </div>
+
+            {/* Table */}
+            <Card>
+                <CardHeader>
+                    <h2 className="text-xl font-semibold text-gray-900">Daftar Siswa</h2>
+                </CardHeader>
+
+                <CardBody className="p-0">
+                    {/* Search and Filter */}
+                    <div className="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row gap-4">
+                        <div className="flex-1 relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <Search className="h-5 w-5 text-gray-400" />
+                            </div>
+                            <input
+                                type="text"
+                                placeholder="Cari nama, email, atau NISN..."
+                                className="input pl-10"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <div className="flex gap-2">
+                            <select
+                                className="input w-auto"
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                            >
+                                <option value="">Semua Status</option>
+                                <option value="Aktif">Aktif</option>
+                                <option value="Non-Aktif">Non-Aktif</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Table */}
+                    <div className="overflow-x-auto">
+                        {loading ? (
+                            <div className="p-8 text-center text-gray-500">Loading...</div>
+                        ) : filteredSiswa.length === 0 ? (
+                            <div className="p-8 text-center text-gray-500">Tidak ada data siswa</div>
+                        ) : (
+                            <table className="table">
+                                <thead>
+                                    <tr>
+                                        <th>NISN</th>
+                                        <th>Nama Lengkap</th>
+                                        <th>Email</th>
+                                        <th>No HP</th>
+                                        <th>Jenis Kelamin</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredSiswa.map((siswa) => (
+                                        <tr key={siswa.idSiswa}>
+                                            <td className="font-mono text-sm">{siswa.nisn || '-'}</td>
+                                            <td className="font-medium text-gray-900">{siswa.namaLengkap}</td>
+                                            <td className="text-sm">{siswa.email || '-'}</td>
+                                            <td className="text-sm">{siswa.noHp || '-'}</td>
+                                            <td className="text-sm">{siswa.jenisKelamin || '-'}</td>
+                                            <td>
+                                                <Badge variant={siswa.statusAktif === 'Aktif' ? 'success' : 'warning'}>
+                                                    {siswa.statusAktif}
+                                                </Badge>
+                                            </td>
+                                            <td>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        className="p-2 hover:bg-gray-100 rounded transition"
+                                                        title="View Detail"
+                                                    >
+                                                        <Eye className="h-4 w-4 text-gray-600" />
+                                                    </button>
+                                                    <button
+                                                        className="p-2 hover:bg-gray-100 rounded transition"
+                                                        title="Edit"
+                                                        onClick={() => handleEdit(siswa)}
+                                                    >
+                                                        <Edit className="h-4 w-4 text-gray-600" />
+                                                    </button>
+                                                    <button
+                                                        className="p-2 hover:bg-red-50 rounded transition"
+                                                        title="Delete"
+                                                        onClick={() => handleDelete(siswa.idSiswa)}
+                                                    >
+                                                        <Trash2 className="h-4 w-4 text-red-600" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
+                </CardBody>
+            </Card>
+        </div>
+
+            {/* Siswa Form Modal */ }
+    <SiswaFormModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onSubmit={handleSubmit}
+        siswa={selectedSiswa}
+        isLoading={isSubmitting}
+    />
+        </div >
+    );
+}
+
+export default function SiswaPage() {
+    return (
+        <DashboardLayout>
+            <SiswaListContent />
+        </DashboardLayout>
+    );
+}
