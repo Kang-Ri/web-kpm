@@ -1,15 +1,74 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+
 const {
     create,
     index,
     find,
     update,
     destroy,
+    bulkImport,
+    bulkDelete,
+    exportData,
+    resetPassword,
 } = require('./controller');
 
 // Middleware (uncomment when ready)
 // const { authenticatedUser, authorizeRoles } = require('../../../middlewares/auth');
+
+// Multer configuration for Excel file upload
+const storage = multer.memoryStorage();
+const upload = multer({
+    storage: storage,
+    fileFilter: (req, file, cb) => {
+        // Accept only Excel files
+        const allowedMimes = [
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        ];
+        if (allowedMimes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('File harus berformat Excel (.xls atau .xlsx)'));
+        }
+    },
+    limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB max
+    }
+});
+
+// BULK IMPORT Siswa (Excel Upload)
+router.post(
+    '/siswa/bulk-import',
+    // authenticatedUser,
+    // authorizeRoles('Super Admin', 'Admin'),
+    upload.single('file'),
+    bulkImport
+);
+
+// BULK DELETE Siswa
+router.delete(
+    '/siswa/bulk-delete',
+    // authenticatedUser,
+    // authorizeRoles('Super Admin', 'Admin'),
+    bulkDelete
+);
+
+// EXPORT Siswa Data
+router.get(
+    '/siswa/export',
+    // authenticatedUser,
+    exportData
+);
+
+// RESET Siswa Password
+router.post(
+    '/siswa/:idSiswa/reset-password',
+    // authenticatedUser,
+    // authorizeRoles('Super Admin', 'Admin'),
+    resetPassword
+);
 
 // CREATE Siswa
 router.post(
@@ -50,3 +109,4 @@ router.delete(
 );
 
 module.exports = router;
+

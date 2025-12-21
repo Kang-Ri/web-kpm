@@ -20,6 +20,10 @@ const Users = sequelize.define('Users', {
         type: DataTypes.STRING(100),
         allowNull: false,
     },
+    noHp: {
+        type: DataTypes.STRING(20),
+        allowNull: true,
+    },
     idRole: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -29,7 +33,7 @@ const Users = sequelize.define('Users', {
         defaultValue: 'Aktif',
     },
 }, {
-    timestamps: false, 
+    timestamps: false,
     tableName: 'Users',
 });
 

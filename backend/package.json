@@ -22,7 +22,8 @@
     "mysql2": "^3.15.3",
     "nodemailer": "^7.0.10",
     "nodemon": "^3.1.11",
-    "sequelize": "^6.37.7"
+    "sequelize": "^6.37.7",
+    "xlsx": "^0.18.5"
   },
   "bin": {
     "web-kpm": "bin/www.js"

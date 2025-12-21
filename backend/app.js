@@ -49,21 +49,28 @@ app.get("/", (req, res) => {
   });
 });
 
+// Auth & Users (No params)
 app.use(`${v1}/cms`, authRouter);
 app.use(`${v1}/cms/users`, usersRouter);
-app.use(`${v1}/cms`, parentProduct1Router);
-app.use(`${v1}/cms`, parentProduct2Router);
-app.use(`${v1}/cms`, productRouter);
-app.use(`${v1}/cms`, formsRouter);
-app.use(`${v1}/cms`, orderRouter);
-app.use(`${v1}/cms`, formFieldsRouter);
 
-// LMS Routes (New)
+// LMS Routes (Specific paths - must be BEFORE parameterized routes!)
 app.use(`${v1}/cms`, siswaRouter);
 app.use(`${v1}/cms`, orangTuaRouter);
 app.use(`${v1}/cms`, siswaKelasRouter);
 app.use(`${v1}/cms`, materiButtonRouter);
 app.use(`${v1}/cms`, aksesMateriRouter);
+
+// Forms & Fields (Specific paths)
+app.use(`${v1}/cms`, formsRouter);
+app.use(`${v1}/cms`, formFieldsRouter);
+
+// Product Routes (May have :id params - after specific routes)
+app.use(`${v1}/cms`, parentProduct1Router);
+app.use(`${v1}/cms`, parentProduct2Router);
+app.use(`${v1}/cms`, productRouter);
+
+// Order Router (Has :id param - MUST be last)
+app.use(`${v1}/cms`, orderRouter);
 
 // Error Middleware
 app.use(notFoundMiddleware);

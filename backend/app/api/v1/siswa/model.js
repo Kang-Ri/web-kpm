@@ -30,6 +30,16 @@ const Siswa = sequelize.define('Siswa', {
         type: DataTypes.ENUM('Laki-laki', 'Perempuan'),
         allowNull: true,
     },
+    jenjangKelas: {
+        type: DataTypes.ENUM('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'),
+        allowNull: true,
+        comment: 'Jenjang kelas siswa (1-12)',
+    },
+    asalSekolah: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+        comment: 'Asal sekolah siswa',
+    },
     agama: {
         type: DataTypes.STRING(50),
         allowNull: true,
