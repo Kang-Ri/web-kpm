@@ -2,6 +2,7 @@ const Product = require('../../api/v1/product/model');
 const ParentProduct2 = require('../../api/v1/parentProduct2/model');
 const Form = require('../../api/v1/forms/model'); // Import model Form
 const { NotFoundError, BadRequestError } = require('../../errors');
+const { Op } = require('sequelize'); // Add Op for filtering
 
 // Helper untuk validasi ParentProduct2
 const checkingParentProduct2 = async (idParent2) => {
@@ -38,7 +39,21 @@ const formInclude = {
 
 // --- 1. GET ALL PRODUCT (readAll) ---
 const getAllProduct = async (req) => {
+    // Support filtering by idParent2 and statusProduk
+    const { idParent2, statusProduk } = req.query;
+
+    let whereClause = {};
+
+    if (idParent2) {
+        whereClause.idParent2 = idParent2;
+    }
+
+    if (statusProduk) {
+        whereClause.statusProduk = statusProduk;
+    }
+
     const result = await Product.findAll({
+        where: whereClause,
         attributes: { exclude: ['idParent1', 'idForm'] }, // Tambahkan idForm ke daftar exclude
         include: [
             {
@@ -101,10 +116,15 @@ const createProduct = async (req) => {
     // 2. Cek keberadaan Form Order (jika idForm diisi)
     await checkingFormOrder(idForm);
 
-    // 3. Cek duplikasi namaProduk
-    const checkName = await Product.findOne({ where: { namaProduk } });
+    // 3. Cek duplikasi namaProduk dalam idParent2 yang sama
+    const checkName = await Product.findOne({
+        where: {
+            namaProduk,
+            idParent2
+        }
+    });
     if (checkName) {
-        throw new BadRequestError('Nama Produk sudah terdaftar.');
+        throw new BadRequestError('Nama Produk sudah terdaftar di ruang kelas ini.');
     }
 
     // 4. Validasi Logika Harga
@@ -150,15 +170,19 @@ const updateProduct = async (req) => {
 
     // 4. Pengecekan Duplikasi Nama (Hanya jika namaProduk disertakan)
     if (updateFields.namaProduk) {
+        // Get current idParent2 (either from updateFields or from current record)
+        const targetIdParent2 = updateFields.idParent2 || current.idParent2;
+
         const checkName = await Product.findOne({
             where: {
                 namaProduk: updateFields.namaProduk,
-                idProduk: { [Product.sequelize.Op.ne]: id } // Kecuali ID yang sedang diupdate
+                idParent2: targetIdParent2,
+                idProduk: { [Op.ne]: id } // Exclude current product
             },
         });
 
         if (checkName) {
-            throw new BadRequestError('Nama Produk sudah terdaftar di entitas lain.');
+            throw new BadRequestError('Nama Produk sudah terdaftar di ruang kelas ini.');
         }
     }
 

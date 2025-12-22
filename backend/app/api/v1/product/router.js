@@ -6,7 +6,7 @@ const {
     authorizeRoles,
 } = require("../../../middlewares/auth");
 
-const productPrefix = "/product"; 
+const productPrefix = "/product";
 
 // GET ALL (Index)
 router.get(
@@ -33,7 +33,7 @@ router.post(
 );
 
 // PATCH (Update)
-router.patch( 
+router.patch(
     `${productPrefix}/:id`,
     authenticatedUser,
     authorizeRoles("Super Admin", "Admin", "PJ"),
@@ -44,7 +44,7 @@ router.patch(
 router.delete(
     `${productPrefix}/:id`,
     authenticatedUser,
-    authorizeRoles("Super Admin"), 
+    authorizeRoles("Super Admin", "Admin"), // Allow both
     destroy
 );
 

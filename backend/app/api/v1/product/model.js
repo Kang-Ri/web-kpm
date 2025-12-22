@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../../../db/sequelizeConfig'); 
+const sequelize = require('../../../db/sequelizeConfig');
 
 const Product = sequelize.define('Product', {
     idProduk: {
@@ -10,17 +10,17 @@ const Product = sequelize.define('Product', {
     },
     // Foreign Key ke ParentProduct2
     // Biarkan sebagai kolom INTEGER biasa, HAPUS properti references
-    idParent2: { 
+    idParent2: {
         type: DataTypes.INTEGER,
         allowNull: false,
     },
     namaProduk: {
         type: DataTypes.STRING(255),
         allowNull: false,
-        unique: true, 
+        // REMOVE global unique - akan diganti dengan composite unique index
         validate: {
-            notEmpty: { 
-                msg: 'Nama Produk tidak boleh kosong.' 
+            notEmpty: {
+                msg: 'Nama Produk tidak boleh kosong.'
             },
         }
     },
@@ -62,8 +62,15 @@ const Product = sequelize.define('Product', {
         defaultValue: 'Draft',
     },
 }, {
-    timestamps: false, 
-    tableName: 'product' // Pastikan nama tabel di database adalah 'product'
+    timestamps: false,
+    tableName: 'product', // Pastikan nama tabel di database adalah 'product'
+    indexes: [
+        {
+            unique: true,
+            fields: ['namaProduk', 'idParent2'],
+            name: 'unique_product_per_parent2'
+        }
+    ]
 });
 
 // Catatan: Asosiasi model (belongsTo) ke ParentProduct2 sudah dipindahkan ke app/db/associations.js

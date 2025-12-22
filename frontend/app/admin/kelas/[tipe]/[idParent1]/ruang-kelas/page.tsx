@@ -222,8 +222,14 @@ function RuangKelasContent() {
                                 <tbody>
                                     {ruangKelasList.map((ruangKelas) => (
                                         <tr key={ruangKelas.idParent2} className="border-b border-gray-100 hover:bg-gray-50">
-                                            <td className="py-3 px-4 font-medium text-gray-900">
-                                                {ruangKelas.namaParent2}
+                                            <td className="py-3 px-4">
+                                                <button
+                                                    onClick={() => router.push(`/admin/kelas/${tipe}/${idParent1}/ruang-kelas/${ruangKelas.idParent2}/materi`)}
+                                                    className="text-blue-600 hover:text-blue-800 font-medium hover:underline text-left"
+                                                    title="Lihat Materi"
+                                                >
+                                                    {ruangKelas.namaParent2}
+                                                </button>
                                             </td>
                                             <td className="py-3 px-4 text-gray-600">
                                                 {ruangKelas.tahunAjaran || '-'}
