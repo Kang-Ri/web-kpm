@@ -1,6 +1,7 @@
 const SiswaKelas = require('../../api/v1/siswaKelas/model');
 const Siswa = require('../../api/v1/siswa/model');
 const ParentProduct2 = require('../../api/v1/parentProduct2/model');
+const { BadRequestError } = require('../../errors');
 const xlsx = require('xlsx');
 
 // Export siswa by kelas to Excel

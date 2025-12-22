@@ -75,6 +75,13 @@ const ParentProduct2 = sequelize.define('ParentProduct2', {
         allowNull: true,
         comment: 'Kapasitas maksimal siswa',
     },
+
+    // Jenjang Kelas yang Diperbolehkan (Array of strings: ["1","2",...,"12"])
+    jenjangKelasIzin: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        comment: 'Array jenjang kelas yang diperbolehkan: ["1","2",...,"12"]',
+    },
 }, {
     timestamps: false,
     tableName: 'ParentProduct2'

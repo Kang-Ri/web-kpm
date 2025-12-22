@@ -6,6 +6,7 @@ const {
     updateEnrollmentStatus,
     deleteEnrollment,
 } = require('../../../services/mysql/siswaKelas');
+const { exportSiswaKelas } = require('../../../services/mysql/siswaKelasExport');
 
 // ENROLL Siswa
 const create = async (req, res, next) => {
@@ -80,10 +81,29 @@ const destroy = async (req, res, next) => {
     }
 };
 
+// EXPORT Siswa Kelas to Excel
+const exportExcel = async (req, res, next) => {
+    try {
+        const excelBuffer = await exportSiswaKelas(req);
+
+        // Get kelas info for filename
+        const { idParent2 } = req.query;
+        const timestamp = new Date().toISOString().split('T')[0];
+        const filename = `siswa-kelas-${idParent2}-${timestamp}.xlsx`;
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.send(excelBuffer);
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports = {
     create,
     index,
     find,
     update,
     destroy,
+    exportExcel,
 };
