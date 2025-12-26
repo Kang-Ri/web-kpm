@@ -6,11 +6,13 @@ import { DashboardLayout } from '@/components/layouts';
 import { Card, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Plus, Edit, Trash2, FileText } from 'lucide-react';
+import { Plus, Edit, Trash2, FileText, Upload, FileUp } from 'lucide-react';
 import { productService, Product, CreateProductDto } from '@/lib/api/product.service';
 import { parentProduct2Service } from '@/lib/api/parentProduct2.service';
 import { parentProduct1Service } from '@/lib/api/parentProduct1.service';
 import { ProductFormModal } from '@/components/kelas/ProductFormModal';
+import { ImportMateriModal } from '@/components/kelas/ImportMateriModal';
+import { BulkImportButtonModal } from '@/components/kelas/BulkImportButtonModal';
 import { showSuccess, showError } from '@/lib/utils/toast';
 
 function MateriContent() {
@@ -30,6 +32,10 @@ function MateriContent() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedMateri, setSelectedMateri] = useState<Product | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Import modal states
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [isBulkImportButtonModalOpen, setIsBulkImportButtonModalOpen] = useState(false);
 
     useEffect(() => {
         setMounted(true);
@@ -214,9 +220,17 @@ function MateriContent() {
                     <h1 className="text-3xl font-bold text-gray-900">Materi - {ruangKelasName}</h1>
                     <p className="text-gray-600 mt-1">Manajemen materi pembelajaran</p>
                 </div>
-                <Button variant="primary" icon={Plus} onClick={handleCreate}>
-                    Tambah Materi
-                </Button>
+                <div className="flex items-center gap-3">
+                    <Button variant="secondary" icon={FileUp} onClick={() => setIsBulkImportButtonModalOpen(true)}>
+                        Import Button
+                    </Button>
+                    <Button variant="secondary" icon={Upload} onClick={() => setIsImportModalOpen(true)}>
+                        Import Excel
+                    </Button>
+                    <Button variant="primary" icon={Plus} onClick={handleCreate}>
+                        Tambah Materi
+                    </Button>
+                </div>
             </div>
 
             {/* Stats Card */}
@@ -281,8 +295,14 @@ function MateriContent() {
                                 <tbody>
                                     {materiList.map((materi) => (
                                         <tr key={materi.idProduk} className="border-b border-gray-100 hover:bg-gray-50">
-                                            <td className="py-3 px-4 font-medium text-gray-900">
-                                                {materi.namaProduk}
+                                            <td className="py-3 px-4">
+                                                <button
+                                                    onClick={() => router.push(`/admin/kelas/${tipe}/${idParent1}/ruang-kelas/${idParent2}/materi/${materi.idProduk}/button`)}
+                                                    className="text-blue-600 hover:text-blue-800 font-medium hover:underline text-left"
+                                                    title="Kelola Button"
+                                                >
+                                                    {materi.namaProduk}
+                                                </button>
                                             </td>
                                             <td className="py-3 px-4">
                                                 <Badge variant="info">
@@ -342,7 +362,30 @@ function MateriContent() {
                 product={selectedMateri}
                 isLoading={isSubmitting}
             />
-        </div>
+
+            {/* Import Modal */}
+            <ImportMateriModal
+                isOpen={isImportModalOpen}
+                onClose={() => setIsImportModalOpen(false)}
+                onImportComplete={fetchMateri}
+                idParent2={idParent2}
+            />
+
+            {/* Bulk Import Button Modal */}
+            <BulkImportButtonModal
+                isOpen={isBulkImportButtonModalOpen}
+                onClose={() => setIsBulkImportButtonModalOpen(false)}
+                onImportComplete={() => {
+                    showSuccess('Bulk import button selesai');
+                    setIsBulkImportButtonModalOpen(false);
+                }}
+                idParent2={idParent2}
+                materiList={materiList.map(m => ({
+                    idProduk: m.idProduk,
+                    namaProduk: m.namaProduk
+                }))}
+            />
+        </div >
     );
 }
 

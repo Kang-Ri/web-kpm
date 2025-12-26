@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { ParentProduct2, CreateParentProduct2Dto } from '@/lib/api/parentProduct2.service';
+import { formService, Form } from '@/lib/api/form.service';
 
 interface ParentProduct2FormModalProps {
     isOpen: boolean;
@@ -32,7 +33,32 @@ export const ParentProduct2FormModal: React.FC<ParentProduct2FormModalProps> = (
         daftarUlangAktif: false,
         kategoriHargaDaftarUlang: 'Gratis',
         hargaDaftarUlang: 0,
+        idFormDaftarUlang: undefined,
     });
+
+    const [availableForms, setAvailableForms] = useState<Form[]>([]);
+    const [loadingForms, setLoadingForms] = useState(false);
+
+    // Load available forms
+    useEffect(() => {
+        const loadForms = async () => {
+            try {
+                setLoadingForms(true);
+                const response = await formService.getAll();
+                const forms = (response.data as any).data || response.data || [];
+                // Filter only active forms
+                setAvailableForms(forms.filter((f: Form) => f.statusForm === 'Aktif'));
+            } catch (error) {
+                console.error('Failed to load forms:', error);
+            } finally {
+                setLoadingForms(false);
+            }
+        };
+
+        if (isOpen) {
+            loadForms();
+        }
+    }, [isOpen]);
 
     useEffect(() => {
         if (ruangKelas) {
@@ -48,6 +74,7 @@ export const ParentProduct2FormModal: React.FC<ParentProduct2FormModalProps> = (
                 daftarUlangAktif: ruangKelas.daftarUlangAktif || false,
                 kategoriHargaDaftarUlang: ruangKelas.kategoriHargaDaftarUlang || 'Gratis',
                 hargaDaftarUlang: ruangKelas.hargaDaftarUlang || 0,
+                idFormDaftarUlang: (ruangKelas as any).idFormDaftarUlang || undefined,
             });
         } else {
             setFormData({
@@ -62,6 +89,7 @@ export const ParentProduct2FormModal: React.FC<ParentProduct2FormModalProps> = (
                 daftarUlangAktif: false,
                 kategoriHargaDaftarUlang: 'Gratis',
                 hargaDaftarUlang: 0,
+                idFormDaftarUlang: undefined,
             });
         }
     }, [ruangKelas, isOpen]);
@@ -234,6 +262,31 @@ export const ParentProduct2FormModal: React.FC<ParentProduct2FormModalProps> = (
 
                     {formData.daftarUlangAktif && (
                         <div className="ml-6 space-y-3 bg-blue-50 p-3 rounded-lg">
+                            {/* Form Daftar Ulang Dropdown */}
+                            <div>
+                                <label htmlFor="idFormDaftarUlang" className="block text-sm font-medium text-gray-700 mb-1">
+                                    Form Daftar Ulang
+                                </label>
+                                <select
+                                    id="idFormDaftarUlang"
+                                    name="idFormDaftarUlang"
+                                    value={formData.idFormDaftarUlang || ''}
+                                    onChange={handleChange}
+                                    disabled={loadingForms}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                                >
+                                    <option value="">Pilih Form (Opsional)</option>
+                                    {availableForms.map((form) => (
+                                        <option key={form.idForm} value={form.idForm}>
+                                            {form.namaForm} ({form.fields?.length || 0} fields)
+                                        </option>
+                                    ))}
+                                </select>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    {loadingForms ? 'Loading forms...' : 'Siswa akan mengisi form ini saat daftar ulang'}
+                                </p>
+                            </div>
+
                             <div>
                                 <label htmlFor="kategoriHargaDaftarUlang" className="block text-sm font-medium text-gray-700 mb-1">
                                     Kategori Harga Daftar Ulang

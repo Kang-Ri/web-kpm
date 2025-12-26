@@ -6,10 +6,14 @@ import { DashboardLayout } from '@/components/layouts';
 import { Card, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Plus, Edit, Trash2, Download, UserPlus, Users } from 'lucide-react';
+import { Plus, Edit, Trash2, Download, UserPlus, Users, FileSpreadsheet } from 'lucide-react';
 import { parentProduct2Service, ParentProduct2, CreateParentProduct2Dto } from '@/lib/api/parentProduct2.service';
 import { parentProduct1Service } from '@/lib/api/parentProduct1.service';
 import { ParentProduct2FormModal } from '@/components/kelas/ParentProduct2FormModal';
+import { BulkImportMateriModal } from '@/components/kelas/BulkImportMateriModal';
+import { EnrollSiswaModal } from '@/components/kelas/EnrollSiswaModal';
+import { ViewEnrolledSiswaModal } from '@/components/kelas/ViewEnrolledSiswaModal';
+import { BulkImportSiswaModal } from '@/components/kelas/BulkImportSiswaModal';
 import { showSuccess, showError } from '@/lib/utils/toast';
 
 function RuangKelasContent() {
@@ -27,6 +31,12 @@ function RuangKelasContent() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedRuangKelas, setSelectedRuangKelas] = useState<ParentProduct2 | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isBulkImportModalOpen, setIsBulkImportModalOpen] = useState(false);
+    const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
+    const [enrollingKelas, setEnrollingKelas] = useState<ParentProduct2 | null>(null);
+    const [isViewSiswaModalOpen, setIsViewSiswaModalOpen] = useState(false);
+    const [viewingKelas, setViewingKelas] = useState<ParentProduct2 | null>(null);
+    const [isBulkImportSiswaModalOpen, setIsBulkImportSiswaModalOpen] = useState(false);
 
     useEffect(() => {
         setMounted(true);
@@ -168,9 +178,17 @@ function RuangKelasContent() {
                     <h1 className="text-3xl font-bold text-gray-900">Ruang Kelas - {kategoriName}</h1>
                     <p className="text-gray-600 mt-1">Manajemen ruang kelas dan enrollment siswa</p>
                 </div>
-                <Button variant="primary" icon={Plus} onClick={handleCreate}>
-                    Tambah Ruang Kelas
-                </Button>
+                <div className="flex items-center gap-3">
+                    <Button variant="secondary" icon={FileSpreadsheet} onClick={() => setIsBulkImportModalOpen(true)}>
+                        Import Materi Kolektif
+                    </Button>
+                    <Button variant="secondary" icon={Users} onClick={() => setIsBulkImportSiswaModalOpen(true)}>
+                        Import Siswa Kolektif
+                    </Button>
+                    <Button variant="primary" icon={Plus} onClick={handleCreate}>
+                        Tambah Ruang Kelas
+                    </Button>
+                </div>
             </div>
 
             {/* Stats Card */}
@@ -267,12 +285,20 @@ function RuangKelasContent() {
                                                     <button
                                                         className="p-2 hover:bg-green-50 rounded"
                                                         title="Tambah Siswa"
+                                                        onClick={() => {
+                                                            setEnrollingKelas(ruangKelas);
+                                                            setIsEnrollModalOpen(true);
+                                                        }}
                                                     >
                                                         <UserPlus className="h-4 w-4 text-green-600" />
                                                     </button>
                                                     <button
                                                         className="p-2 hover:bg-indigo-50 rounded"
                                                         title="Lihat Siswa"
+                                                        onClick={() => {
+                                                            setViewingKelas(ruangKelas);
+                                                            setIsViewSiswaModalOpen(true);
+                                                        }}
                                                     >
                                                         <Users className="h-4 w-4 text-indigo-600" />
                                                     </button>
@@ -308,6 +334,60 @@ function RuangKelasContent() {
                 onSubmit={handleSubmit}
                 ruangKelas={selectedRuangKelas}
                 isLoading={isSubmitting}
+            />
+
+            {/* Bulk Import Modal */}
+            <BulkImportMateriModal
+                isOpen={isBulkImportModalOpen}
+                onClose={() => setIsBulkImportModalOpen(false)}
+                onImportComplete={() => {
+                    showSuccess('Bulk import materi selesai');
+                    setIsBulkImportModalOpen(false);
+                }}
+                ruangKelasList={ruangKelasList.map(rk => ({
+                    idParent2: rk.idParent2,
+                    namaParent2: rk.namaParent2
+                }))}
+            />
+
+            {/* Enroll Siswa Modal */}
+            {enrollingKelas && (
+                <EnrollSiswaModal
+                    isOpen={isEnrollModalOpen}
+                    onClose={() => {
+                        setIsEnrollModalOpen(false);
+                        setEnrollingKelas(null);
+                    }}
+                    onEnrollComplete={() => {
+                        fetchRuangKelas();
+                    }}
+                    idParent2={enrollingKelas.idParent2}
+                    namaRuangKelas={enrollingKelas.namaParent2}
+                />
+            )}
+
+            {/* View Enrolled Siswa Modal */}
+            {viewingKelas && (
+                <ViewEnrolledSiswaModal
+                    isOpen={isViewSiswaModalOpen}
+                    onClose={() => {
+                        setIsViewSiswaModalOpen(false);
+                        setViewingKelas(null);
+                    }}
+                    idParent2={viewingKelas.idParent2}
+                    namaRuangKelas={viewingKelas.namaParent2}
+                />
+            )}
+
+            {/* Bulk Import Siswa Modal */}
+            <BulkImportSiswaModal
+                isOpen={isBulkImportSiswaModalOpen}
+                onClose={() => setIsBulkImportSiswaModalOpen(false)}
+                onImportComplete={() => {
+                    fetchRuangKelas();
+                }}
+                idParent2={idParent1}
+                namaRuangKelas={kategoriName}
             />
         </div>
     );

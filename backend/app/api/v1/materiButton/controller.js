@@ -8,6 +8,12 @@ const {
     deleteButton,
 } = require('../../../services/mysql/materiButton');
 
+const {
+    bulkImportMateriButtonFromExcel,
+    generateBulkMateriButtonTemplate,
+} = require('../../../services/mysql/materiButtonImport');
+const { BadRequestError } = require('../../../errors');
+
 // CREATE Button
 const create = async (req, res, next) => {
     try {
@@ -96,6 +102,42 @@ const destroy = async (req, res, next) => {
     }
 };
 
+// BULK IMPORT MateriButton
+const bulkImport = async (req, res, next) => {
+    try {
+        if (!req.file) {
+            throw new BadRequestError('File Excel wajib diupload');
+        }
+
+        const { idParent2 } = req.body;
+        if (!idParent2) {
+            throw new BadRequestError('idParent2 wajib diisi');
+        }
+
+        const result = await bulkImportMateriButtonFromExcel(req.file.buffer, parseInt(idParent2));
+
+        res.status(StatusCodes.OK).json({
+            message: 'Bulk import button selesai',
+            data: result,
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// DOWNLOAD TEMPLATE Bulk Import
+const downloadBulkTemplate = async (req, res, next) => {
+    try {
+        const buffer = generateBulkMateriButtonTemplate();
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename="template-bulk-import-button.xlsx"');
+        res.send(buffer);
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports = {
     create,
     index,
@@ -103,4 +145,6 @@ module.exports = {
     find,
     update,
     destroy,
+    bulkImport,
+    downloadBulkTemplate,
 };

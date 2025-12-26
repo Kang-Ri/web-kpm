@@ -7,6 +7,11 @@ const {
     deleteAccess,
 } = require('../../../services/mysql/aksesMateri');
 
+const {
+    exportSiswaByMateri,
+    getSiswaByMateri,
+} = require('../../../services/mysql/aksesMateriExport');
+
 // GRANT Access (Unlock)
 const grant = async (req, res, next) => {
     try {
@@ -50,6 +55,44 @@ const find = async (req, res, next) => {
     }
 };
 
+// GET Siswa by Materi (for display in modal)
+const getSiswaList = async (req, res, next) => {
+    try {
+        const { idProduk } = req.params;
+        const result = await getSiswaByMateri(parseInt(idProduk));
+
+        res.status(StatusCodes.OK).json({
+            message: 'Berhasil mengambil data siswa',
+            data: result,
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// EXPORT Siswa by Materi to Excel
+const exportSiswa = async (req, res, next) => {
+    try {
+        const { idProduk } = req.params;
+        const buffer = await exportSiswaByMateri(parseInt(idProduk));
+
+        if (!buffer) {
+            return res.status(StatusCodes.NOT_FOUND).json({
+                message: 'Tidak ada siswa yang memiliki akses ke materi ini',
+            });
+        }
+
+        const materiName = req.query.materiName || 'Materi';
+        const filename = `siswa-${materiName}-${Date.now()}.xlsx`;
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.send(buffer);
+    } catch (err) {
+        next(err);
+    }
+};
+
 // REVOKE Access (Lock)
 const revoke = async (req, res, next) => {
     try {
@@ -84,6 +127,8 @@ module.exports = {
     grant,
     index,
     find,
+    getSiswaList,
+    exportSiswa,
     revoke,
     destroy,
 };

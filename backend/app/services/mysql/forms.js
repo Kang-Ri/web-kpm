@@ -149,6 +149,86 @@ const deleteForm = async (idForm) => {
     return result; // Mengembalikan objek yang dihapus (praktik umum)
 }
 
+// --- 6. SUBMIT FORM (submitForm) ---
+const submitForm = async (idForm, idSiswa, responses) => {
+    // 1. Validasi Form exists & active
+    const form = await Form.findOne({
+        where: { idForm },
+        include: [
+            {
+                model: FormField,
+                as: 'fields',
+                attributes: ['idField', 'namaField', 'tipeField', 'required', 'nilaiPilihan']
+            }
+        ]
+    });
+
+    if (!form) {
+        throw new NotFoundError(`Form dengan ID ${idForm} tidak ditemukan.`);
+    }
+
+    if (form.statusForm !== 'Aktif') {
+        throw new BadRequestError('Form sudah tidak aktif.');
+    }
+
+    // 2. Validasi semua required fields terisi
+    const requiredFields = form.fields.filter(f => f.required);
+    for (const field of requiredFields) {
+        if (!responses[field.namaField] || responses[field.namaField] === '') {
+            throw new BadRequestError(`Field "${field.namaField}" wajib diisi.`);
+        }
+    }
+
+    // 3. Validasi format email
+    for (const field of form.fields) {
+        if (field.tipeField === 'email' && responses[field.namaField]) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(responses[field.namaField])) {
+                throw new BadRequestError(`Format email pada field "${field.namaField}" tidak valid.`);
+            }
+        }
+    }
+
+    // 4. Create Order
+    const Order = require('../../api/v1/order/model');
+    const newOrder = await Order.create({
+        idSiswa,
+        idProduk: null, // Tidak terkait produk untuk sekarang
+        statusOrder: 'Pending',
+        totalHarga: 0, // Payment nanti
+        metodePembayaran: null,
+        tglDibuat: new Date()
+    });
+
+    // 5. Save responses ke orderFormResponses
+    const OrderFormResponse = require('../../api/v1/orderFormResponses/model');
+    const responseRecords = [];
+
+    for (const field of form.fields) {
+        if (responses[field.namaField] !== undefined && responses[field.namaField] !== null) {
+            // Convert to string for storage
+            let responseValue = responses[field.namaField];
+            if (typeof responseValue === 'object') {
+                responseValue = JSON.stringify(responseValue);
+            }
+
+            const record = await OrderFormResponse.create({
+                idOrder: newOrder.idOrder,
+                idField: field.idField,
+                responseValue: String(responseValue)
+            });
+
+            responseRecords.push(record);
+        }
+    }
+
+    return {
+        idOrder: newOrder.idOrder,
+        statusOrder: newOrder.statusOrder,
+        totalResponses: responseRecords.length
+    };
+};
+
 // EXPORT SEMUA FUNGSI
 module.exports = {
     createForm,
@@ -156,4 +236,5 @@ module.exports = {
     getFormDetail,
     updateForm,
     deleteForm,
+    submitForm,
 };

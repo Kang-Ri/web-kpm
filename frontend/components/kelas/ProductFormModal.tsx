@@ -29,10 +29,16 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
         authProduk: 'Umum',
         refCode: '',
         statusProduk: 'Draft',
+        tanggalPublish: null,
     });
 
     useEffect(() => {
         if (product) {
+            // Format tanggalPublish for datetime-local input (YYYY-MM-DDTHH:mm)
+            const formattedDate = product.tanggalPublish
+                ? new Date(product.tanggalPublish).toISOString().slice(0, 16)
+                : '';
+
             setFormData({
                 idParent2: product.idParent2,
                 namaProduk: product.namaProduk || '',
@@ -44,6 +50,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 authProduk: product.authProduk || 'Umum',
                 refCode: product.refCode || '',
                 statusProduk: product.statusProduk || 'Draft',
+                tanggalPublish: formattedDate || null,
             });
         } else {
             setFormData({
@@ -57,6 +64,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 authProduk: 'Umum',
                 refCode: '',
                 statusProduk: 'Draft',
+                tanggalPublish: null,
             });
         }
     }, [product, isOpen]);
@@ -66,6 +74,14 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
         if (type === 'number') {
             setFormData(prev => ({ ...prev, [name]: value ? parseFloat(value) : 0 }));
+        } else if (name === 'tanggalPublish') {
+            // Auto-set status based on tanggalPublish
+            const newStatus = value ? 'Publish' : 'Draft';
+            setFormData(prev => ({
+                ...prev,
+                tanggalPublish: value || null,
+                statusProduk: newStatus
+            }));
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
         }
@@ -246,6 +262,24 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                             <option value="Non-Aktif">Non-Aktif</option>
                         </select>
                     </div>
+                </div>
+
+                {/* Tanggal Publish */}
+                <div>
+                    <label htmlFor="tanggalPublish" className="block text-sm font-medium text-gray-700 mb-1">
+                        Tanggal Publish (Opsional)
+                    </label>
+                    <input
+                        type="datetime-local"
+                        id="tanggalPublish"
+                        name="tanggalPublish"
+                        value={formData.tanggalPublish || ''}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                        Jika diisi, status akan otomatis menjadi "Publish". Kosongkan untuk "Draft".
+                    </p>
                 </div>
 
                 {/* Info Box */}

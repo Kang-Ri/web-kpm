@@ -11,6 +11,7 @@ export interface ParentProduct2 {
     daftarUlangAktif: boolean;
     kategoriHargaDaftarUlang: 'Gratis' | 'Seikhlasnya' | 'Bernominal';
     hargaDaftarUlang: number;
+    idFormDaftarUlang?: number;
     tahunAjaran?: string;
     kapasitasMaksimal?: number;
     jenjangKelasIzin?: string[]; // ["1","2",...,"12"]
@@ -26,6 +27,7 @@ export interface CreateParentProduct2Dto {
     daftarUlangAktif?: boolean;
     kategoriHargaDaftarUlang?: 'Gratis' | 'Seikhlasnya' | 'Bernominal';
     hargaDaftarUlang?: number;
+    idFormDaftarUlang?: number;
     tahunAjaran?: string;
     kapasitasMaksimal?: number;
     jenjangKelasIzin?: string[];

@@ -13,6 +13,12 @@ const MateriButton = sequelize.define('MateriButton', {
         comment: 'FK ke product (materi)',
     },
 
+    judulButton: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+        comment: 'Judul/heading untuk button',
+    },
+
     namaButton: {
         type: DataTypes.STRING(100),
         allowNull: false,

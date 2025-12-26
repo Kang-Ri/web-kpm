@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, BookOpen, Trophy, ShoppingBag, Zap, Handshake, Users, GraduationCap } from 'lucide-react';
+import { Home, BookOpen, Trophy, ShoppingBag, Zap, Handshake, Users, GraduationCap, ClipboardList } from 'lucide-react';
 import { MenuItem } from '@/types';
 
 export const menuItems: MenuItem[] = [
@@ -75,6 +75,11 @@ export const adminMenuItems: MenuItem[] = [
             { label: 'Kelas Periodik', href: '/admin/kelas/periodik' },
             { label: 'Kelas Insidental', href: '/admin/kelas/insidental' },
         ],
+    },
+    {
+        label: 'Form Builder',
+        icon: ClipboardList,
+        href: '/admin/form-builder',
     },
     {
         label: 'Manajemen Produk',

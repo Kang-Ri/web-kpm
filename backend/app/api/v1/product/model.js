@@ -61,6 +61,11 @@ const Product = sequelize.define('Product', {
         type: DataTypes.ENUM('Draft', 'Publish', 'Non-Aktif'),
         defaultValue: 'Draft',
     },
+    tanggalPublish: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        comment: 'Tanggal publish materi',
+    },
 }, {
     timestamps: false,
     tableName: 'product', // Pastikan nama tabel di database adalah 'product'

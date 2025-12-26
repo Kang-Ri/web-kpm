@@ -1,5 +1,8 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });
+
 const {
     create,
     index,
@@ -7,17 +10,24 @@ const {
     find,
     update,
     destroy,
+    bulkImport,
+    downloadBulkTemplate,
 } = require('./controller');
 
-// CREATE Button
+const { authenticatedUser, authorizeRoles } = require('../../../middlewares/auth');
+
+// CREATE Button (Admin & Super Admin)
 router.post(
     '/materi-buttons',
+    authenticatedUser,
+    authorizeRoles('Super Admin', 'Admin'),
     create
 );
 
-// GET ALL Buttons
+// GET ALL Buttons (Authenticated users)
 router.get(
     '/materi-buttons',
+    authenticatedUser,
     index
 );
 
@@ -27,22 +37,44 @@ router.get(
     getActive
 );
 
-// GET ONE Button
+// GET ONE Button (Authenticated users)
 router.get(
     '/materi-buttons/:idButton',
+    authenticatedUser,
     find
 );
 
-// UPDATE Button
+// UPDATE Button (Admin & Super Admin)
 router.patch(
     '/materi-buttons/:idButton',
+    authenticatedUser,
+    authorizeRoles('Super Admin', 'Admin'),
     update
 );
 
-// DELETE Button
+// DELETE Button (Admin & Super Admin)
 router.delete(
     '/materi-buttons/:idButton',
+    authenticatedUser,
+    authorizeRoles('Super Admin', 'Admin'),
     destroy
+);
+
+// BULK IMPORT MateriButton (Admin & Super Admin)
+router.post(
+    '/materi-buttons/bulk-import',
+    authenticatedUser,
+    authorizeRoles('Super Admin', 'Admin'),
+    upload.single('file'),
+    bulkImport
+);
+
+// DOWNLOAD TEMPLATE Bulk Import
+router.get(
+    '/materi-buttons/bulk-template',
+    authenticatedUser,
+    authorizeRoles('Super Admin', 'Admin'),
+    downloadBulkTemplate
 );
 
 module.exports = router;

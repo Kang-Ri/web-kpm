@@ -43,13 +43,6 @@ const getFieldsByForm = async (idForm) => {
 
     const fields = await FormField.findAll({
         where: { idForm },
-        include: [
-            {
-                model: Form,
-                as: 'form',
-                attributes: ['idForm', 'namaForm', 'descForm']
-            }
-        ],
         order: [['orderIndex', 'ASC']]
     });
 
@@ -70,14 +63,7 @@ const updateField = async (idField, fieldData) => {
                 idForm: field.idForm,
                 namaField: fieldData.namaField,
                 idField: { [FormField.sequelize.Op.ne]: idField }
-            },
-            include: [
-                {
-                    model: Form,
-                    as: 'form',
-                    attributes: ['idForm', 'namaForm', 'descForm']
-                }
-            ]
+            }
         });
 
         if (checkDuplicate) {

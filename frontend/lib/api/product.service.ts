@@ -13,6 +13,7 @@ export interface Product {
     idForm?: number | null;
     refCode?: string;
     statusProduk: 'Draft' | 'Publish' | 'Non-Aktif';
+    tanggalPublish?: string | null;
 }
 
 export interface CreateProductDto {
@@ -27,6 +28,7 @@ export interface CreateProductDto {
     idForm?: number | null;
     refCode?: string;
     statusProduk?: 'Draft' | 'Publish' | 'Non-Aktif';
+    tanggalPublish?: string | null;
 }
 
 export const productService = {
@@ -48,5 +50,28 @@ export const productService = {
 
     delete: async (id: number): Promise<{ message: string }> => {
         return apiClient.delete(`/cms/product/${id}`);
+    },
+
+    importMateri: async (file: File, idParent2: number): Promise<{ data: any }> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('idParent2', idParent2.toString());
+
+        return apiClient.post('/cms/product/import', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+    },
+
+    bulkImportMateri: async (file: File): Promise<{ data: any }> => {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        return apiClient.post('/cms/product/bulk-import', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
     },
 };

@@ -7,7 +7,8 @@ const {
     create,
     getFormDetail,
     update,
-    destroy
+    destroy,
+    submitForm
 } = require('./controller');
 
 const {
@@ -38,5 +39,9 @@ router.patch('/forms/:idForm', authenticatedUser,
 // DELETE hapus form: /api/v1/forms/:idForm
 router.delete('/forms/:idForm', authenticatedUser,
     authorizeRoles("Super Admin", "Admin"), destroy);
+
+// POST submit form: /api/v1/cms/forms/:idForm/submit
+// Accessible by siswa (authenticatedUser saja, tanpa role restriction)
+router.post('/cms/forms/:idForm/submit', authenticatedUser, submitForm);
 
 module.exports = router;

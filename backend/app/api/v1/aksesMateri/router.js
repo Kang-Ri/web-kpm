@@ -4,9 +4,13 @@ const {
     grant,
     index,
     find,
+    getSiswaList,
+    exportSiswa,
     revoke,
     destroy,
 } = require('./controller');
+
+const { authenticatedUser } = require('../../../middlewares/auth');
 
 // GRANT Access (Unlock)
 router.post(
@@ -18,6 +22,20 @@ router.post(
 router.get(
     '/akses-materi',
     index
+);
+
+// GET Siswa List by Materi (for modal display)
+router.get(
+    '/materi/:idProduk/siswa',
+    authenticatedUser,
+    getSiswaList
+);
+
+// EXPORT Siswa by Materi to Excel
+router.get(
+    '/materi/:idProduk/siswa/export',
+    authenticatedUser,
+    exportSiswa
 );
 
 // GET ONE Access
