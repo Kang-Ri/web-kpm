@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 // 1. Controller untuk Self-Management User (Profile, Change Password)
-const selfController = require('./controller'); 
+const selfController = require('./controller');
 // 2. Controller untuk Admin CRUD Users (Controller yang baru saja Anda konfirmasi)
 const adminController = require('./adminController');
 
@@ -17,6 +17,10 @@ const { authenticatedUser, authorizeRoles } = require('../../../middlewares/auth
 // GET User Profile (/api/v1/cms/users/me)
 // Hanya perlu otentikasi (authenticatedUser)
 router.get('/me', authenticatedUser, selfController.profile);
+
+// GET User Profile with Siswa Data (/api/v1/cms/users/me/full)
+// For auto-fill form functionality
+router.get('/me/full', authenticatedUser, selfController.getMe);
 
 // PUT Update Password (/api/v1/cms/users/update-password)
 // Hanya perlu otentikasi

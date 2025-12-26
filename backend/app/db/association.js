@@ -21,6 +21,9 @@ const SiswaKelas = require('../api/v1/siswaKelas/model');
 const MateriButton = require('../api/v1/materiButton/model');
 const AksesMateri = require('../api/v1/aksesMateri/model');
 
+// Variable Templates (for form builder)
+const VariableTemplate = require('../api/v1/variableTemplates/model');
+
 
 /**
  * Fungsi untuk mendefinisikan semua asosiasi model (Relasi Database).
@@ -277,6 +280,11 @@ const defineAssociations = () => {
         foreignKey: 'idOrder',
         as: 'materiAccess'
     });
+
+    // --------------------------------------------------
+    // STANDALONE MODELS (No Relations)
+    // --------------------------------------------------
+    // VariableTemplate - imported and registered above (line 25)
 
     console.log("Semua asosiasi model telah berhasil didefinisikan (19 relasi total).");
 };

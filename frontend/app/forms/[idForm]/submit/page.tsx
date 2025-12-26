@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { formService, FormField } from '@/lib/api/form.service';
+import { userService } from '@/lib/api/user.service';
 import { showSuccess, showError } from '@/lib/utils/toast';
 import { Button } from '@/components/ui/Button';
-import { ArrowLeft, Send } from 'lucide-react';
+import { ArrowLeft, Send, UserCheck } from 'lucide-react';
 
 export default function FormSubmitPage() {
     const params = useParams();
@@ -18,6 +19,8 @@ export default function FormSubmitPage() {
     const [fields, setFields] = useState<FormField[]>([]);
     const [responses, setResponses] = useState<Record<string, any>>({});
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [autoFillEnabled, setAutoFillEnabled] = useState(true);
+    const [userDataLoaded, setUserDataLoaded] = useState(false);
 
     useEffect(() => {
         loadForm();
@@ -40,11 +43,40 @@ export default function FormSubmitPage() {
                 (a.orderIndex ?? 0) - (b.orderIndex ?? 0)
             );
             setFields(sortedFields);
+
+            // Auto-fill from user data if enabled
+            if (autoFillEnabled && !userDataLoaded) {
+                await loadUserDataAndAutoFill(sortedFields);
+            }
         } catch (error: any) {
             showError(error.message || 'Form tidak ditemukan');
             router.push('/');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const loadUserDataAndAutoFill = async (fieldsToFill: FormField[]) => {
+        try {
+            const userResponse = await userService.getMe();
+            const userData = (userResponse.data as any).data || userResponse.data;
+
+            // Auto-fill matching fields
+            const autoFilled: Record<string, any> = {};
+            fieldsToFill.forEach(field => {
+                // Try to match namaField with userData.siswa keys
+                const value = userData.siswa?.[field.namaField];
+                if (value !== undefined && value !== null) {
+                    autoFilled[field.namaField] = value;
+                }
+            });
+
+            setResponses(autoFilled);
+            setUserDataLoaded(true);
+            console.log('✅ Auto-filled fields:', Object.keys(autoFilled));
+        } catch (error) {
+            console.warn('⚠️ Failed to auto-fill user data:', error);
+            // Silently fail - user can still fill manually
         }
     };
 

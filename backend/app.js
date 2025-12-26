@@ -41,6 +41,7 @@ const orangTuaRouter = require("./app/api/v1/orangTua/router");
 const siswaKelasRouter = require("./app/api/v1/siswaKelas/router");
 const materiButtonRouter = require("./app/api/v1/materiButton/router");
 const aksesMateriRouter = require("./app/api/v1/aksesMateri/router");
+const variableTemplatesRouter = require("./app/api/v1/variableTemplates/router");
 
 
 app.get("/", (req, res) => {
@@ -63,6 +64,7 @@ app.use(`${v1}/cms`, aksesMateriRouter);
 // Forms & Fields (Specific paths)
 app.use(`${v1}/cms`, formsRouter);
 app.use(`${v1}/cms`, formFieldsRouter);
+app.use(`${v1}/cms`, variableTemplatesRouter);
 
 // Product Routes (May have :id params - after specific routes)
 app.use(`${v1}/cms`, parentProduct1Router);
