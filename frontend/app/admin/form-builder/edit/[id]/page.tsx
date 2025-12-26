@@ -50,7 +50,12 @@ export default function EditFormPage() {
             setNamaForm(formData.namaForm);
             setDescForm(formData.descForm || '');
             setStatusForm(formData.statusForm);
-            setFields(formData.fields || []);
+
+            // Sort fields by orderIndex to maintain order
+            const sortedFields = (formData.fields || []).sort((a: any, b: any) =>
+                (a.orderIndex ?? 0) - (b.orderIndex ?? 0)
+            );
+            setFields(sortedFields);
         } catch (error: any) {
             showError(error.message || 'Gagal memuat form');
             router.push('/admin/form-builder');
@@ -291,13 +296,17 @@ export default function EditFormPage() {
                                     >
                                         <div className="flex items-start justify-between">
                                             <div className="flex-1">
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-2 flex-wrap">
                                                     <span className="text-sm font-medium text-gray-900">
                                                         {field.textDescription || field.namaField}
                                                     </span>
                                                     {field.required && (
                                                         <span className="text-red-600 text-xs">*</span>
                                                     )}
+                                                    {/* Field Type Badge */}
+                                                    <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">
+                                                        {FIELD_TYPES.find(t => t.value === field.tipeField?.toLowerCase())?.label || field.tipeField}
+                                                    </span>
                                                     {field.idField && (
                                                         <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
                                                             ID: {field.idField}
@@ -305,7 +314,7 @@ export default function EditFormPage() {
                                                     )}
                                                 </div>
                                                 <div className="text-xs text-gray-500 mt-1">
-                                                    {FIELD_TYPES.find(t => t.value === field.tipeField)?.label}
+                                                    Variable: {field.namaField}
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-1">

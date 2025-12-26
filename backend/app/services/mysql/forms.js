@@ -189,15 +189,24 @@ const submitForm = async (idForm, idSiswa, responses) => {
         }
     }
 
-    // 4. Create Order
+    // 4. Create Order with required fields (placeholder for form-only submission)
     const Order = require('../../api/v1/order/model');
     const newOrder = await Order.create({
-        idSiswa,
-        idProduk: null, // Tidak terkait produk untuk sekarang
+        idUser: null, // Will be linked to siswa later if needed
+        idProduk: null, // No product for form submission
+        namaProduk: `Form Submission: ${form.namaForm}`, // Use form name
+        hargaProduk: 0,
+        namaPembeli: responses.nama_lengkap || responses.nama || 'Unknown',
+        emailPembeli: responses.email || 'no-email@form-submission.com',
+        noHpPembeli: responses.no_hp || responses.telepon || '0000000000',
+        jumlahBeli: 1,
+        hargaTransaksi: 0,
+        diskon: 0,
+        hargaFinal: 0,
         statusOrder: 'Pending',
-        totalHarga: 0, // Payment nanti
-        metodePembayaran: null,
-        tglDibuat: new Date()
+        statusPembayaran: 'Unpaid',
+        paymentMethod: null,
+        tglOrder: new Date()
     });
 
     // 5. Save responses ke orderFormResponses

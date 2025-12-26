@@ -34,7 +34,12 @@ export default function FormSubmitPage() {
                 namaForm: formData.namaForm,
                 descForm: formData.descForm,
             });
-            setFields(formData.fields || []);
+
+            // Sort fields by orderIndex to maintain order
+            const sortedFields = (formData.fields || []).sort((a: any, b: any) =>
+                (a.orderIndex ?? 0) - (b.orderIndex ?? 0)
+            );
+            setFields(sortedFields);
         } catch (error: any) {
             showError(error.message || 'Form tidak ditemukan');
             router.push('/');

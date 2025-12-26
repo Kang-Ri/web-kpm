@@ -101,9 +101,10 @@ const submitForm = async (req, res, next) => {
     const { idForm } = req.params;
 
     try {
-        // Gunakan idSiswa dari authenticated user (req.user.idSiswa)
-        // atau dari body jika testing
-        const idSiswa = req.user?.idSiswa || req.body.idSiswa;
+        // Get idSiswa from Siswa table using idUser from JWT
+        const Siswa = require('../siswa/model');
+        const siswa = await Siswa.findOne({ where: { idUser: req.user.idUser } });
+        const idSiswa = siswa?.idSiswa;
         const { responses } = req.body;
 
         if (!idSiswa) {

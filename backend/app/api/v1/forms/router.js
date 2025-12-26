@@ -40,8 +40,12 @@ router.patch('/forms/:idForm', authenticatedUser,
 router.delete('/forms/:idForm', authenticatedUser,
     authorizeRoles("Super Admin", "Admin"), destroy);
 
+// PUBLIC: GET form detail for students (MUST be above admin routes to match first)
+// Path will be /api/v1/cms/forms/:idForm (cms prefix added in app.js)
+router.get('/forms/:idForm/view', authenticatedUser, getFormDetail);
+
 // POST submit form: /api/v1/cms/forms/:idForm/submit
 // Accessible by siswa (authenticatedUser saja, tanpa role restriction)
-router.post('/cms/forms/:idForm/submit', authenticatedUser, submitForm);
+router.post('/forms/:idForm/submit', authenticatedUser, submitForm);
 
 module.exports = router;

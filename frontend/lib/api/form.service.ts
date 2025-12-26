@@ -34,9 +34,9 @@ export const formService = {
         return apiClient.get('/cms/forms');
     },
 
-    // Get form by ID (with fields)
+    // Get form by ID (with fields) - Public endpoint for students
     getById: async (idForm: number): Promise<{ data: Form }> => {
-        return apiClient.get(`/cms/forms/${idForm}`);
+        return apiClient.get(`/cms/forms/${idForm}/view`);
     },
 
     // Create new form
