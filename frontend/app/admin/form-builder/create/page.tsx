@@ -1,11 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Eye, Plus, ChevronUp, ChevronDown } from 'lucide-react';
 import { formService, formFieldService, FormField } from '@/lib/api/form.service';
+import { variableTemplateService, VariableTemplate } from '@/lib/api/variableTemplate.service';
 import { showSuccess, showError } from '@/lib/utils/toast';
 import { Button } from '@/components/ui/Button';
+import { ComboBox } from '@/components/ui/ComboBox';
+import { VariableTemplateModal } from '@/components/form-builder/VariableTemplateModal';
 
 const FIELD_TYPES = [
     { value: 'text', label: 'Text Input', icon: '📝' },
@@ -31,6 +34,30 @@ export default function CreateFormPage() {
     // Fields
     const [fields, setFields] = useState<Partial<FormField>[]>([]);
     const [editingField, setEditingField] = useState<number | null>(null);
+
+    // Variable Templates
+    const [templates, setTemplates] = useState<VariableTemplate[]>([]);
+    const [loadingTemplates, setLoadingTemplates] = useState(true);
+    const [showTemplateModal, setShowTemplateModal] = useState(false);
+
+    // Load variable templates on mount
+    useEffect(() => {
+        loadTemplates();
+    }, []);
+
+    const loadTemplates = async () => {
+        try {
+            setLoadingTemplates(true);
+            const response = await variableTemplateService.getAll();
+            const templatesData = (response.data as any).data || response.data;
+            setTemplates(Array.isArray(templatesData) ? templatesData : []);
+        } catch (error) {
+            console.error('Failed to load templates:', error);
+            setTemplates([]);
+        } finally {
+            setLoadingTemplates(false);
+        }
+    };
 
     const addField = (tipeField: string) => {
         const newField: Partial<FormField> & { tempId?: string } = {
@@ -331,14 +358,30 @@ export default function CreateFormPage() {
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
                                         Nama Variabel <span className="text-red-600">*</span>
                                     </label>
-                                    <input
-                                        type="text"
-                                        value={fields[editingField].namaField}
-                                        onChange={(e) => updateField(editingField, { namaField: e.target.value })}
-                                        placeholder="nama_lengkap"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                    <ComboBox
+                                        options={templates.map(t => ({
+                                            value: t.namaVariable,
+                                            label: t.label,
+                                            color: t.color,
+                                            category: t.category
+                                        }))}
+                                        value={fields[editingField].namaField || ''}
+                                        onChange={(value) => updateField(editingField, { namaField: value })}
+                                        placeholder="Pilih template atau ketik custom..."
+                                        allowCustom={true}
                                     />
-                                    <p className="text-xs text-gray-500 mt-1">Hanya huruf kecil, angka, dan underscore</p>
+                                    <p className="text-xs text-gray-500 mt-1 flex items-center justify-between">
+                                        <span>
+                                            {loadingTemplates ? 'Loading templates...' : `${templates.length} templates tersedia • Atau ketik custom variable`}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowTemplateModal(true)}
+                                            className="text-blue-600 hover:text-blue-700 font-medium"
+                                        >
+                                            + Kelola Templates
+                                        </button>
+                                    </p>
                                 </div>
 
                                 <div>
@@ -417,6 +460,13 @@ export default function CreateFormPage() {
                     )}
                 </div>
             </div>
+
+            {/* Variable Template Management Modal */}
+            <VariableTemplateModal
+                isOpen={showTemplateModal}
+                onClose={() => setShowTemplateModal(false)}
+                onUpdate={loadTemplates}
+            />
         </div>
     );
 }

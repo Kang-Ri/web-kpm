@@ -1,4 +1,5 @@
 // app/services/mysql/formFields.js
+const { Op } = require('sequelize');
 const FormField = require('../../api/v1/formFields/model');
 const Form = require('../../api/v1/forms/model');
 const { NotFoundError, BadRequestError } = require('../../errors');
@@ -62,7 +63,7 @@ const updateField = async (idField, fieldData) => {
             where: {
                 idForm: field.idForm,
                 namaField: fieldData.namaField,
-                idField: { [FormField.sequelize.Op.ne]: idField }
+                idField: { [Op.ne]: idField }
             }
         });
 

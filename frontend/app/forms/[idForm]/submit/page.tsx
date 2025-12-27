@@ -61,11 +61,34 @@ export default function FormSubmitPage() {
             const userResponse = await userService.getMe();
             const userData = (userResponse.data as any).data || userResponse.data;
 
+            // Field name mapping (snake_case template -> camelCase API)
+            const fieldMapping: Record<string, string> = {
+                'nama_lengkap': 'namaLengkap',
+                'no_hp': 'noHp',
+                'tanggal_lahir': 'tanggalLahir',
+                'jenis_kelamin': 'jenisKelamin',
+                'alamat': 'alamatLengkap',
+                'kelas': 'jenjangKelas',
+                'tempat_lahir': 'tempatLahir',
+                'asal_sekolah': 'asalSekolah',
+            };
+
             // Auto-fill matching fields
             const autoFilled: Record<string, any> = {};
             fieldsToFill.forEach(field => {
-                // Try to match namaField with userData.siswa keys
-                const value = userData.siswa?.[field.namaField];
+                // Try exact match first  
+                let value = userData.siswa?.[field.namaField];
+
+                // Try mapped field name
+                if (!value && fieldMapping[field.namaField]) {
+                    value = userData.siswa?.[fieldMapping[field.namaField]];
+                }
+
+                // Special: email fallback to user email
+                if (field.namaField === 'email' && !value) {
+                    value = userData.email;
+                }
+
                 if (value !== undefined && value !== null) {
                     autoFilled[field.namaField] = value;
                 }

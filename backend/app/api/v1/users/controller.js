@@ -34,27 +34,29 @@ const changePassword = async (req, res, next) => {
 // --- 3. Get Current User with Siswa Data (for auto-fill) ---
 const getMe = async (req, res, next) => {
     try {
-        const User = require('../user/model');
+        const User = require('./model');
         const Siswa = require('../siswa/model');
 
         // Get user with siswa data
         const user = await User.findOne({
             where: { idUser: req.user.idUser },
-            attributes: ['idUser', 'email', 'namaLengkap', 'role'],
+            attributes: ['idUser', 'email', 'namaLengkap', 'idRole'],
             include: [{
                 model: Siswa,
                 as: 'siswa',
                 attributes: [
                     'idSiswa',
-                    'nama_lengkap',
+                    'namaLengkap',
                     'email',
-                    'no_hp',
-                    'tanggal_lahir',
-                    'jenis_kelamin',
-                    'alamat',
-                    'kelas',
-                    'nama_ortu',
-                    'pekerjaan_ortu'
+                    'noHp',
+                    'tanggalLahir',
+                    'jenisKelamin',
+                    'alamatLengkap',
+                    'jenjangKelas',
+                    'asalSekolah',
+                    'tempatLahir',
+                    'nik',
+                    'nisn'
                 ]
             }]
         });
