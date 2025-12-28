@@ -8,7 +8,8 @@ const {
     getFormDetail,
     update,
     destroy,
-    submitForm
+    submitForm,
+    duplicate,
 } = require('./controller');
 
 const {
@@ -39,6 +40,10 @@ router.patch('/forms/:idForm', authenticatedUser,
 // DELETE hapus form: /api/v1/forms/:idForm
 router.delete('/forms/:idForm', authenticatedUser,
     authorizeRoles("Super Admin", "Admin"), destroy);
+
+// POST duplicate form: /api/v1/cms/forms/:idForm/duplicate
+router.post('/forms/:idForm/duplicate', authenticatedUser,
+    authorizeRoles("Super Admin", "Admin"), duplicate);
 
 // PUBLIC: GET form detail for students (MUST be above admin routes to match first)
 // Path will be /api/v1/cms/forms/:idForm (cms prefix added in app.js)

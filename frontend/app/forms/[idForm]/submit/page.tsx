@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { formService, FormField } from '@/lib/api/form.service';
 import { userService } from '@/lib/api/user.service';
 import { showSuccess, showError } from '@/lib/utils/toast';
@@ -11,7 +11,9 @@ import { ArrowLeft, Send, UserCheck } from 'lucide-react';
 export default function FormSubmitPage() {
     const params = useParams();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const idForm = parseInt(params.idForm as string);
+    const idSiswaKelas = searchParams.get('idSiswaKelas') ? parseInt(searchParams.get('idSiswaKelas')!) : null;
 
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
@@ -152,17 +154,24 @@ export default function FormSubmitPage() {
 
             // Call submission API
             const result = await formService.submitForm(idForm, {
-                responses
+                responses,
+                idSiswaKelas // Pass enrollment ID if present
             });
 
             console.log('✅ Submission Result:', result);
 
             showSuccess('Form berhasil dikirim! Order ID: ' + (result.data?.idOrder || 'N/A'));
 
+            // Check if payment needed
+            if (result.data?.needsPayment && result.data?.hargaFinal > 0) {
+                showSuccess(`Total Pembayaran: Rp ${result.data.hargaFinal.toLocaleString('id-ID')}`);
+                // TODO: Redirect to payment page or show payment instructions
+            }
+
             // Redirect to success page or home
             setTimeout(() => {
                 router.push('/');
-            }, 1500);
+            }, 2000);
         } catch (error: any) {
             console.error('❌ Submission Error:', error);
             const errorMessage = error.response?.data?.message || error.message || 'Gagal mengirim form';

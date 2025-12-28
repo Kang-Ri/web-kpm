@@ -6,6 +6,7 @@ const {
     find,
     update,
     cancel,
+    confirmPayment,
     destroy,
 } = require('./controller');
 
@@ -28,6 +29,9 @@ router.patch('/:id', update);
 
 // POST /api/v1/orders/:id/cancel - Membatalkan order (user hanya bisa cancel order miliknya)
 router.post('/:id/cancel', cancel);
+
+// POST /api/v1/cms/orders/:id/confirm-payment - Konfirmasi pembayaran & aktifkan enrollment (Admin only)
+router.post('/:id/confirm-payment', confirmPayment);
 
 // --- Admin Routes ---
 // DELETE /api/v1/orders/:id - Menghapus order (hanya admin)

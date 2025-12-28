@@ -80,7 +80,59 @@ const cancel = async (req, res, next) => {
     }
 };
 
-// --- 6. Delete Order (Admin) ---
+// --- 6. Confirm Payment & Activate Enrollment ---
+const confirmPayment = async (req, res, next) => {
+    try {
+        const { id: idOrder } = req.params;
+        const Order = require('../order/model');
+        const SiswaKelas = require('../siswaKelas/model');
+
+        // 1. Update order status
+        const order = await Order.findByPk(idOrder);
+        if (!order) {
+            return res.status(StatusCodes.NOT_FOUND).json({
+                message: "Order tidak ditemukan."
+            });
+        }
+
+        await order.update({
+            statusPembayaran: 'Lunas',
+            statusOrder: 'Completed'
+        });
+
+        // 2. Activate enrollment if linked
+        const siswaKelas = await SiswaKelas.findOne({
+            where: { idOrderDaftarUlang: idOrder }
+        });
+
+        if (siswaKelas) {
+            await siswaKelas.update({
+                statusEnrollment: 'Aktif',
+                sudahDaftarUlang: true
+            });
+
+            return res.status(StatusCodes.OK).json({
+                message: "Pembayaran berhasil dikonfirmasi. Status enrollment diaktifkan.",
+                data: {
+                    order,
+                    enrollment: {
+                        idSiswaKelas: siswaKelas.idSiswaKelas,
+                        statusEnrollment: 'Aktif'
+                    }
+                }
+            });
+        }
+
+        res.status(StatusCodes.OK).json({
+            message: "Pembayaran berhasil dikonfirmasi.",
+            data: order
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// --- 7. Delete Order (Admin) ---
 const destroy = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -100,5 +152,6 @@ module.exports = {
     find,
     update,
     cancel,
+    confirmPayment,
     destroy,
 };

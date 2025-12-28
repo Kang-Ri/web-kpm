@@ -105,7 +105,7 @@ const submitForm = async (req, res, next) => {
         const Siswa = require('../siswa/model');
         const siswa = await Siswa.findOne({ where: { idUser: req.user.idUser } });
         const idSiswa = siswa?.idSiswa;
-        const { responses } = req.body;
+        const { responses, idSiswaKelas } = req.body; // Add idSiswaKelas
 
         if (!idSiswa) {
             return res.status(StatusCodes.BAD_REQUEST).json({
@@ -119,12 +119,32 @@ const submitForm = async (req, res, next) => {
             });
         }
 
-        const result = await FormService.submitForm(idForm, idSiswa, responses);
+        const result = await FormService.submitForm(idForm, idSiswa, responses, idSiswaKelas);
 
         res.status(StatusCodes.CREATED).json({
             success: true,
             message: "Form berhasil disubmit",
             data: result
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * POST /api/v1/cms/forms/:idForm/duplicate - Duplicate form
+ */
+const duplicate = async (req, res, next) => {
+    const { idForm } = req.params;
+    const { newName } = req.body;
+
+    try {
+        const duplicatedForm = await FormService.duplicateForm(idForm, newName);
+
+        res.status(StatusCodes.CREATED).json({
+            success: true,
+            message: "Form berhasil diduplikasi.",
+            data: duplicatedForm
         });
     } catch (error) {
         next(error);
@@ -138,4 +158,5 @@ module.exports = {
     update,
     destroy,
     submitForm,
+    duplicate,
 };

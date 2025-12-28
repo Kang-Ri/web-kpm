@@ -150,7 +150,7 @@ const deleteForm = async (idForm) => {
 }
 
 // --- 6. SUBMIT FORM (submitForm) ---
-const submitForm = async (idForm, idSiswa, responses) => {
+const submitForm = async (idForm, idSiswa, responses, idSiswaKelas = null) => {
     // 1. Validasi Form exists & active
     const form = await Form.findOne({
         where: { idForm },
@@ -189,53 +189,111 @@ const submitForm = async (idForm, idSiswa, responses) => {
         }
     }
 
-    // 4. Create Order with required fields (placeholder for form-only submission)
+    // 4. Get harga daftar ulang if idSiswaKelas provided
+    let hargaDaftarUlang = 0;
+    let namaKelas = 'Form Submission';
+
+    if (idSiswaKelas) {
+        const SiswaKelas = require('../../api/v1/siswaKelas/model');
+        const ParentProduct2 = require('../../api/v1/parentProduct2/model');
+
+        const siswaKelas = await SiswaKelas.findOne({
+            where: { idSiswaKelas },
+            include: [{
+                model: ParentProduct2,
+                as: 'parentProduct2',
+                attributes: ['hargaDaftarUlang', 'kategoriHargaDaftarUlang']
+            }]
+        });
+
+        if (siswaKelas?.parentProduct2) {
+            hargaDaftarUlang = siswaKelas.parentProduct2.hargaDaftarUlang || 0;
+            namaKelas = `Daftar Ulang - ${form.namaForm}`;
+        }
+    }
+
+    // 5. Create Order
     const Order = require('../../api/v1/order/model');
     const newOrder = await Order.create({
-        idUser: null, // Will be linked to siswa later if needed
-        idProduk: null, // No product for form submission
-        namaProduk: `Form Submission: ${form.namaForm}`, // Use form name
-        hargaProduk: 0,
-        namaPembeli: responses.nama_lengkap || responses.nama || 'Unknown',
+        idSiswa,
+        idProduk: null,
+        namaProduk: namaKelas,
+        hargaProduk: hargaDaftarUlang,
+        namaPembeli: responses.namaLengkap || responses.nama_lengkap || responses.nama || 'Unknown',
         emailPembeli: responses.email || 'no-email@form-submission.com',
-        noHpPembeli: responses.no_hp || responses.telepon || '0000000000',
+        noHpPembeli: responses.noHp || responses.no_hp || responses.telepon || '0000000000',
         jumlahBeli: 1,
-        hargaTransaksi: 0,
+        hargaTransaksi: hargaDaftarUlang,
         diskon: 0,
-        hargaFinal: 0,
+        hargaFinal: hargaDaftarUlang,
         statusOrder: 'Pending',
-        statusPembayaran: 'Unpaid',
+        statusPembayaran: hargaDaftarUlang > 0 ? 'Belum Lunas' : 'Lunas',
         paymentMethod: null,
         tglOrder: new Date()
     });
 
-    // 5. Save responses ke orderFormResponses
-    const OrderFormResponse = require('../../api/v1/orderFormResponses/model');
-    const responseRecords = [];
-
-    for (const field of form.fields) {
-        if (responses[field.namaField] !== undefined && responses[field.namaField] !== null) {
-            // Convert to string for storage
-            let responseValue = responses[field.namaField];
-            if (typeof responseValue === 'object') {
-                responseValue = JSON.stringify(responseValue);
-            }
-
-            const record = await OrderFormResponse.create({
-                idOrder: newOrder.idOrder,
-                idField: field.idField,
-                responseValue: String(responseValue)
-            });
-
-            responseRecords.push(record);
-        }
+    // 6. Link Order to SiswaKelas
+    if (idSiswaKelas) {
+        const SiswaKelas = require('../../api/v1/siswaKelas/model');
+        await SiswaKelas.update(
+            { idOrderDaftarUlang: newOrder.idOrder },
+            { where: { idSiswaKelas } }
+        );
     }
+
+    // 7. Save ALL responses as single JSON object
+    const OrderFormResponse = require('../../api/v1/orderFormResponses/model');
+
+    await OrderFormResponse.create({
+        idOrder: newOrder.idOrder,
+        idField: null,
+        responseValue: JSON.stringify(responses)
+    });
 
     return {
         idOrder: newOrder.idOrder,
         statusOrder: newOrder.statusOrder,
-        totalResponses: responseRecords.length
+        statusPembayaran: newOrder.statusPembayaran,
+        hargaFinal: newOrder.hargaFinal,
+        needsPayment: hargaDaftarUlang > 0,
+        formData: responses
     };
+};
+
+// --- 7. DUPLICATE FORM (duplicateForm) ---
+const duplicateForm = async (idForm, newName = null) => {
+    const originalForm = await Form.findOne({
+        where: { idForm },
+        include: [{ model: FormField, as: 'fields', attributes: { exclude: ['idField'] } }]
+    });
+
+    if (!originalForm) throw new NotFoundError(`Form dengan ID ${idForm} tidak ditemukan.`);
+
+    const duplicatedForm = await Form.create({
+        namaForm: newName || `${originalForm.namaForm} (Copy)`,
+        descForm: originalForm.descForm,
+        statusForm: 'Draft'
+    });
+
+    if (originalForm.fields && originalForm.fields.length > 0) {
+        const fieldsData = originalForm.fields.map(field => ({
+            idForm: duplicatedForm.idForm,
+            namaField: field.namaField,
+            tipeField: field.tipeField,
+            nilaiPilihan: field.nilaiPilihan,
+            required: field.required,
+            textDescription: field.textDescription,
+            textWarning: field.textWarning,
+            placeholder: field.placeholder,
+            orderIndex: field.orderIndex
+        }));
+        await FormField.bulkCreate(fieldsData);
+    }
+
+    return await Form.findOne({
+        where: { idForm: duplicatedForm.idForm },
+        include: [{ model: FormField, as: 'fields' }]
+    });
 };
 
 // EXPORT SEMUA FUNGSI
@@ -246,4 +304,5 @@ module.exports = {
     updateForm,
     deleteForm,
     submitForm,
+    duplicateForm,
 };

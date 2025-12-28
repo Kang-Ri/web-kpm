@@ -63,6 +63,11 @@ const ParentProduct2 = sequelize.define('ParentProduct2', {
         defaultValue: 0,
         comment: 'Harga daftar ulang',
     },
+    idFormDaftarUlang: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        comment: 'ID form daftar ulang (duplicated from template)',
+    },
 
     // Pengaturan Kelas (optional)
     tahunAjaran: {
