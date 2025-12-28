@@ -241,13 +241,75 @@ const submitForm = async (idForm, idSiswa, responses, idSiswaKelas = null) => {
         );
     }
 
-    // 7. Save ALL responses as single JSON object
+    // 7. Get complete user data for purchase history
+    const Siswa = require('../../api/v1/siswa/model');
+    const Users = require('../../api/v1/users/model');
+
+    const siswaData = await Siswa.findOne({
+        where: { idSiswa },
+        include: [{
+            model: Users,
+            as: 'user',
+            attributes: ['email']
+        }]
+    });
+
+    // 8. Get product hierarchy for purchase history
+    let productHierarchy = null;
+    if (idSiswaKelas) {
+        const SiswaKelas = require('../../api/v1/siswaKelas/model');
+        const ParentProduct2 = require('../../api/v1/parentProduct2/model');
+        const ParentProduct1 = require('../../api/v1/parentProduct1/model');
+
+        const siswaKelas = await SiswaKelas.findOne({
+            where: { idSiswaKelas },
+            include: [{
+                model: ParentProduct2,
+                as: 'parentProduct2',
+                attributes: ['namaParent2', 'idParent1'],
+                include: [{
+                    model: ParentProduct1,
+                    as: 'parentProduct1',
+                    attributes: ['namaParent1']
+                }]
+            }]
+        });
+
+        productHierarchy = {
+            product: null, // For enrollment, no specific product
+            parentProduct1: siswaKelas?.parentProduct2?.parentProduct1?.namaParent1 || null,
+            parentProduct2: siswaKelas?.parentProduct2?.namaParent2 || null,
+            productType: 'enrollment'
+        };
+    }
+
+    // 9. Build enhanced JSON with metadata for purchase history
+    const enhancedData = {
+        _metadata: {
+            idOrder: newOrder.idOrder,
+            orderDate: newOrder.tglOrder.toISOString(),
+            totalAmount: hargaDaftarUlang,
+            paymentStatus: newOrder.statusPembayaran,
+            productHierarchy,
+            userAccount: {
+                idSiswa: siswaData.idSiswa,
+                idUser: siswaData.idUser,
+                namaLengkap: siswaData.namaLengkap,
+                email: siswaData.user?.email || responses.email || 'no-email@example.com',
+                noHp: siswaData.noHp || responses.noHp || responses.no_hp || '0000000000',
+                kelas: siswaData.kelas
+            }
+        },
+        formResponses: responses
+    };
+
+    // 10. Save enhanced JSON to orderformresponse
     const OrderFormResponse = require('../../api/v1/orderFormResponses/model');
 
     await OrderFormResponse.create({
         idOrder: newOrder.idOrder,
         idField: null,
-        nilaiJawaban: JSON.stringify(responses)
+        nilaiJawaban: JSON.stringify(enhancedData)
     });
 
     return {
