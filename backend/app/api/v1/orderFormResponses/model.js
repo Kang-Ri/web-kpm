@@ -15,7 +15,7 @@ const OrderFormResponse = sequelize.define('OrderFormResponse', {
     },
     idField: {
         type: DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true, // Allow NULL for JSON response storage (idField=null, all data in nilaiJawaban)
         field: 'idField',
     },
     nilaiJawaban: {
