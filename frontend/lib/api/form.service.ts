@@ -60,7 +60,24 @@ export const formService = {
     },
 
     // Submit form (student)
-    submitForm: async (idForm: number, data: { idSiswa?: number; responses: Record<string, any> }): Promise<{ success: boolean; message: string; data: { idOrder: number; statusOrder: string } }> => {
+    submitForm: async (
+        idForm: number,
+        data: {
+            responses: Record<string, any>;
+            idSiswaKelas?: number;
+        }
+    ): Promise<{
+        success: boolean;
+        message: string;
+        data: {
+            idOrder: number;
+            statusOrder: string;
+            statusPembayaran: string;
+            hargaFinal: number;
+            needsPayment: boolean;
+            formData: Record<string, any>;
+        };
+    }> => {
         return apiClient.post(`/cms/forms/${idForm}/submit`, data);
     },
 };

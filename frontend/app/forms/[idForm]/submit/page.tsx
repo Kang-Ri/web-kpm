@@ -13,7 +13,7 @@ export default function FormSubmitPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const idForm = parseInt(params.idForm as string);
-    const idSiswaKelas = searchParams.get('idSiswaKelas') ? parseInt(searchParams.get('idSiswaKelas')!) : null;
+    const idSiswaKelas = searchParams.get('idSiswaKelas') ? parseInt(searchParams.get('idSiswaKelas')!) : undefined;
 
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
