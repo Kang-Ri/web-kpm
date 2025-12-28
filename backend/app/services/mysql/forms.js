@@ -189,25 +189,46 @@ const submitForm = async (idForm, idSiswa, responses, idSiswaKelas = null) => {
         }
     }
 
-    // 4. Get harga daftar ulang if idSiswaKelas provided
+    // 4. Get harga daftar ulang from Product if idSiswaKelas provided
     let hargaDaftarUlang = 0;
     let namaKelas = 'Form Submission';
+    let daftarUlangProduct = null;
 
     if (idSiswaKelas) {
         const SiswaKelas = require('../../api/v1/siswaKelas/model');
         const ParentProduct2 = require('../../api/v1/parentProduct2/model');
+        const Product = require('../../api/v1/product/model');
 
         const siswaKelas = await SiswaKelas.findOne({
             where: { idSiswaKelas },
             include: [{
                 model: ParentProduct2,
                 as: 'parentProduct2',
-                attributes: ['hargaDaftarUlang', 'kategoriHargaDaftarUlang']
+                attributes: ['idParent2', 'namaParent2'],
+                include: [{
+                    model: Product,
+                    as: 'products',
+                    where: {
+                        jenisProduk: 'Daftar Ulang',
+                        statusProduk: 'Publish'
+                    },
+                    attributes: ['idProduk', 'namaProduk', 'kategoriHarga', 'hargaJual'],
+                    required: false // LEFT JOIN - allow null if no Product
+                }]
             }]
         });
 
-        if (siswaKelas?.parentProduct2) {
-            hargaDaftarUlang = siswaKelas.parentProduct2.hargaDaftarUlang || 0;
+        if (!siswaKelas) {
+            throw new NotFoundError(`SiswaKelas dengan ID ${idSiswaKelas} tidak ditemukan.`);
+        }
+
+        // Get Daftar Ulang Product from ruang kelas
+        if (siswaKelas.parentProduct2?.products && siswaKelas.parentProduct2.products.length > 0) {
+            daftarUlangProduct = siswaKelas.parentProduct2.products[0];
+            hargaDaftarUlang = daftarUlangProduct.hargaJual || 0;
+            namaKelas = daftarUlangProduct.namaProduk;
+        } else {
+            // Fallback: no Product found, use form name
             namaKelas = `Daftar Ulang - ${form.namaForm}`;
         }
     }
@@ -216,7 +237,7 @@ const submitForm = async (idForm, idSiswa, responses, idSiswaKelas = null) => {
     const Order = require('../../api/v1/order/model');
     const newOrder = await Order.create({
         idSiswa,
-        idProduk: null,
+        idProduk: daftarUlangProduct?.idProduk || null, // Link to Product Daftar Ulang
         namaProduk: namaKelas,
         hargaProduk: hargaDaftarUlang,
         namaPembeli: responses.namaLengkap || responses.nama_lengkap || responses.nama || 'Unknown',
@@ -276,10 +297,10 @@ const submitForm = async (idForm, idSiswa, responses, idSiswaKelas = null) => {
         });
 
         productHierarchy = {
-            product: null, // For enrollment, no specific product
+            product: daftarUlangProduct?.namaProduk || null, // Product Daftar Ulang name
             parentProduct1: siswaKelas?.parentProduct2?.parentProduct1?.namaParent1 || null,
             parentProduct2: siswaKelas?.parentProduct2?.namaParent2 || null,
-            productType: 'enrollment'
+            productType: 'Daftar Ulang' // Changed from 'enrollment' to match jenisProduk
         };
     }
 
