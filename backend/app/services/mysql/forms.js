@@ -227,7 +227,7 @@ const submitForm = async (idForm, idSiswa, responses, idSiswaKelas = null) => {
         diskon: 0,
         hargaFinal: hargaDaftarUlang,
         statusOrder: 'Pending',
-        statusPembayaran: hargaDaftarUlang > 0 ? 'Belum Lunas' : 'Lunas',
+        statusPembayaran: hargaDaftarUlang > 0 ? 'Unpaid' : 'Paid',
         paymentMethod: null,
         tglOrder: new Date()
     });

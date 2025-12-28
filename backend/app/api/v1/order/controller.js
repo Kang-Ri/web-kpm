@@ -96,7 +96,7 @@ const confirmPayment = async (req, res, next) => {
         }
 
         await order.update({
-            statusPembayaran: 'Lunas',
+            statusPembayaran: 'Paid',
             statusOrder: 'Completed'
         });
 
