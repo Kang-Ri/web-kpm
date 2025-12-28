@@ -212,7 +212,7 @@ const defineAssociations = () => {
     // 14. Relasi SiswaKelas <-> ParentProduct2 (Many-to-One)
     SiswaKelas.belongsTo(ParentProduct2, {
         foreignKey: 'idParent2',
-        as: 'ruangKelas',
+        as: 'parentProduct2', // Generic alias for all product types
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
     });
