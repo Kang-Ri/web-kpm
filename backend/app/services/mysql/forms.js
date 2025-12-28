@@ -247,7 +247,7 @@ const submitForm = async (idForm, idSiswa, responses, idSiswaKelas = null) => {
     await OrderFormResponse.create({
         idOrder: newOrder.idOrder,
         idField: null,
-        responseValue: JSON.stringify(responses)
+        nilaiJawaban: JSON.stringify(responses)
     });
 
     return {
