@@ -123,6 +123,29 @@ const defineAssociations = () => {
         as: 'products'
     });
 
+    // 6a. Form self-reference: Template → Duplicated Forms
+    Form.hasMany(Form, {
+        foreignKey: 'idFormTemplate',
+        as: 'duplicatedForms', // Forms created from this template
+        onDelete: 'SET NULL',
+        onUpdate: 'CASCADE'
+    });
+
+    Form.belongsTo(Form, {
+        foreignKey: 'idFormTemplate',
+        as: 'templateForm', // Original template
+        onDelete: 'SET NULL',
+        onUpdate: 'CASCADE'
+    });
+
+    // 6b. Form → Product (for product-specific forms)
+    Form.belongsTo(Product, {
+        foreignKey: 'idProdukLinked',
+        as: 'linkedProduct',
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
+    });
+
     // 7. Relasi OrderFormResponse <-> FormField (One-to-Many)
     OrderFormResponse.belongsTo(FormField, {
         foreignKey: 'idField',

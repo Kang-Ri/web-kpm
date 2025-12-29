@@ -151,6 +151,30 @@ const duplicate = async (req, res, next) => {
     }
 };
 
+/**
+ * POST /api/v1/product/:idProduk/duplicate-form - Duplicate form template for product
+ */
+const duplicateFormForProduct = async (req, res, next) => {
+    const { idProduk } = req.params;
+    const { idFormTemplate, formType } = req.body;
+
+    try {
+        const duplicatedForm = await FormService.duplicateFormForProduct(
+            parseInt(idProduk),
+            parseInt(idFormTemplate),
+            formType || 'product'
+        );
+
+        res.status(StatusCodes.CREATED).json({
+            success: true,
+            message: "Form berhasil diduplikasi dan dihubungkan ke produk.",
+            data: duplicatedForm
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     getAllForms,
     create,
@@ -159,4 +183,5 @@ module.exports = {
     destroy,
     submitForm,
     duplicate,
+    duplicateFormForProduct, // NEW
 };

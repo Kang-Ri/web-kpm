@@ -10,6 +10,7 @@ const {
     destroy,
     submitForm,
     duplicate,
+    duplicateFormForProduct, // NEW
 } = require('./controller');
 
 const {
@@ -52,5 +53,13 @@ router.get('/forms/:idForm/view', authenticatedUser, getFormDetail);
 // POST submit form: /api/v1/cms/forms/:idForm/submit
 // Accessible by siswa (authenticatedUser saja, tanpa role restriction)
 router.post('/forms/:idForm/submit', authenticatedUser, submitForm);
+
+
+// POST duplicate form for product: /api/v1/product/:idProduk/duplicate-form
+router.post('/product/:idProduk/duplicate-form',
+    authenticatedUser,
+    authorizeRoles("Super Admin", "Admin"),
+    duplicateFormForProduct
+);
 
 module.exports = router;

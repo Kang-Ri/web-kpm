@@ -379,6 +379,95 @@ const duplicateForm = async (idForm, newName = null) => {
     });
 };
 
+// --- 8. DUPLICATE FORM FOR PRODUCT (duplicateFormForProduct) ---
+/**
+ * Duplicates a form template and attaches it to a product
+ * @param {number} idProduk - Product ID to attach form to
+ * @param {number} idFormTemplate - Template form ID to duplicate
+ * @param {string} formType - Type of form ('product' or 'daftar_ulang')
+ * @returns {object} Duplicated form with fields
+ */
+const duplicateFormForProduct = async (idProduk, idFormTemplate, formType = 'product') => {
+    // 1. Validate product exists
+    const product = await Product.findByPk(idProduk);
+    if (!product) {
+        throw new NotFoundError(`Product dengan ID ${idProduk} tidak ditemukan.`);
+    }
+
+    // 2. Validate template form exists
+    const templateForm = await Form.findByPk(idFormTemplate, {
+        include: [
+            {
+                model: FormField,
+                as: 'fields',
+                required: false
+            }
+        ]
+    });
+
+    if (!templateForm) {
+        throw new NotFoundError(`Form template dengan ID ${idFormTemplate} tidak ditemukan.`);
+    }
+
+    // 3. Create duplicated form
+    const duplicatedForm = await Form.create({
+        namaForm: `${templateForm.namaForm} - ${product.namaProduk}`,
+        descForm: templateForm.descForm,
+        statusForm: templateForm.statusForm,
+        formType: formType, // 'product' or 'daftar_ulang'
+        idProdukLinked: idProduk, // Link to product
+        idFormTemplate: idFormTemplate // Reference to template
+    });
+
+    // 4. Duplicate form fields
+    if (templateForm.fields && templateForm.fields.length > 0) {
+        const fieldsData = templateForm.fields.map(field => ({
+            idForm: duplicatedForm.idForm,
+            labelField: field.labelField,
+            placeholderField: field.placeholderField,
+            typeField: field.typeField,
+            optionsField: field.optionsField,
+            isRequiredField: field.isRequiredField,
+            validationField: field.validationField,
+            defaultValueField: field.defaultValueField,
+            orderField: field.orderField,
+            isActiveField: field.isActiveField,
+            descField: field.descField,
+            warningField: field.warningField
+        }));
+
+        await FormField.bulkCreate(fieldsData);
+    }
+
+    // 5. Update product.idForm
+    await product.update({ idForm: duplicatedForm.idForm });
+
+    // 6. Return duplicated form with fields
+    const result = await Form.findByPk(duplicatedForm.idForm, {
+        include: [
+            {
+                model: FormField,
+                as: 'fields',
+                required: false
+            },
+            {
+                model: Product,
+                as: 'linkedProduct',
+                attributes: ['idProduk', 'namaProduk'],
+                required: false
+            },
+            {
+                model: Form,
+                as: 'templateForm',
+                attributes: ['idForm', 'namaForm'],
+                required: false
+            }
+        ]
+    });
+
+    return result;
+};
+
 // EXPORT SEMUA FUNGSI
 module.exports = {
     createForm,
@@ -388,4 +477,5 @@ module.exports = {
     deleteForm,
     submitForm,
     duplicateForm,
+    duplicateFormForProduct, // NEW
 };
