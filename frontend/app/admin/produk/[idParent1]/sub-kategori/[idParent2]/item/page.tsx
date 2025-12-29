@@ -294,7 +294,7 @@ function ItemProdukContent() {
                                                 </Badge>
                                             </td>
                                             <td className="py-3 px-4">
-                                                {item.customForm ? (
+                                                {item.idForm ? (
                                                     <Badge variant="success">✓</Badge>
                                                 ) : (
                                                     <Badge variant="warning">-</Badge>
@@ -309,7 +309,7 @@ function ItemProdukContent() {
                                                     >
                                                         <Edit className="h-4 w-4 text-blue-600" />
                                                     </button>
-                                                    {item.customForm && item.idForm && (
+                                                    {item.idForm && (
                                                         <button
                                                             className="p-2 hover:bg-blue-50 rounded"
                                                             title="Edit Form"
