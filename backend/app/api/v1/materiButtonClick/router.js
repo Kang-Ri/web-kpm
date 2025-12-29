@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const { trackClick, getAnalytics, getProductAnalytics } = require('./controller');
-const { authenticateUser, authorizeRoles } = require('../../../middlewares/authentication');
+const { authenticatedUser, authorizeRoles } = require('../../../middlewares/auth');
 
 // Student routes - Track button click
 router.post(
     '/student/materi/:idProduk/buttons/:idButton/click',
-    authenticateUser,
+    authenticatedUser,
     authorizeRoles('siswa'),
     trackClick
 );
@@ -14,14 +14,14 @@ router.post(
 // Admin routes - Get analytics
 router.get(
     '/cms/product/:idProduk/buttons/:idButton/analytics',
-    authenticateUser,
+    authenticatedUser,
     authorizeRoles('admin'),
     getAnalytics
 );
 
 router.get(
     '/cms/product/:idProduk/analytics',
-    authenticateUser,
+    authenticatedUser,
     authorizeRoles('admin'),
     getProductAnalytics
 );
