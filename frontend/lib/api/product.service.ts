@@ -11,6 +11,10 @@ export interface Product {
     jenisProduk: 'Materi' | 'Produk' | 'Daftar Ulang' | 'Lainnya';
     authProduk: 'Umum' | 'Khusus';
     idForm?: number | null;
+    customForm?: {
+        idForm: number;
+        namaForm: string;
+    };
     refCode?: string;
     statusProduk: 'Draft' | 'Publish' | 'Non-Aktif';
     tanggalPublish?: string | null;
