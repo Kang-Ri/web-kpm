@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Product, CreateProductDto } from '@/lib/api/product.service';
-import { FormTemplateSelector } from '@/components/admin/FormTemplateSelector';
-import { formService } from '@/lib/api/form.service';
+import { formService, Form } from '@/lib/api/form.service';
 import { showSuccess, showError } from '@/lib/utils/toast';
 import { useRouter } from 'next/navigation';
 
@@ -37,11 +36,32 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
         tanggalPublish: null,
     });
 
-    // Form selector state
-    const [isFormSelectorOpen, setIsFormSelectorOpen] = useState(false);
+    // Form templates state
+    const [availableForms, setAvailableForms] = useState<Form[]>([]);
+    const [loadingForms, setLoadingForms] = useState(false);
+    const [selectedTemplateId, setSelectedTemplateId] = useState<number | undefined>(undefined);
     const [attachedFormName, setAttachedFormName] = useState<string | null>(null);
     const [isAttachingForm, setIsAttachingForm] = useState(false);
-    const [pendingTemplateId, setPendingTemplateId] = useState<number | null>(null);
+
+    // Load available form templates
+    useEffect(() => {
+        const loadForms = async () => {
+            try {
+                setLoadingForms(true);
+                const response = await formService.getAll({ formType: 'template' });
+                const forms = response.data || [];
+                setAvailableForms(forms.filter((f: Form) => f.statusForm === 'Aktif'));
+            } catch (error) {
+                console.error('Failed to load forms:', error);
+            } finally {
+                setLoadingForms(false);
+            }
+        };
+
+        if (isOpen) {
+            loadForms();
+        }
+    }, [isOpen]);
 
     useEffect(() => {
         if (product) {
@@ -66,8 +86,10 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
             // Fetch attached form name if exists
             if (product.customForm) {
                 setAttachedFormName(product.customForm.namaForm);
+                setSelectedTemplateId(product.idForm || undefined);
             } else {
                 setAttachedFormName(null);
+                setSelectedTemplateId(undefined);
             }
         } else {
             setFormData({
@@ -84,6 +106,7 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
                 tanggalPublish: null,
             });
             setAttachedFormName(null);
+            setSelectedTemplateId(undefined);
         }
     }, [product, isOpen]);
 
@@ -104,65 +127,26 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
         }
     };
 
-    const handleFormTemplateSelect = async (idFormTemplate: number) => {
-        // If product doesn't exist yet, store template ID for later
-        if (!product?.idProduk) {
-            setPendingTemplateId(idFormTemplate);
-            setIsFormSelectorOpen(false);
-            showSuccess('Template dipilih! Form akan dibuat setelah produk disimpan.');
-            return;
-        }
-
-        // If product exists, duplicate immediately
-        try {
-            setIsAttachingForm(true);
-            const response = await formService.duplicateFormForProduct(
-                product.idProduk,
-                idFormTemplate,
-                'product'
-            );
-            setAttachedFormName(response.data.namaForm);
-            setPendingTemplateId(null);
-            showSuccess('Form berhasil diduplikasi dan dihubungkan!');
-            setIsFormSelectorOpen(false);
-        } catch (error: any) {
-            showError(error.response?.data?.message || 'Gagal menduplikasi form');
-        } finally {
-            setIsAttachingForm(false);
-        }
-    };
-
-    const handleEditForm = () => {
-        if (product?.idForm) {
-            router.push(`/admin/form-builder/edit/${product.idForm}`);
-        }
-    };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         await onSubmit(formData);
-
-        // After save, if there's a pending template, duplicate it
-        // Note: This relies on parent component updating 'product' prop after save
     };
 
-    // Auto-duplicate pending template after product is saved
+    // Auto-duplicate selected template after product is saved
     useEffect(() => {
         const autoDuplicateTemplate = async () => {
-            if (product?.idProduk && pendingTemplateId && !attachedFormName) {
+            if (product?.idProduk && selectedTemplateId && !attachedFormName) {
                 try {
                     setIsAttachingForm(true);
                     const response = await formService.duplicateFormForProduct(
                         product.idProduk,
-                        pendingTemplateId,
+                        selectedTemplateId,
                         'product'
                     );
                     setAttachedFormName(response.data.namaForm);
-                    setPendingTemplateId(null);
                     showSuccess('Form berhasil dibuat dan dihubungkan!');
                 } catch (error: any) {
                     showError(error.response?.data?.message || 'Gagal membuat form');
-                    setPendingTemplateId(null);
                 } finally {
                     setIsAttachingForm(false);
                 }
@@ -170,7 +154,7 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
         };
 
         autoDuplicateTemplate();
-    }, [product?.idProduk, pendingTemplateId, attachedFormName]);
+    }, [product?.idProduk, selectedTemplateId, attachedFormName]);
 
     return (
         <Modal
@@ -357,12 +341,12 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
 
                 {/* Form Pemesanan Section */}
                 <div className="border-t pt-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="formTemplate" className="block text-sm font-medium text-gray-700 mb-1">
                         Form Pemesanan
                     </label>
                     {attachedFormName ? (
-                        <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-                            <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                            <div className="flex-1 p-3 bg-green-50 border border-green-200 rounded-lg">
                                 <p className="text-sm font-medium text-green-900">
                                     ✓ Form terhubung: {attachedFormName}
                                 </p>
@@ -370,42 +354,33 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={handleEditForm}
+                                onClick={() => product?.idForm && router.push(`/admin/form-builder/edit/${product.idForm}`)}
                                 type="button"
+                                disabled={!product?.idForm}
                             >
                                 Edit Form
                             </Button>
                         </div>
-                    ) : pendingTemplateId ? (
-                        <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                            <div className="flex-1">
-                                <p className="text-sm font-medium text-blue-900">
-                                    📋 Template dipilih - Form akan dibuat setelah produk disimpan
-                                </p>
-                            </div>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setPendingTemplateId(null)}
-                                type="button"
-                            >
-                                Batal
-                            </Button>
-                        </div>
                     ) : (
-                        <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                            <p className="text-sm text-gray-600 mb-2">
-                                Pilih template form untuk produk ini. {!product && 'Form akan dibuat otomatis setelah produk disimpan.'}
-                            </p>
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={() => setIsFormSelectorOpen(true)}
-                                type="button"
-                            >
-                                Pilih Template Form
-                            </Button>
-                        </div>
+                        <select
+                            id="formTemplate"
+                            value={selectedTemplateId || ''}
+                            onChange={(e) => setSelectedTemplateId(e.target.value ? parseInt(e.target.value) : undefined)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            disabled={loadingForms}
+                        >
+                            <option value="">Pilih template form...</option>
+                            {availableForms.map((form) => (
+                                <option key={form.idForm} value={form.idForm}>
+                                    {form.namaForm} ({form.fields?.length || 0} fields)
+                                </option>
+                            ))}
+                        </select>
+                    )}
+                    {selectedTemplateId && !product && (
+                        <p className="text-xs text-blue-600 mt-1">
+                            Form akan dibuat otomatis setelah produk disimpan.
+                        </p>
                     )}
                 </div>
 
@@ -432,14 +407,6 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
                     </Button>
                 </div>
             </form>
-
-            {/* Form Template Selector Modal */}
-            <FormTemplateSelector
-                isOpen={isFormSelectorOpen}
-                onClose={() => setIsFormSelectorOpen(false)}
-                onSelect={handleFormTemplateSelect}
-                isLoading={isAttachingForm}
-            />
         </Modal>
     );
 };
