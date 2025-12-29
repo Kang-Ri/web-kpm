@@ -49,7 +49,7 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
             try {
                 setLoadingForms(true);
                 const response = await formService.getAll({ formType: 'template' });
-                const forms = response.data || [];
+                const forms = response.data.data || [];
                 setAvailableForms(forms.filter((f: Form) => f.statusForm === 'Aktif'));
             } catch (error) {
                 console.error('Failed to load forms:', error);
