@@ -293,6 +293,7 @@ function MateriContent() {
                                         <th className="text-left py-3 px-4 font-semibold text-gray-700">Harga Jual</th>
                                         <th className="text-left py-3 px-4 font-semibold text-gray-700">Auth</th>
                                         <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
+                                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Form</th>
                                         <th className="text-left py-3 px-4 font-semibold text-gray-700">Actions</th>
                                     </tr>
                                 </thead>
@@ -332,6 +333,13 @@ function MateriContent() {
                                                 </Badge>
                                             </td>
                                             <td className="py-3 px-4">
+                                                {materi.customForm ? (
+                                                    <Badge variant="success">✓</Badge>
+                                                ) : (
+                                                    <Badge variant="warning">-</Badge>
+                                                )}
+                                            </td>
+                                            <td className="py-3 px-4">
                                                 <div className="flex items-center gap-2">
                                                     <button
                                                         className="p-2 hover:bg-blue-50 rounded"
@@ -340,6 +348,15 @@ function MateriContent() {
                                                     >
                                                         <Edit className="h-4 w-4 text-blue-600" />
                                                     </button>
+                                                    {materi.customForm && materi.idForm && (
+                                                        <button
+                                                            className="p-2 hover:bg-blue-50 rounded"
+                                                            title="Edit Form"
+                                                            onClick={() => router.push(`/admin/form-builder/edit/${materi.idForm}`)}
+                                                        >
+                                                            <FileText className="h-4 w-4 text-blue-600" />
+                                                        </button>
+                                                    )}
                                                     <button
                                                         className="p-2 hover:bg-red-50 rounded"
                                                         title="Delete"
