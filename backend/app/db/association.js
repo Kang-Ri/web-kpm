@@ -241,10 +241,6 @@ const defineAssociations = () => {
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
     });
-    Product.hasMany(MateriButton, {
-        foreignKey: 'idProduk',
-        as: 'buttons'
-    });
 
     // 17. Relasi AksesMateri <-> Siswa (Many-to-One)
     AksesMateri.belongsTo(Siswa, {
