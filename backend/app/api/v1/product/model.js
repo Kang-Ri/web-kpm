@@ -42,7 +42,7 @@ const Product = sequelize.define('Product', {
         defaultValue: 0.00,
     },
     jenisProduk: {
-        type: DataTypes.ENUM('Materi', 'Produk', 'Lainnya'),
+        type: DataTypes.ENUM('Materi', 'Produk', 'Daftar Ulang', 'Lainnya'),
         defaultValue: 'Produk',
     },
     authProduk: {
