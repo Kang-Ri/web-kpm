@@ -6,6 +6,9 @@ export interface Form {
     descForm: string | null;
     statusForm: 'Aktif' | 'Non-Aktif' | 'Draft';
     tglDibuat: string;
+    formType?: 'template' | 'product' | 'daftar_ulang';
+    idProdukLinked?: number;
+    idFormTemplate?: number;
     fields?: FormField[];
     products?: {
         idProduk: number;
@@ -30,8 +33,8 @@ export interface FormField {
 
 export const formService = {
     // Get all forms
-    getAll: async (): Promise<{ data: Form[] }> => {
-        return apiClient.get('/cms/forms');
+    getAll: async (params?: { formType?: string }): Promise<{ data: Form[] }> => {
+        return apiClient.get('/cms/forms', { params });
     },
 
     // Get form by ID (with fields) - Public endpoint for students
