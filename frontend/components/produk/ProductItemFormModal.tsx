@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Product, CreateProductDto } from '@/lib/api/product.service';
+import { FormTemplateSelector } from '@/components/admin/FormTemplateSelector';
+import { formService } from '@/lib/api/form.service';
+import { showSuccess, showError } from '@/lib/utils/toast';
+import { useRouter } from 'next/navigation';
 
 interface ProductItemFormModalProps {
     isOpen: boolean;
@@ -18,6 +22,7 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
     product,
     isLoading
 }) => {
+    const router = useRouter();
     const [formData, setFormData] = useState<CreateProductDto>({
         idParent2: 0,
         namaProduk: '',
@@ -31,6 +36,11 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
         statusProduk: 'Draft',
         tanggalPublish: null,
     });
+
+    // Form selector state
+    const [isFormSelectorOpen, setIsFormSelectorOpen] = useState(false);
+    const [attachedFormName, setAttachedFormName] = useState<string | null>(null);
+    const [isAttachingForm, setIsAttachingForm] = useState(false);
 
     useEffect(() => {
         if (product) {
@@ -51,6 +61,13 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
                 statusProduk: product.statusProduk || 'Draft',
                 tanggalPublish: formattedDate || null,
             });
+
+            // Fetch attached form name if exists
+            if (product.customForm) {
+                setAttachedFormName(product.customForm.namaForm);
+            } else {
+                setAttachedFormName(null);
+            }
         } else {
             setFormData({
                 idParent2: 0,
@@ -65,6 +82,7 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
                 statusProduk: 'Draft',
                 tanggalPublish: null,
             });
+            setAttachedFormName(null);
         }
     }, [product, isOpen]);
 
@@ -82,6 +100,36 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
             }));
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
+        }
+    };
+
+    const handleFormTemplateSelect = async (idFormTemplate: number) => {
+        if (!product?.idProduk) {
+            showError('Simpan product terlebih dahulu sebelum menambahkan form');
+            setIsFormSelectorOpen(false);
+            return;
+        }
+
+        try {
+            setIsAttachingForm(true);
+            const response = await formService.duplicateFormForProduct(
+                product.idProduk,
+                idFormTemplate,
+                'product'
+            );
+            setAttachedFormName(response.data.namaForm);
+            showSuccess('Form berhasil diduplikasi dan dihubungkan!');
+            setIsFormSelectorOpen(false);
+        } catch (error: any) {
+            showError(error.response?.data?.message || 'Gagal menduplikasi form');
+        } finally {
+            setIsAttachingForm(false);
+        }
+    };
+
+    const handleEditForm = () => {
+        if (product?.idForm) {
+            router.push(`/admin/form-builder/edit/${product.idForm}`);
         }
     };
 
@@ -273,6 +321,45 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
                     </p>
                 </div>
 
+                {/* Form Pemesanan Section */}
+                <div className="border-t pt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Form Pemesanan
+                    </label>
+                    {attachedFormName ? (
+                        <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                            <div className="flex-1">
+                                <p className="text-sm font-medium text-green-900">
+                                    ✓ Form terhubung: {attachedFormName}
+                                </p>
+                            </div>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleEditForm}
+                                type="button"
+                            >
+                                Edit Form
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                            <p className="text-sm text-gray-600 mb-2">
+                                Belum ada form pemesanan. {product ? 'Pilih template untuk menduplikasi.' : 'Simpan produk dulu untuk menambahkan form.'}
+                            </p>
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => setIsFormSelectorOpen(true)}
+                                type="button"
+                                disabled={!product}
+                            >
+                                Pilih Template Form
+                            </Button>
+                        </div>
+                    )}
+                </div>
+
                 {/* Info Box */}
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                     <p className="text-sm text-yellow-800">
@@ -296,6 +383,14 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
                     </Button>
                 </div>
             </form>
+
+            {/* Form Template Selector Modal */}
+            <FormTemplateSelector
+                isOpen={isFormSelectorOpen}
+                onClose={() => setIsFormSelectorOpen(false)}
+                onSelect={handleFormTemplateSelect}
+                isLoading={isAttachingForm}
+            />
         </Modal>
     );
 };

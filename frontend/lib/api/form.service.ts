@@ -83,6 +83,18 @@ export const formService = {
     }> => {
         return apiClient.post(`/cms/forms/${idForm}/submit`, data);
     },
+
+    // Duplicate form template for product
+    duplicateFormForProduct: async (
+        idProduk: number,
+        idFormTemplate: number,
+        formType: 'product' | 'daftar_ulang' = 'product'
+    ): Promise<{ data: Form }> => {
+        return apiClient.post(`/cms/product/${idProduk}/duplicate-form`, {
+            idFormTemplate,
+            formType
+        });
+    },
 };
 
 export const formFieldService = {

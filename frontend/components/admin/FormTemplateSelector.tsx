@@ -31,7 +31,7 @@ export const FormTemplateSelector: React.FC<FormTemplateSelectorProps> = ({
         try {
             setLoading(true);
             const response = await formService.getAll({ formType: 'template' });
-            const data = response.data.data || response.data;
+            const data = response.data;
             if (Array.isArray(data)) {
                 setTemplates(data);
             }
@@ -72,8 +72,8 @@ export const FormTemplateSelector: React.FC<FormTemplateSelectorProps> = ({
                             <label
                                 key={template.idForm}
                                 className={`flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50 ${selectedId === template.idForm
-                                        ? 'border-blue-500 bg-blue-50'
-                                        : 'border-gray-200'
+                                    ? 'border-blue-500 bg-blue-50'
+                                    : 'border-gray-200'
                                     }`}
                             >
                                 <input
