@@ -432,6 +432,7 @@ const duplicateFormForProduct = async (idProduk, idFormTemplate, formType = 'pro
 
         const fieldsData = templateForm.fields.map(field => ({
             idForm: duplicatedForm.idForm,
+            namaField: field.namaField, // REQUIRED
             labelField: field.labelField,
             placeholderField: field.placeholderField,
             typeField: field.typeField,

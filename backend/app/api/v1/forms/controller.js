@@ -158,6 +158,8 @@ const duplicateFormForProduct = async (req, res, next) => {
     const { idProduk } = req.params;
     const { idFormTemplate, formType } = req.body;
 
+    console.log('🔄 Request Duplicate Form:', { idProduk, idFormTemplate, formType });
+
     try {
         const duplicatedForm = await FormService.duplicateFormForProduct(
             parseInt(idProduk),
