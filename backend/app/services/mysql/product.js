@@ -58,7 +58,7 @@ const getAllProduct = async (req) => {
 
     const result = await Product.findAll({
         where: whereClause,
-        attributes: { exclude: ['idParent1', 'idForm'] }, // Tambahkan idForm ke daftar exclude
+        attributes: { exclude: ['idParent1'] }, // Removed idForm from exclude
         include: [
             {
                 model: ParentProduct2,
@@ -79,7 +79,7 @@ const getOneProduct = async (req) => {
 
     const result = await Product.findOne({
         where: { idProduk: id },
-        attributes: { exclude: ['idParent1', 'idForm'] }, // Tambahkan idForm ke daftar exclude
+        attributes: { exclude: ['idParent1'] }, // Removed idForm from exclude
         include: [
             {
                 model: ParentProduct2,
