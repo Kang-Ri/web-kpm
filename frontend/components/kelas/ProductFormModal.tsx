@@ -324,14 +324,6 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                     </p>
                 </div>
 
-                {/* Info Box */}
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                    <p className="text-sm text-yellow-800">
-                        <strong>Tips:</strong> Gunakan status "Draft" untuk materi yang masih dalam pengembangan,
-                        "Publish" untuk materi yang siap diakses siswa, dan "Non-Aktif" untuk materi yang diarsipkan.
-                    </p>
-                </div>
-
                 {/* Form Pemesanan Section */}
                 <div className="border-t pt-4">
                     <label htmlFor="formTemplate" className="block text-sm font-medium text-gray-700 mb-1">
@@ -375,6 +367,14 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                             Form akan dibuat otomatis setelah materi disimpan.
                         </p>
                     )}
+                </div>
+
+                {/* Info Box */}
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                    <p className="text-sm text-yellow-800">
+                        <strong>Tips:</strong> Gunakan status "Draft" untuk materi yang masih dalam pengembangan,
+                        "Publish" untuk materi yang siap diakses siswa, dan "Non-Aktif" untuk materi yang diarsipkan.
+                    </p>
                 </div>
 
 
