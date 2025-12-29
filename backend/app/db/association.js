@@ -20,6 +20,7 @@ const OrangTua = require('../api/v1/orangTua/model');
 const SiswaKelas = require('../api/v1/siswaKelas/model');
 const MateriButton = require('../api/v1/materiButton/model');
 const AksesMateri = require('../api/v1/aksesMateri/model');
+const MateriButtonClick = require('../api/v1/materiButtonClick/model');
 
 // Variable Templates (for form builder)
 const VariableTemplate = require('../api/v1/variableTemplates/model');
@@ -281,12 +282,54 @@ const defineAssociations = () => {
         as: 'materiAccess'
     });
 
+    // 20. Relasi Product <-> MateriButton (One-to-Many)
+    Product.hasMany(MateriButton, {
+        foreignKey: 'idProduk',
+        as: 'buttons',
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
+    });
+    MateriButton.belongsTo(Product, {
+        foreignKey: 'idProduk',
+        as: 'product',
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
+    });
+
+    // 21. Relasi MateriButton <-> MateriButtonClick (One-to-Many)
+    MateriButton.hasMany(MateriButtonClick, {
+        foreignKey: 'idButton',
+        as: 'clicks',
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
+    });
+    MateriButtonClick.belongsTo(MateriButton, {
+        foreignKey: 'idButton',
+        as: 'button',
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
+    });
+
+    // 22. Relasi Siswa <-> MateriButtonClick (One-to-Many)
+    Siswa.hasMany(MateriButtonClick, {
+        foreignKey: 'idSiswa',
+        as: 'buttonClicks',
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
+    });
+    MateriButtonClick.belongsTo(Siswa, {
+        foreignKey: 'idSiswa',
+        as: 'siswa',
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
+    });
+
     // --------------------------------------------------
     // STANDALONE MODELS (No Relations)
     // --------------------------------------------------
     // VariableTemplate - imported and registered above (line 25)
 
-    console.log("Semua asosiasi model telah berhasil didefinisikan (19 relasi total).");
+    console.log("Semua asosiasi model telah berhasil didefinisikan (22 relasi total).");
 };
 
 module.exports = { defineAssociations };

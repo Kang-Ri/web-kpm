@@ -138,6 +138,34 @@ const downloadBulkTemplate = async (req, res, next) => {
     }
 };
 
+// REORDER Buttons (for drag & drop)
+const reorder = async (req, res, next) => {
+    try {
+        const { buttonIds } = req.body; // Array of idButton in new order
+
+        if (!Array.isArray(buttonIds) || buttonIds.length === 0) {
+            throw new BadRequestError('buttonIds harus berupa array yang tidak kosong');
+        }
+
+        const MateriButton = require('./model');
+
+        // Update orderIndex for each button
+        for (let i = 0; i < buttonIds.length; i++) {
+            await MateriButton.update(
+                { orderIndex: i + 1 },
+                { where: { idButton: buttonIds[i] } }
+            );
+        }
+
+        res.status(StatusCodes.OK).json({
+            message: 'Urutan button berhasil diupdate',
+            data: { reorderedCount: buttonIds.length }
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports = {
     create,
     index,
@@ -147,4 +175,5 @@ module.exports = {
     destroy,
     bulkImport,
     downloadBulkTemplate,
+    reorder, // NEW
 };

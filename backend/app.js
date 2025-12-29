@@ -41,6 +41,7 @@ const orangTuaRouter = require("./app/api/v1/orangTua/router");
 const siswaKelasRouter = require("./app/api/v1/siswaKelas/router");
 const materiButtonRouter = require("./app/api/v1/materiButton/router");
 const aksesMateriRouter = require("./app/api/v1/aksesMateri/router");
+const materiButtonClickRouter = require("./app/api/v1/materiButtonClick/router");
 const variableTemplatesRouter = require("./app/api/v1/variableTemplates/router");
 
 
@@ -60,6 +61,7 @@ app.use(`${v1}/cms`, orangTuaRouter);
 app.use(`${v1}/cms`, siswaKelasRouter);
 app.use(`${v1}/cms`, materiButtonRouter);
 app.use(`${v1}/cms`, aksesMateriRouter);
+app.use(`${v1}`, materiButtonClickRouter); // Click tracking routes (student + cms)
 
 // Forms & Fields (Specific paths)
 app.use(`${v1}/cms`, formsRouter);

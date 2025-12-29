@@ -12,6 +12,7 @@ const {
     destroy,
     bulkImport,
     downloadBulkTemplate,
+    reorder, // NEW
 } = require('./controller');
 
 const { authenticatedUser, authorizeRoles } = require('../../../middlewares/auth');
@@ -58,6 +59,14 @@ router.delete(
     authenticatedUser,
     authorizeRoles('Super Admin', 'Admin'),
     destroy
+);
+
+// REORDER Buttons (Admin & Super Admin)
+router.patch(
+    '/materi/:idProduk/buttons/reorder',
+    authenticatedUser,
+    authorizeRoles('Super Admin', 'Admin'),
+    reorder
 );
 
 // BULK IMPORT MateriButton (Admin & Super Admin)
