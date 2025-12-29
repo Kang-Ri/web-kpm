@@ -84,10 +84,7 @@ export const adminMenuItems: MenuItem[] = [
     {
         label: 'Manajemen Produk',
         icon: ShoppingBag,
-        children: [
-            { label: 'Produk Fisik', href: '/admin/produk/fisik' },
-            { label: 'Produk Digital', href: '/admin/produk/digital' },
-        ],
+        href: '/admin/produk', // Direct link, no dropdown
     },
     {
         label: 'Lomba',

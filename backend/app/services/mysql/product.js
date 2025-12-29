@@ -39,8 +39,8 @@ const formInclude = {
 
 // --- 1. GET ALL PRODUCT (readAll) ---
 const getAllProduct = async (req) => {
-    // Support filtering by idParent2 and statusProduk
-    const { idParent2, statusProduk } = req.query;
+    // Support filtering by idParent2, statusProduk, and jenisProduk
+    const { idParent2, statusProduk, jenisProduk } = req.query;
 
     let whereClause = {};
 
@@ -50,6 +50,10 @@ const getAllProduct = async (req) => {
 
     if (statusProduk) {
         whereClause.statusProduk = statusProduk;
+    }
+
+    if (jenisProduk) {
+        whereClause.jenisProduk = jenisProduk;
     }
 
     const result = await Product.findAll({

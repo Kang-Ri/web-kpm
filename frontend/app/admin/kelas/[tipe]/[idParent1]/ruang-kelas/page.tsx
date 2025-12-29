@@ -233,6 +233,7 @@ function RuangKelasContent() {
                                         <th className="text-left py-3 px-4 font-semibold text-gray-700">Tahun Ajaran</th>
                                         <th className="text-left py-3 px-4 font-semibold text-gray-700">Kapasitas</th>
                                         <th className="text-left py-3 px-4 font-semibold text-gray-700">Jenjang Kelas</th>
+                                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Daftar Ulang</th>
                                         <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
                                         <th className="text-left py-3 px-4 font-semibold text-gray-700">Actions</th>
                                     </tr>
@@ -266,6 +267,21 @@ function RuangKelasContent() {
                                                     </div>
                                                 ) : (
                                                     <span className="text-gray-500 text-sm">Semua Jenjang</span>
+                                                )}
+                                            </td>
+                                            <td className="py-3 px-4">
+                                                {ruangKelas.daftarUlangAktif ? (
+                                                    <div className="flex flex-col gap-1">
+                                                        <Badge variant="success">Aktif</Badge>
+                                                        <span className="text-xs text-gray-600">
+                                                            {ruangKelas.kategoriHargaDaftarUlang === 'Gratis'
+                                                                ? 'Gratis'
+                                                                : `Rp ${ruangKelas.hargaDaftarUlang?.toLocaleString('id-ID') || 0}`
+                                                            }
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <Badge variant="secondary">Tidak Aktif</Badge>
                                                 )}
                                             </td>
                                             <td className="py-3 px-4">
