@@ -419,8 +419,17 @@ const duplicateFormForProduct = async (idProduk, idFormTemplate, formType = 'pro
         idFormTemplate: idFormTemplate // Reference to template
     });
 
+    console.log('📋 Template form loaded:', {
+        idForm: templateForm.idForm,
+        namaForm: templateForm.namaForm,
+        fieldsCount: templateForm.fields ? templateForm.fields.length : 0,
+        fields: templateForm.fields
+    });
+
     // 4. Duplicate form fields
     if (templateForm.fields && templateForm.fields.length > 0) {
+        console.log(`📝 Duplicating ${templateForm.fields.length} fields...`);
+
         const fieldsData = templateForm.fields.map(field => ({
             idForm: duplicatedForm.idForm,
             labelField: field.labelField,
@@ -436,7 +445,12 @@ const duplicateFormForProduct = async (idProduk, idFormTemplate, formType = 'pro
             warningField: field.warningField
         }));
 
-        await FormField.bulkCreate(fieldsData);
+        console.log('📊 Fields to create:', fieldsData);
+
+        const createdFields = await FormField.bulkCreate(fieldsData);
+        console.log(`✅ Created ${createdFields.length} fields successfully`);
+    } else {
+        console.log('⚠️ No fields to duplicate - templateForm.fields is empty or null');
     }
 
     // 5. Update product.idForm
