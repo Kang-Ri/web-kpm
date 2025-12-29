@@ -63,4 +63,19 @@ export const materiButtonService = {
             },
         });
     },
+
+    // Reorder buttons (drag & drop)
+    reorder: async (idProduk: number, buttonIds: number[]): Promise<{ message: string }> => {
+        return apiClient.patch(`/cms/materi/${idProduk}/buttons/reorder`, { buttonIds });
+    },
+
+    // Get analytics for a button (admin)
+    getAnalytics: async (idProduk: number, idButton: number): Promise<{ data: any }> => {
+        return apiClient.get(`/cms/product/${idProduk}/buttons/${idButton}/analytics`);
+    },
+
+    // Track button click (student)
+    trackClick: async (idProduk: number, idButton: number): Promise<{ message: string }> => {
+        return apiClient.post(`/student/materi/${idProduk}/buttons/${idButton}/click`);
+    }
 };

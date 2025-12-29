@@ -8,7 +8,7 @@ export interface Product {
     kategoriHarga: 'Gratis' | 'Seikhlasnya' | 'Bernominal';
     hargaModal: number;
     hargaJual: number;
-    jenisProduk: 'Materi' | 'Produk' | 'Lainnya';
+    jenisProduk: 'Materi' | 'Produk' | 'Daftar Ulang' | 'Lainnya';
     authProduk: 'Umum' | 'Khusus';
     idForm?: number | null;
     refCode?: string;
@@ -23,7 +23,7 @@ export interface CreateProductDto {
     kategoriHarga?: 'Gratis' | 'Seikhlasnya' | 'Bernominal';
     hargaModal?: number;
     hargaJual?: number;
-    jenisProduk?: 'Materi' | 'Produk' | 'Lainnya';
+    jenisProduk?: 'Materi' | 'Produk' | 'Daftar Ulang' | 'Lainnya';
     authProduk?: 'Umum' | 'Khusus';
     idForm?: number | null;
     refCode?: string;
@@ -32,7 +32,7 @@ export interface CreateProductDto {
 }
 
 export const productService = {
-    getAll: async (params?: { idParent2?: number; statusProduk?: string }): Promise<{ data: Product[] }> => {
+    getAll: async (params?: { idParent2?: number; statusProduk?: string; jenisProduk?: string }): Promise<{ data: Product[] }> => {
         return apiClient.get('/cms/product', { params });
     },
 
@@ -74,4 +74,9 @@ export const productService = {
             },
         });
     },
+
+    // Analytics
+    getAnalytics: async (idProduk: number): Promise<{ data: any }> => {
+        return apiClient.get(`/cms/product/${idProduk}/analytics`);
+    }
 };
