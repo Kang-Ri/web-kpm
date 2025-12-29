@@ -6,7 +6,7 @@ import { DashboardLayout } from '@/components/layouts';
 import { Card, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Plus, Edit, Trash2, Upload } from 'lucide-react';
+import { Plus, Edit, Trash2, Upload, FileText } from 'lucide-react';
 import { productService, Product, CreateProductDto } from '@/lib/api/product.service';
 import { parentProduct2Service } from '@/lib/api/parentProduct2.service';
 import { parentProduct1Service } from '@/lib/api/parentProduct1.service';
@@ -241,6 +241,7 @@ function ItemProdukContent() {
                                         <th className="text-left py-3 px-4 font-semibold text-gray-700">Harga Jual</th>
                                         <th className="text-left py-3 px-4 font-semibold text-gray-700">Auth</th>
                                         <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
+                                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Form</th>
                                         <th className="text-left py-3 px-4 font-semibold text-gray-700">Actions</th>
                                     </tr>
                                 </thead>
@@ -274,6 +275,13 @@ function ItemProdukContent() {
                                                 </Badge>
                                             </td>
                                             <td className="py-3 px-4">
+                                                {item.customForm ? (
+                                                    <Badge variant="success">✓</Badge>
+                                                ) : (
+                                                    <Badge variant="warning">-</Badge>
+                                                )}
+                                            </td>
+                                            <td className="py-3 px-4">
                                                 <div className="flex items-center gap-2">
                                                     <button
                                                         className="p-2 hover:bg-blue-50 rounded"
@@ -282,6 +290,15 @@ function ItemProdukContent() {
                                                     >
                                                         <Edit className="h-4 w-4 text-blue-600" />
                                                     </button>
+                                                    {item.customForm && item.idForm && (
+                                                        <button
+                                                            className="p-2 hover:bg-blue-50 rounded"
+                                                            title="Edit Form"
+                                                            onClick={() => router.push(`/admin/form-builder/edit/${item.idForm}`)}
+                                                        >
+                                                            <FileText className="h-4 w-4 text-blue-600" />
+                                                        </button>
+                                                    )}
                                                     <button
                                                         className="p-2 hover:bg-red-50 rounded"
                                                         title="Delete"
