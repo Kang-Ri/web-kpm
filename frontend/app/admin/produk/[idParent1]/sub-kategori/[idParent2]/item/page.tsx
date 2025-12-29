@@ -10,7 +10,7 @@ import { Plus, Edit, Trash2, Upload } from 'lucide-react';
 import { productService, Product, CreateProductDto } from '@/lib/api/product.service';
 import { parentProduct2Service } from '@/lib/api/parentProduct2.service';
 import { parentProduct1Service } from '@/lib/api/parentProduct1.service';
-import { ProductFormModal } from '@/components/kelas/ProductFormModal';
+import { ProductItemFormModal } from '@/components/produk/ProductItemFormModal';
 import { ImportMateriModal } from '@/components/kelas/ImportMateriModal';
 import { showSuccess, showError } from '@/lib/utils/toast';
 
@@ -301,7 +301,7 @@ function ItemProdukContent() {
             </Card>
 
             {/* Form Modal */}
-            <ProductFormModal
+            <ProductItemFormModal
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}
                 onSubmit={handleSubmit}
