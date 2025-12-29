@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { Plus, Edit, Trash2, FolderOpen } from 'lucide-react';
 import { parentProduct2Service, ParentProduct2, CreateParentProduct2Dto } from '@/lib/api/parentProduct2.service';
 import { parentProduct1Service } from '@/lib/api/parentProduct1.service';
-import { ParentProduct2FormModal } from '@/components/kelas/ParentProduct2FormModal';
+import { ProductSubKategoriFormModal } from '@/components/produk/ProductSubKategoriFormModal';
 import { showSuccess, showError } from '@/lib/utils/toast';
 
 function SubKategoriContent() {
@@ -245,11 +245,11 @@ function SubKategoriContent() {
             </Card>
 
             {/* Form Modal */}
-            <ParentProduct2FormModal
+            <ProductSubKategoriFormModal
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}
                 onSubmit={handleSubmit}
-                parentProduct2={selectedSubKategori}
+                subKategori={selectedSubKategori}
                 isLoading={isSubmitting}
             />
         </div>
