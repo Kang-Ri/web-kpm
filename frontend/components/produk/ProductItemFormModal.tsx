@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 interface ProductItemFormModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (data: CreateProductDto) => Promise<void>;
+    onSubmit: (data: CreateProductDto, selectedTemplateId?: number) => Promise<void>;
     product: Product | null;
     isLoading: boolean;
 }
@@ -129,7 +129,7 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        await onSubmit(formData);
+        await onSubmit(formData, selectedTemplateId);
     };
 
     // Auto-duplicate selected template after product is saved

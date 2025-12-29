@@ -13,6 +13,7 @@ import { parentProduct1Service } from '@/lib/api/parentProduct1.service';
 import { ProductFormModal } from '@/components/kelas/ProductFormModal';
 import { ImportMateriModal } from '@/components/kelas/ImportMateriModal';
 import { BulkImportButtonModal } from '@/components/kelas/BulkImportButtonModal';
+import { formService } from '@/lib/api/form.service';
 import { showSuccess, showError } from '@/lib/utils/toast';
 
 function MateriContent() {
@@ -141,7 +142,7 @@ function MateriContent() {
         setSelectedMateri(null);
     };
 
-    const handleSubmit = async (data: CreateProductDto) => {
+    const handleSubmit = async (data: CreateProductDto, selectedTemplateId?: number) => {
         try {
             setIsSubmitting(true);
 
@@ -160,7 +161,25 @@ function MateriContent() {
                 const response = await productService.create(submitData);
                 console.log('✅ Create Response:', response);
                 console.log('📦 Created Data:', response.data);
-                showSuccess('Materi baru berhasil ditambahkan');
+
+                // Handle form duplication if template was selected
+                if (selectedTemplateId && response.data) {
+                    const createdProduct = response.data.data || response.data;
+                    const idProduk = createdProduct.idProduk;
+
+                    if (idProduk) {
+                        try {
+                            console.log(`🔗 Duplic ating form template ${selectedTemplateId} for product ${idProduk}`);
+                            await formService.duplicateFormForProduct(idProduk, selectedTemplateId, 'product');
+                            showSuccess('Materi dan form berhasil dibuat!');
+                        } catch (formError: any) {
+                            console.error('❌ Form duplication error:', formError);
+                            showError(formError.response?.data?.message || 'Materi dibuat tapi gagal menduplikasi form');
+                        }
+                    }
+                } else {
+                    showSuccess('Materi baru berhasil ditambahkan');
+                }
             }
 
             setIsModalOpen(false);

@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 interface ProductFormModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (data: CreateProductDto) => Promise<void>;
+    onSubmit: (data: CreateProductDto, selectedTemplateId?: number) => Promise<void>;
     product: Product | null;
     isLoading: boolean;
 }
@@ -134,7 +134,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
         try {
             console.log('📝 Form Submit Data:', formData);
-            await onSubmit(formData);
+            await onSubmit(formData, selectedTemplateId);
         } catch (error) {
             console.error('❌ Form Submit Error:', error);
         }

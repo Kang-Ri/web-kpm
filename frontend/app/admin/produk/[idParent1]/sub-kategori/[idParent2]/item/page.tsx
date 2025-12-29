@@ -12,6 +12,7 @@ import { parentProduct2Service } from '@/lib/api/parentProduct2.service';
 import { parentProduct1Service } from '@/lib/api/parentProduct1.service';
 import { ProductItemFormModal } from '@/components/produk/ProductItemFormModal';
 import { ImportMateriModal } from '@/components/kelas/ImportMateriModal';
+import { formService } from '@/lib/api/form.service';
 import { showSuccess, showError } from '@/lib/utils/toast';
 
 function ItemProdukContent() {
@@ -109,7 +110,7 @@ function ItemProdukContent() {
         setSelectedItem(null);
     };
 
-    const handleSubmit = async (data: CreateProductDto) => {
+    const handleSubmit = async (data: CreateProductDto, selectedTemplateId?: number) => {
         try {
             setIsSubmitting(true);
 
@@ -119,8 +120,26 @@ function ItemProdukContent() {
                 await productService.update(selectedItem.idProduk, submitData);
                 showSuccess('Item produk berhasil diperbarui');
             } else {
-                await productService.create(submitData);
-                showSuccess('Item produk baru berhasil ditambahkan');
+                const response = await productService.create(submitData);
+
+                // Handle form duplication if template was selected
+                if (selectedTemplateId && response.data) {
+                    const createdProduct = response.data.data || response.data;
+                    const idProduk = createdProduct.idProduk;
+
+                    if (idProduk) {
+                        try {
+                            console.log(`🔗 Duplicating form template ${selectedTemplateId} for product ${idProduk}`);
+                            await formService.duplicateFormForProduct(idProduk, selectedTemplateId, 'product');
+                            showSuccess('Produk dan form berhasil dibuat!');
+                        } catch (formError: any) {
+                            console.error('❌ Form duplication error:', formError);
+                            showError(formError.response?.data?.message || 'Produk dibuat tapi gagal menduplikasi form');
+                        }
+                    }
+                } else {
+                    showSuccess('Item produk baru berhasil ditambahkan');
+                }
             }
 
             setIsModalOpen(false);
