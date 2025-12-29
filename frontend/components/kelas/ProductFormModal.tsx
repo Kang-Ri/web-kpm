@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Product, CreateProductDto } from '@/lib/api/product.service';
-import { FormTemplateSelector } from '@/components/admin/FormTemplateSelector';
-import { formService } from '@/lib/api/form.service';
+import { formService, Form } from '@/lib/api/form.service';
 import { showSuccess, showError } from '@/lib/utils/toast';
 import { useRouter } from 'next/navigation';
 
@@ -37,11 +36,32 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
         tanggalPublish: null,
     });
 
-    // Form selector state
-    const [isFormSelectorOpen, setIsFormSelectorOpen] = useState(false);
+    // Form templates state
+    const [availableForms, setAvailableForms] = useState<Form[]>([]);
+    const [loadingForms, setLoadingForms] = useState(false);
+    const [selectedTemplateId, setSelectedTemplateId] = useState<number | undefined>(undefined);
     const [attachedFormName, setAttachedFormName] = useState<string | null>(null);
     const [isAttachingForm, setIsAttachingForm] = useState(false);
-    const [pendingTemplateId, setPendingTemplateId] = useState<number | null>(null);
+
+    // Load available form templates
+    useEffect(() => {
+        const loadForms = async () => {
+            try {
+                setLoadingForms(true);
+                const response = await formService.getAll({ formType: 'template' });
+                const forms = response.data || [];
+                setAvailableForms(forms.filter((f: Form) => f.statusForm === 'Aktif'));
+            } catch (error) {
+                console.error('Failed to load forms:', error);
+            } finally {
+                setLoadingForms(false);
+            }
+        };
+
+        if (isOpen) {
+            loadForms();
+        }
+    }, [isOpen]);
 
     useEffect(() => {
         if (product) {
@@ -86,40 +106,6 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
             });
         }
     }, [product, isOpen]);
-
-    const handleFormTemplateSelect = async (idFormTemplate: number) => {
-        // If product doesn't exist yet, store template ID for later
-        if (!product?.idProduk) {
-            setPendingTemplateId(idFormTemplate);
-            setIsFormSelectorOpen(false);
-            showSuccess('Template dipilih! Form akan dibuat setelah materi disimpan.');
-            return;
-        }
-
-        // If product exists, duplicate immediately
-        try {
-            setIsAttachingForm(true);
-            const response = await formService.duplicateFormForProduct(
-                product.idProduk,
-                idFormTemplate,
-                'product'
-            );
-            setAttachedFormName(response.data.namaForm);
-            setPendingTemplateId(null);
-            showSuccess('Form berhasil diduplikasi dan dihubungkan!');
-            setIsFormSelectorOpen(false);
-        } catch (error: any) {
-            showError(error.response?.data?.message || 'Gagal menduplikasi form');
-        } finally {
-            setIsAttachingForm(false);
-        }
-    };
-
-    const handleEditForm = () => {
-        if (product?.idForm) {
-            router.push(`/admin/form-builder/edit/${product.idForm}`);
-        }
-    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
@@ -411,14 +397,6 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                     </Button>
                 </div>
             </form>
-
-            {/* Form Template Selector Modal */}
-            <FormTemplateSelector
-                isOpen={isFormSelectorOpen}
-                onClose={() => setIsFormSelectorOpen(false)}
-                onSelect={handleFormTemplateSelect}
-                isLoading={isAttachingForm}
-            />
         </Modal>
     );
 };
