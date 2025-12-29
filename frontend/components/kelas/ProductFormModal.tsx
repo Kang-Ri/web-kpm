@@ -87,8 +87,10 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
             // Fetch attached form name if exists
             if (product.customForm) {
                 setAttachedFormName(product.customForm.namaForm);
+                setSelectedTemplateId(product.idForm || undefined);
             } else {
                 setAttachedFormName(null);
+                setSelectedTemplateId(undefined);
             }
         } else {
             setFormData({
@@ -104,6 +106,8 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 statusProduk: 'Draft',
                 tanggalPublish: null,
             });
+            setAttachedFormName(null);
+            setSelectedTemplateId(undefined);
         }
     }, [product, isOpen]);
 
@@ -330,12 +334,12 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
                 {/* Form Pemesanan Section */}
                 <div className="border-t pt-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="formTemplate" className="block text-sm font-medium text-gray-700 mb-1">
                         Form Pemesanan
                     </label>
                     {attachedFormName ? (
-                        <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-                            <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                            <div className="flex-1 p-3 bg-green-50 border border-green-200 rounded-lg">
                                 <p className="text-sm font-medium text-green-900">
                                     ✓ Form terhubung: {attachedFormName}
                                 </p>
@@ -343,44 +347,36 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={handleEditForm}
+                                onClick={() => product?.idForm && router.push(`/admin/form-builder/edit/${product.idForm}`)}
                                 type="button"
+                                disabled={!product?.idForm}
                             >
                                 Edit Form
                             </Button>
                         </div>
-                    ) : pendingTemplateId ? (
-                        <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                            <div className="flex-1">
-                                <p className="text-sm font-medium text-blue-900">
-                                    📋 Template dipilih - Form akan dibuat setelah materi disimpan
-                                </p>
-                            </div>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setPendingTemplateId(null)}
-                                type="button"
-                            >
-                                Batal
-                            </Button>
-                        </div>
                     ) : (
-                        <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                            <p className="text-sm text-gray-600 mb-2">
-                                Pilih template form untuk materi ini. {!product && 'Form akan dibuat otomatis setelah materi disimpan.'}
-                            </p>
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={() => setIsFormSelectorOpen(true)}
-                                type="button"
-                            >
-                                Pilih Template Form
-                            </Button>
-                        </div>
+                        <select
+                            id="formTemplate"
+                            value={selectedTemplateId || ''}
+                            onChange={(e) => setSelectedTemplateId(e.target.value ? parseInt(e.target.value) : undefined)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            disabled={loadingForms}
+                        >
+                            <option value="">Pilih template form...</option>
+                            {availableForms.map((form) => (
+                                <option key={form.idForm} value={form.idForm}>
+                                    {form.namaForm} ({form.fields?.length || 0} fields)
+                                </option>
+                            ))}
+                        </select>
+                    )}
+                    {selectedTemplateId && !product && (
+                        <p className="text-xs text-blue-600 mt-1">
+                            Form akan dibuat otomatis setelah materi disimpan.
+                        </p>
                     )}
                 </div>
+
 
                 {/* Actions */}
                 <div className="flex items-center justify-end gap-3 pt-4 border-t">
