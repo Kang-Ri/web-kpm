@@ -33,12 +33,6 @@ const siswaKelasIncludes = [
         model: ParentProduct2,
         as: 'ruangKelas',
         attributes: ['idParent2', 'namaParent2', 'tahunAjaran', 'kapasitasMaksimal'],
-    },
-    {
-        model: Order,
-        as: 'orderDaftarUlang',
-        attributes: ['idOrder', 'hargaFinal', 'statusPembayaran'],
-        required: false,
     }
 ];
 
