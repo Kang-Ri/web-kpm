@@ -34,6 +34,11 @@ const index = async (req, res, next) => {
             data: result,
         });
     } catch (err) {
+        console.error('===== SISWA KELAS ERROR DETAIL =====');
+        console.error('Error name:', err.name);
+        console.error('Error message:', err.message);
+        console.error('Full error:', err);
+        console.error('=====================================');
         next(err);
     }
 };
