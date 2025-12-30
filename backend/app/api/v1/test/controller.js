@@ -1,6 +1,6 @@
 const { StatusCodes } = require('http-status-codes');
-const Order = require('../../order/model');
-const Product = require('../../product/model');
+const Order = require('../order/model');
+const Product = require('../product/model');
 
 /**
  * POST /api/v1/test/create-dummy-order
