@@ -155,7 +155,20 @@ function MateriContent() {
                 console.log('📝 Updating materi ID:', selectedMateri.idProduk);
                 const response = await productService.update(selectedMateri.idProduk, submitData);
                 console.log('✅ Update Response:', response);
-                showSuccess('Materi berhasil diperbarui');
+
+                // Handle form duplication if template was selected during edit
+                if (selectedTemplateId) {
+                    try {
+                        console.log(`🔗 Duplicating form template ${selectedTemplateId} for materi ${selectedMateri.idProduk}`);
+                        await formService.duplicateFormForProduct(selectedMateri.idProduk, selectedTemplateId, 'product');
+                        showSuccess('Materi dan form berhasil diperbarui!');
+                    } catch (formError: any) {
+                        console.error('❌ Form duplication error:', formError);
+                        showError(formError.response?.data?.message || 'Materi diperbarui tapi gagal menduplikasi form');
+                    }
+                } else {
+                    showSuccess('Materi berhasil diperbarui');
+                }
             } else {
                 console.log('➕ Creating new materi');
                 const response = await productService.create(submitData);
