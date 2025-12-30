@@ -44,6 +44,7 @@ const aksesMateriRouter = require("./app/api/v1/aksesMateri/router");
 const materiButtonClickRouter = require("./app/api/v1/materiButtonClick/router");
 const variableTemplatesRouter = require("./app/api/v1/variableTemplates/router");
 const paymentRouter = require("./app/api/v1/payment/router");
+const testRouter = require("./app/api/v1/test/router"); // Test helpers
 
 
 app.get("/", (req, res) => {
@@ -79,6 +80,9 @@ app.use(`${v1}/cms`, orderRouter);
 
 // Payment Router (Simulator + Real Midtrans)
 app.use(`${v1}`, paymentRouter);
+
+// Test Router (Development only - remove in production)
+app.use(`${v1}/test`, testRouter);
 
 // Error Middleware
 app.use(notFoundMiddleware);
