@@ -8,13 +8,26 @@ const Product = require('../product/model');
  */
 const createDummyOrder = async (req, res, next) => {
     try {
-        // Find a product or create a dummy one
-        let product = await Product.findOne({ where: { namaProduk: 'Test Product - Payment Simulator' } });
+        const ParentProduct2 = require('../parentProduct2/model');
+
+        // Find any existing ParentProduct2
+        let parent2 = await ParentProduct2.findOne();
+
+        if (!parent2) {
+            return res.status(400).json({
+                success: false,
+                message: 'Tidak ada ParentProduct2 di database. Buat ruang kelas terlebih dahulu.'
+            });
+        }
+
+        // Find or create test product
+        let product = await Product.findOne({
+            where: { namaProduk: 'Test Product - Payment Simulator' }
+        });
 
         if (!product) {
-            // Get any parentProduct2 or use ID 1
             product = await Product.create({
-                idParent2: 1, // Adjust if needed
+                idParent2: parent2.idParent2,
                 namaProduk: 'Test Product - Payment Simulator',
                 descProduk: 'Produk dummy untuk testing payment',
                 kategoriHarga: 'Bernominal',
@@ -27,7 +40,7 @@ const createDummyOrder = async (req, res, next) => {
 
         // Create dummy order
         const dummyOrder = await Order.create({
-            idUser: req.body.idUser || 1, // Use provided or default
+            idUser: req.body.idUser || 1,
             idProduk: product.idProduk,
             namaProduk: product.namaProduk,
             hargaProduk: product.hargaJual,
