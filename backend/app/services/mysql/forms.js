@@ -47,11 +47,20 @@ const createForm = async (req) => {
 };
 
 // --- 2. GET ALL FORMS (readAll) ---
-const getAllForms = async () => {
+const getAllForms = async (req) => {
+    // Support filtering by formType (e.g., 'template', 'product', 'daftar_ulang')
+    const { formType } = req?.query || {};
+
+    let whereClause = {};
+    if (formType) {
+        whereClause.formType = formType;
+    }
+
     // Hanya mengambil data Form. Kita tidak perlu menyebutkan atribut jika ingin mengambil semua:
     const result = await Form.findAll({
+        where: whereClause,
         // Sesuaikan nama atribut sesuai Model: deskripsi dan status
-        attributes: ['idForm', 'namaForm', 'descForm', 'statusForm', 'tglDibuat'],
+        attributes: ['idForm', 'namaForm', 'descForm', 'statusForm', 'formType', 'tglDibuat'],
         include: [
             productInclude,
             {

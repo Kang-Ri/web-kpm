@@ -7,7 +7,7 @@ const FormService = require('../../../services/mysql/forms');
  */
 const getAllForms = async (req, res, next) => {
     try {
-        const result = await FormService.getAllForms();
+        const result = await FormService.getAllForms(req);
         res.status(StatusCodes.OK).json({
             message: "Data Formulir berhasil diambil.",
             data: result,
