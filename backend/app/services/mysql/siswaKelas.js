@@ -27,12 +27,14 @@ const siswaKelasIncludes = [
     {
         model: Siswa,
         as: 'siswa',
-        attributes: ['idSiswa', 'namaLengkap', 'noHp', 'email'],
+        attributes: ['idSiswa', 'namaLengkap'],
+        required: false
     },
     {
         model: ParentProduct2,
         as: 'ruangKelas',
-        attributes: ['idParent2', 'namaParent2', 'tahunAjaran', 'kapasitasMaksimal'],
+        attributes: ['idParent2', 'namaParent2'],
+        required: false
     }
 ];
 
