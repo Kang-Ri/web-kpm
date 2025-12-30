@@ -40,19 +40,9 @@ const orderIncludes = [
     {
         model: Product,
         as: 'product',
-        attributes: ['idProduk', 'namaProduk', 'hargaJual', 'kategoriHarga'],
+        attributes: ['idProduk', 'namaProduk', 'hargaJual', 'kategoriHarga', 'jenisProduk'],
         required: false, // LEFT JOIN (product bisa null jika dihapus)
-    },
-    {
-        model: OrderFormResponse,
-        as: 'formResponses',
-        attributes: ['idResponse', 'idField', 'nilaiJawaban'],
-        include: {
-            model: FormField,
-            as: 'formField',
-            attributes: ['idField', 'namaField', 'textDescription', 'tipeField'],
-        },
-    },
+    }
 ];
 
 // --- 1. CREATE ORDER (create) ---
