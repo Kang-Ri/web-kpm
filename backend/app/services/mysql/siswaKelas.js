@@ -31,7 +31,7 @@ const siswaKelasIncludes = [
     },
     {
         model: ParentProduct2,
-        as: 'ruangKelas',
+        as: 'parentProduct2', // Match alias in association.js
         required: false
     }
 ];
