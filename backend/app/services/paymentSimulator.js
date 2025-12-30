@@ -1,5 +1,3 @@
-const Order = require('../../api/v1/order/model');
-
 /**
  * Mock Payment Service (Simulator)
  * Mimics Midtrans behavior for development/testing
