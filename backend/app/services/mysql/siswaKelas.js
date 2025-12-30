@@ -22,8 +22,19 @@ const checkingKelas = async (idParent2) => {
     return checkKelas;
 };
 
-// Include configuration - TEMPORARILY EMPTY FOR DEBUGGING
-const siswaKelasIncludes = [];
+// Include configuration
+const siswaKelasIncludes = [
+    {
+        model: Siswa,
+        as: 'siswa',
+        required: false
+    },
+    {
+        model: ParentProduct2,
+        as: 'ruangKelas',
+        required: false
+    }
+];
 
 // --- 1. ENROLL SISWA KE KELAS (create) ---
 const enrollSiswa = async (req) => {
