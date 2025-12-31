@@ -72,9 +72,11 @@ const exportSiswaByMateri = async (idProduk) => {
 /**
  * Get list siswa yang punya akses ke materi
  * @param {number} idProduk - ID Materi/Product
- * @returns {Promise<Array>} - Array of siswa with access info
+ * @returns {Promise<Array>} - Array of siswa with access info + payment status
  */
 const getSiswaByMateri = async (idProduk) => {
+    const Order = require('../../api/v1/order/model');
+
     const aksesRecords = await AksesMateri.findAll({
         where: { idProduk },
         include: [
@@ -82,6 +84,13 @@ const getSiswaByMateri = async (idProduk) => {
                 model: Siswa,
                 as: 'siswa',
                 attributes: ['idSiswa', 'namaLengkap', 'noHp', 'email', 'jenjangKelas', 'asalSekolah'],
+                required: false
+            },
+            {
+                model: Order,
+                as: 'order',
+                attributes: ['idOrder', 'hargaFinal', 'statusPembayaran', 'tglOrder', 'paidAt'],
+                required: false
             }
         ],
         order: [['tanggalAkses', 'DESC']],

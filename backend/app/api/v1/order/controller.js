@@ -146,6 +146,74 @@ const destroy = async (req, res, next) => {
     }
 };
 
+// --- 7. Update Payment Status (Admin Only) ---
+const updatePaymentStatus = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { statusPembayaran } = req.body;
+
+        // Validate status
+        const validStatuses = ['Unpaid', 'Paid', 'Pending', 'Failed'];
+        if (!validStatuses.includes(statusPembayaran)) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                message: `Status pembayaran tidak valid. Pilihan: ${validStatuses.join(', ')}`
+            });
+        }
+
+        const Order = require('../../../api/v1/order/model');
+        const Product = require('../../../api/v1/product/model');
+
+        // Get order
+        const order = await Order.findOne({
+            where: { idOrder: id },
+            include: {
+                model: Product,
+                as: 'product',
+                attributes: ['jenisProduk']
+            }
+        });
+
+        if (!order) {
+            return res.status(StatusCodes.NOT_FOUND).json({
+                message: 'Order tidak ditemukan'
+            });
+        }
+
+        // Update status
+        const updateData = { statusPembayaran };
+        if (statusPembayaran === 'Paid' && !order.paidAt) {
+            updateData.paidAt = new Date();
+        }
+
+        await order.update(updateData);
+
+        // Auto-unlock materi if payment changed to Paid and product is Materi
+        if (statusPembayaran === 'Paid' && order.product?.jenisProduk === 'Materi') {
+            const AksesMateriService = require('../../../services/mysql/aksesMateri');
+
+            try {
+                await AksesMateriService.grantAccess({
+                    body: {
+                        idSiswa: order.idUser,
+                        idProduk: order.idProduk,
+                        idOrder: order.idOrder
+                    }
+                });
+            } catch (accessError) {
+                console.error('Error auto-granting access:', accessError.message);
+                // Continue even if access grant fails
+            }
+        }
+
+        res.status(StatusCodes.OK).json({
+            message: 'Status pembayaran berhasil diupdate',
+            data: order
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     create,
     index,
@@ -154,4 +222,5 @@ module.exports = {
     cancel,
     confirmPayment,
     destroy,
+    updatePaymentStatus,
 };

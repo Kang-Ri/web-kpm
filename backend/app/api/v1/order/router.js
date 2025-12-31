@@ -8,6 +8,7 @@ const {
     cancel,
     confirmPayment,
     destroy,
+    updatePaymentStatus,
 } = require('./controller');
 
 // Middleware auth (sesuaikan dengan middleware yang ada)
@@ -32,6 +33,9 @@ router.post('/:id/cancel', cancel);
 
 // POST /api/v1/cms/orders/:id/confirm-payment - Konfirmasi pembayaran & aktifkan enrollment (Admin only)
 router.post('/:id/confirm-payment', confirmPayment);
+
+// PATCH /api/v1/orders/:id/payment-status - Update payment status (Admin only)
+router.patch('/:id/payment-status', updatePaymentStatus);
 
 // --- Admin Routes ---
 // DELETE /api/v1/orders/:id - Menghapus order (hanya admin)
