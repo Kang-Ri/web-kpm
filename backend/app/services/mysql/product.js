@@ -29,6 +29,57 @@ const checkingFormOrder = async (idForm) => {
     }
 };
 
+// Helper untuk auto-unlock materi gratis ke semua siswa di kelas
+const autoUnlockFreeMateri = async (idProduk, idParent2) => {
+    try {
+        const SiswaKelas = require('../../api/v1/siswaKelas/model');
+        const AksesMateri = require('../../api/v1/aksesMateri/model');
+
+        // Get all active students in this kelas
+        const students = await SiswaKelas.findAll({
+            where: {
+                idParent2: idParent2,
+                statusEnrollment: 'Aktif'
+            },
+            attributes: ['idSiswa']
+        });
+
+        // Bulk grant access to all students
+        const promises = students.map(async (student) => {
+            // Check if access already exists
+            const existing = await AksesMateri.findOne({
+                where: {
+                    idSiswa: student.idSiswa,
+                    idProduk: idProduk
+                }
+            });
+
+            if (existing) {
+                // Update to Unlocked if exists
+                await existing.update({
+                    statusAkses: 'Unlocked',
+                    tanggalAkses: new Date()
+                });
+            } else {
+                // Create new access
+                await AksesMateri.create({
+                    idSiswa: student.idSiswa,
+                    idProduk: idProduk,
+                    idOrder: null, // No order for free materi
+                    statusAkses: 'Unlocked',
+                    tanggalAkses: new Date()
+                });
+            }
+        });
+
+        await Promise.all(promises);
+        console.log(`Auto-unlocked free materi ${idProduk} for ${students.length} students`);
+    } catch (error) {
+        console.error('Error in autoUnlockFreeMateri:', error.message);
+        // Don't throw error - let product creation/update succeed even if auto-unlock fails
+    }
+};
+
 // Konfigurasi Include untuk Form
 const formInclude = {
     model: Form,
@@ -150,6 +201,11 @@ const createProduct = async (req) => {
         statusProduk
     });
 
+    // Auto-unlock access for all students if kategoriHarga is 'Gratis' and jenisProduk is 'Materi'
+    if (kategoriHarga === 'Gratis' && jenisProduk === 'Materi') {
+        await autoUnlockFreeMateri(result.idProduk, idParent2);
+    }
+
     return result;
 };
 
@@ -196,7 +252,14 @@ const updateProduct = async (req) => {
     });
 
     // 6. Dapatkan data yang sudah di-update
-    return getOneProduct(req);
+    const updatedProduct = await getOneProduct(req);
+
+    // 7. Auto-unlock access if kategoriHarga changed to 'Gratis' and jenisProduk is 'Materi'
+    if (updateFields.kategoriHarga === 'Gratis' && updatedProduct.jenisProduk === 'Materi') {
+        await autoUnlockFreeMateri(updatedProduct.idProduk, updatedProduct.idParent2);
+    }
+
+    return updatedProduct;
 };
 
 // --- 5. DELETE PRODUCT (destroy) ---
