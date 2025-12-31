@@ -124,6 +124,10 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 tanggalPublish: value || null,
                 statusProduk: newStatus
             }));
+        } else if (name === 'kategoriHarga' && value === 'Gratis') {
+            // Clear form template selection when changing to Gratis
+            setSelectedTemplateId(undefined);
+            setFormData(prev => ({ ...prev, [name]: value }));
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
         }
@@ -347,20 +351,28 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                             </Button>
                         </div>
                     ) : (
-                        <select
-                            id="formTemplate"
-                            value={selectedTemplateId || ''}
-                            onChange={(e) => setSelectedTemplateId(e.target.value ? parseInt(e.target.value) : undefined)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            disabled={loadingForms}
-                        >
-                            <option value="">Pilih template form...</option>
-                            {availableForms.map((form) => (
-                                <option key={form.idForm} value={form.idForm}>
-                                    {form.namaForm} ({form.fields?.length || 0} fields)
-                                </option>
-                            ))}
-                        </select>
+                        <>
+                            <select
+                                id="formTemplate"
+                                value={selectedTemplateId || ''}
+                                onChange={(e) => setSelectedTemplateId(e.target.value ? parseInt(e.target.value) : undefined)}
+                                className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${formData.kategoriHarga === 'Gratis' ? 'bg-gray-100 cursor-not-allowed opacity-60' : ''
+                                    }`}
+                                disabled={loadingForms || formData.kategoriHarga === 'Gratis'}
+                            >
+                                <option value="">Pilih template form...</option>
+                                {availableForms.map((form) => (
+                                    <option key={form.idForm} value={form.idForm}>
+                                        {form.namaForm} ({form.fields?.length || 0} fields)
+                                    </option>
+                                ))}
+                            </select>
+                            {formData.kategoriHarga === 'Gratis' && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                    ℹ️ Form tidak diperlukan untuk materi gratis
+                                </p>
+                            )}
+                        </>
                     )}
                     {selectedTemplateId && !product && (
                         <p className="text-xs text-blue-600 mt-1">
