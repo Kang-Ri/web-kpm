@@ -25,4 +25,6 @@ export const orderService = {
     getAll: (params?: any) => api.get('/cms/order', { params }),
     getById: (id: number) => api.get(`/cms/order/${id}`),
     updateStatus: (id: number, data: any) => api.patch(`/cms/order/${id}/status`, data),
+    updatePaymentStatus: (id: number, statusPembayaran: string) =>
+        api.patch(`/cms/order/${id}/payment-status`, { statusPembayaran }),
 };

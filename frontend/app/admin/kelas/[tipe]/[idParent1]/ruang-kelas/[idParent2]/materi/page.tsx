@@ -6,13 +6,14 @@ import { DashboardLayout } from '@/components/layouts';
 import { Card, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Plus, Edit, Trash2, FileText, Upload, FileUp } from 'lucide-react';
+import { Plus, Edit, Trash2, FileText, Upload, FileUp, DollarSign } from 'lucide-react';
 import { productService, Product, CreateProductDto } from '@/lib/api/product.service';
 import { parentProduct2Service } from '@/lib/api/parentProduct2.service';
 import { parentProduct1Service } from '@/lib/api/parentProduct1.service';
 import { ProductFormModal } from '@/components/kelas/ProductFormModal';
 import { ImportMateriModal } from '@/components/kelas/ImportMateriModal';
 import { BulkImportButtonModal } from '@/components/kelas/BulkImportButtonModal';
+import MateriPaymentStatusModal from '@/components/kelas/MateriPaymentStatusModal';
 import { formService } from '@/lib/api/form.service';
 import { showSuccess, showError } from '@/lib/utils/toast';
 
@@ -37,6 +38,10 @@ function MateriContent() {
     // Import modal states
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [isBulkImportButtonModalOpen, setIsBulkImportButtonModalOpen] = useState(false);
+
+    // Payment status modal states
+    const [isPaymentStatusModalOpen, setIsPaymentStatusModalOpen] = useState(false);
+    const [selectedPaymentMateri, setSelectedPaymentMateri] = useState<Product | null>(null);
 
     useEffect(() => {
         setMounted(true);
@@ -390,6 +395,16 @@ function MateriContent() {
                                                         </button>
                                                     )}
                                                     <button
+                                                        className="p-2 hover:bg-green-50 rounded"
+                                                        title="Payment Status"
+                                                        onClick={() => {
+                                                            setSelectedPaymentMateri(materi);
+                                                            setIsPaymentStatusModalOpen(true);
+                                                        }}
+                                                    >
+                                                        <DollarSign className="h-4 w-4 text-green-600" />
+                                                    </button>
+                                                    <button
                                                         className="p-2 hover:bg-red-50 rounded"
                                                         title="Delete"
                                                         onClick={() => handleDelete(materi.idProduk)}
@@ -438,6 +453,19 @@ function MateriContent() {
                     namaProduk: m.namaProduk
                 }))}
             />
+
+            {/* Payment Status Modal */}
+            {selectedPaymentMateri && (
+                <MateriPaymentStatusModal
+                    isOpen={isPaymentStatusModalOpen}
+                    onClose={() => {
+                        setIsPaymentStatusModalOpen(false);
+                        setSelectedPaymentMateri(null);
+                    }}
+                    idProduk={selectedPaymentMateri.idProduk}
+                    namaProduk={selectedPaymentMateri.namaProduk}
+                />
+            )}
         </div >
     );
 }
