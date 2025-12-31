@@ -76,7 +76,7 @@ const exportSiswaByMateri = async (idProduk) => {
  */
 const getSiswaByMateri = async (idProduk) => {
     const { Sequelize } = require('sequelize');
-    const sequelize = require('../../../db');
+    const sequelize = require('../../../db/index');
 
     // Get the materi's parent first
     const materi = await Product.findOne({
