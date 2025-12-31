@@ -161,9 +161,20 @@ function MateriContent() {
                 const response = await productService.update(selectedMateri.idProduk, submitData);
                 console.log('✅ Update Response:', response);
 
+                // Get updated product data from response (has complete data)
+                const updatedProduct = response.data?.data || response.data;
+                const productHasForm = updatedProduct?.idForm || selectedMateri.idForm;
+
+                console.log('🔍 Form check:', {
+                    selectedTemplateId,
+                    productHasForm,
+                    updatedProductIdForm: updatedProduct?.idForm,
+                    selectedMateriIdForm: selectedMateri.idForm
+                });
+
                 // Handle form duplication if template was selected during edit
                 // BUT only if product doesn't already have a form!
-                if (selectedTemplateId && !selectedMateri.idForm) {
+                if (selectedTemplateId && !productHasForm) {
                     try {
                         console.log(`🔗 Duplicating form template ${selectedTemplateId} for materi ${selectedMateri.idProduk}`);
                         await formService.duplicateFormForProduct(selectedMateri.idProduk, selectedTemplateId, 'product');
@@ -172,7 +183,7 @@ function MateriContent() {
                         console.error('❌ Form duplication error:', formError);
                         showError(formError.response?.data?.message || 'Materi diperbarui tapi gagal menduplikasi form');
                     }
-                } else if (selectedTemplateId && selectedMateri.idForm) {
+                } else if (selectedTemplateId && productHasForm) {
                     // Product already has form, just show success for materi update
                     console.log('ℹ️ Product already has form, skipping duplication');
                     showSuccess('Materi berhasil diperbarui (Form existing digunakan)');
