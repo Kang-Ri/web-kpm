@@ -36,12 +36,29 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
         tanggalPublish: null,
     });
 
+    // Track initial state for change detection
+    const [initialFormData, setInitialFormData] = useState<CreateProductDto | null>(null);
+    const [initialTemplateId, setInitialTemplateId] = useState<number | undefined>(undefined);
+
     // Form templates state
     const [availableForms, setAvailableForms] = useState<Form[]>([]);
     const [loadingForms, setLoadingForms] = useState(false);
     const [selectedTemplateId, setSelectedTemplateId] = useState<number | undefined>(undefined);
     const [attachedFormName, setAttachedFormName] = useState<string | null>(null);
     const [isAttachingForm, setIsAttachingForm] = useState(false);
+
+    // Check if form has changes
+    const hasChanges = (): boolean => {
+        if (!initialFormData) return false; // Creating new, always allow submit
+
+        // Compare form data
+        const formChanged = JSON.stringify(formData) !== JSON.stringify(initialFormData);
+
+        // Compare template selection (only if not editing existing product with attached form)
+        const templateChanged = !product?.idForm && selectedTemplateId !== initialTemplateId;
+
+        return formChanged || templateChanged;
+    };
 
     // Load available form templates
     useEffect(() => {
@@ -70,7 +87,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 ? new Date(product.tanggalPublish).toISOString().slice(0, 16)
                 : '';
 
-            setFormData({
+            const loadedData = {
                 idParent2: product.idParent2,
                 namaProduk: product.namaProduk || '',
                 descProduk: product.descProduk || '',
@@ -82,15 +99,20 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 refCode: product.refCode || '',
                 statusProduk: product.statusProduk || 'Draft',
                 tanggalPublish: formattedDate || null,
-            });
+            };
+
+            setFormData(loadedData);
+            setInitialFormData(loadedData); // Store initial state for change detection
 
             // Fetch attached form name if exists
             if (product.customForm) {
                 setAttachedFormName(product.customForm.namaForm);
                 setSelectedTemplateId(product.idForm || undefined);
+                setInitialTemplateId(product.idForm || undefined); // Store initial template
             } else {
                 setAttachedFormName(null);
                 setSelectedTemplateId(undefined);
+                setInitialTemplateId(undefined);
             }
         } else {
             setFormData({
@@ -106,8 +128,10 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 statusProduk: 'Draft',
                 tanggalPublish: null,
             });
+            setInitialFormData(null); // No initial state for new product
             setAttachedFormName(null);
             setSelectedTemplateId(undefined);
+            setInitialTemplateId(undefined);
         }
     }, [product, isOpen]);
 
