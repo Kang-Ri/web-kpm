@@ -70,15 +70,31 @@ const exportSiswaByMateri = async (idProduk) => {
 };
 
 /**
- * Get list siswa yang punya akses ke materi
+ * Get list siswa yang enrolled di kelas, dengan info akses & payment untuk materi tertentu
  * @param {number} idProduk - ID Materi/Product
- * @returns {Promise<Array>} - Array of siswa with access info + payment status
+ * @returns {Promise<Array>} - Array of siswa enrolled in class with access info + payment status
  */
 const getSiswaByMateri = async (idProduk) => {
     const Order = require('../../api/v1/order/model');
+    const SiswaKelas = require('../../api/v1/siswaKelas/model');
+    const ParentProduct2 = require('../../api/v1/parentProduct2/model');
 
-    const aksesRecords = await AksesMateri.findAll({
+    // First, get the materi's parent (kelas/ruang kelas)
+    const materi = await Product.findOne({
         where: { idProduk },
+        attributes: ['idProduk', 'idParent2', 'namaProduk']
+    });
+
+    if (!materi) {
+        throw new Error('Materi tidak ditemukan');
+    }
+
+    // Get all students enrolled in this kelas
+    const siswaKelasRecords = await SiswaKelas.findAll({
+        where: {
+            idParent2: materi.idParent2,
+            statusEnrollment: 'Aktif' // Only active students
+        },
         include: [
             {
                 model: Siswa,
@@ -87,16 +103,45 @@ const getSiswaByMateri = async (idProduk) => {
                 required: false
             },
             {
+                model: ParentProduct2,
+                as: 'parentProduct2',
+                attributes: ['idParent2', 'namaParent2'],
+                required: false
+            }
+        ],
+        order: [['tanggalMasuk', 'DESC']],
+    });
+
+    // For each student, get their AksesMateri and Order for this specific materi
+    const results = await Promise.all(siswaKelasRecords.map(async (siswaKelas) => {
+        if (!siswaKelas.siswa) return null;
+
+        // Get AksesMateri for this student and materi
+        const aksesMateri = await AksesMateri.findOne({
+            where: {
+                idSiswa: siswaKelas.siswa.idSiswa,
+                idProduk: idProduk
+            },
+            include: {
                 model: Order,
                 as: 'order',
                 attributes: ['idOrder', 'hargaFinal', 'statusPembayaran', 'tglOrder', 'paidAt'],
                 required: false
             }
-        ],
-        order: [['tanggalAkses', 'DESC']],
-    });
+        });
 
-    return aksesRecords;
+        return {
+            idAksesMateri: aksesMateri?.idAksesMateri || null,
+            statusAkses: aksesMateri?.statusAkses || 'Locked',
+            tanggalAkses: aksesMateri?.tanggalAkses || null,
+            siswa: siswaKelas.siswa,
+            order: aksesMateri?.order || null,
+            ruangKelas: siswaKelas.parentProduct2
+        };
+    }));
+
+    // Filter out null results and return
+    return results.filter(r => r !== null);
 };
 
 module.exports = {
