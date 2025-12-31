@@ -105,10 +105,12 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
             setInitialFormData(loadedData); // Store initial state for change detection
 
             // Fetch attached form name if exists
-            if (product.customForm) {
-                setAttachedFormName(product.customForm.namaForm);
-                setSelectedTemplateId(product.idForm || undefined);
-                setInitialTemplateId(product.idForm || undefined); // Store initial template
+            if (product.idForm) {
+                // Product has form attached
+                const formName = product.customForm?.namaForm || `Form ID: ${product.idForm}`;
+                setAttachedFormName(formName);
+                setSelectedTemplateId(product.idForm);
+                setInitialTemplateId(product.idForm); // Store initial template
             } else {
                 setAttachedFormName(null);
                 setSelectedTemplateId(undefined);
