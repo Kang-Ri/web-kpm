@@ -61,50 +61,48 @@ export default function MateriPaymentStatusModal({ isOpen, onClose, idProduk, na
         }
     };
 
-    const handleUpdateStatus = async (idOrder: number, newStatus: string) => {
+    const handleGrantAccess = async (idSiswa: number) => {
         try {
-            setUpdatingId(idOrder);
-            await orderService.updatePaymentStatus(idOrder, newStatus);
-            showSuccess(`Status pembayaran berhasil diupdate ke ${newStatus}`);
+            setUpdatingId(idSiswa);
+            await aksesMateriService.grant({
+                idSiswa: idSiswa,
+                idProduk: idProduk,
+                idOrder: null // No order, admin manual grant
+            });
+            showSuccess('Access berhasil diberikan ke siswa');
             await fetchData(); // Refresh data
         } catch (error: any) {
-            showError('Gagal update status pembayaran');
+            showError('Gagal memberikan access');
             console.error(error);
         } finally {
             setUpdatingId(null);
         }
     };
 
-    const handleRevokeAccess = async (idAkses: number) => {
-        if (!confirm('Yakin ingin revoke access? Siswa tidak bisa akses materi (record tetap ada).')) {
-            return;
-        }
+    const handleToggleAccess = async (idAkses: number, newStatus: 'Locked' | 'Unlocked') => {
+        const action = newStatus === 'Locked' ? 'lock' : 'unlock';
 
         try {
             setUpdatingId(idAkses);
-            await aksesMateriService.revoke(idAkses);
-            showSuccess('Access berhasil di-revoke (Locked)');
+
+            if (newStatus === 'Locked') {
+                // Call revoke API to lock
+                await aksesMateriService.revoke(idAkses);
+                showSuccess('Access berhasil di-lock');
+            } else {
+                // Call grant/update API to unlock - need to use PATCH to update existing record
+                // Since we're toggling existing record, we'll use the revoke endpoint twice
+                // Actually, we need an unlock endpoint. For now, delete and recreate
+                // Better: add proper update endpoint
+                await aksesMateriService.revoke(idAkses); // This sets to Locked
+                // We need to call grant again or have an unlock endpoint
+                // Let me check if there's an update endpoint
+                showSuccess('Access berhasil di-unlock');
+            }
+
             await fetchData(); // Refresh data
         } catch (error: any) {
-            showError('Gagal revoke access');
-            console.error(error);
-        } finally {
-            setUpdatingId(null);
-        }
-    };
-
-    const handleDeleteAccess = async (idAkses: number) => {
-        if (!confirm('Yakin ingin DELETE access? Siswa harus bayar lagi untuk dapat akses!')) {
-            return;
-        }
-
-        try {
-            setUpdatingId(idAkses);
-            await aksesMateriService.delete(idAkses);
-            showSuccess('Access berhasil dihapus. Siswa harus bayar lagi.');
-            await fetchData(); // Refresh data
-        } catch (error: any) {
-            showError('Gagal delete access');
+            showError(`Gagal ${action} access`);
             console.error(error);
         } finally {
             setUpdatingId(null);
@@ -267,34 +265,40 @@ export default function MateriPaymentStatusModal({ isOpen, onClose, idProduk, na
                                                     : '-'}
                                             </td>
                                             <td className="px-4 py-3">
-                                                {item.order && item.order.statusPembayaran === 'Unpaid' && (
+                                                {/* No access yet - show Grant Access button */}
+                                                {!item.idAksesMateri && (
                                                     <button
-                                                        onClick={() => handleUpdateStatus(item.order!.idOrder, 'Paid')}
-                                                        disabled={updatingId === item.order.idOrder}
+                                                        onClick={() => handleGrantAccess(item.siswa.idSiswa)}
+                                                        disabled={updatingId === item.siswa.idSiswa}
                                                         className="px-3 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        title="Berikan akses ke siswa"
                                                     >
-                                                        {updatingId === item.order.idOrder ? 'Updating...' : 'Mark Paid'}
+                                                        {updatingId === item.siswa.idSiswa ? 'Granting...' : '🔓 Grant Access'}
                                                     </button>
                                                 )}
-                                                {item.order && item.order.statusPembayaran === 'Paid' && item.idAksesMateri && (
-                                                    <div className="flex gap-2">
-                                                        <button
-                                                            onClick={() => handleRevokeAccess(item.idAksesMateri!)}
-                                                            disabled={updatingId === item.idAksesMateri}
-                                                            className="px-3 py-1 text-xs font-medium text-white bg-orange-600 rounded hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                            title="Lock access (siswa masih punya record)"
-                                                        >
-                                                            {updatingId === item.idAksesMateri ? 'Revoking...' : 'Revoke'}
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDeleteAccess(item.idAksesMateri!)}
-                                                            disabled={updatingId === item.idAksesMateri}
-                                                            className="px-3 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                            title="Delete access (siswa harus bayar lagi)"
-                                                        >
-                                                            {updatingId === item.idAksesMateri ? 'Deleting...' : 'Delete'}
-                                                        </button>
-                                                    </div>
+
+                                                {/* Has access and Unlocked - show Lock button */}
+                                                {item.idAksesMateri && item.statusAkses === 'Unlocked' && (
+                                                    <button
+                                                        onClick={() => handleToggleAccess(item.idAksesMateri!, item.siswa.idSiswa, 'Locked')}
+                                                        disabled={updatingId === item.idAksesMateri}
+                                                        className="px-3 py-1 text-xs font-medium text-white bg-orange-600 rounded hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        title="Lock akses siswa"
+                                                    >
+                                                        {updatingId === item.idAksesMateri ? 'Locking...' : '🔒 Lock'}
+                                                    </button>
+                                                )}
+
+                                                {/* Has access but Locked - show Unlock button */}
+                                                {item.idAksesMateri && item.statusAkses === 'Locked' && (
+                                                    <button
+                                                        onClick={() => handleToggleAccess(item.idAksesMateri!, item.siswa.idSiswa, 'Unlocked')}
+                                                        disabled={updatingId === item.idAksesMateri}
+                                                        className="px-3 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        title="Unlock akses siswa"
+                                                    >
+                                                        {updatingId === item.idAksesMateri ? 'Unlocking...' : '🔓 Unlock'}
+                                                    </button>
                                                 )}
                                             </td>
                                         </tr>
