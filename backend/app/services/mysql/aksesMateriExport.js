@@ -75,11 +75,10 @@ const exportSiswaByMateri = async (idProduk) => {
  * @returns {Promise<Array>} - Array of siswa enrolled in class with access info + payment status
  */
 const getSiswaByMateri = async (idProduk) => {
-    const Order = require('../../api/v1/order/model');
-    const SiswaKelas = require('../../api/v1/siswaKelas/model');
-    const ParentProduct2 = require('../../api/v1/parentProduct2/model');
+    const { Sequelize } = require('sequelize');
+    const sequelize = require('../../../db');
 
-    // First, get the materi's parent (kelas/ruang kelas)
+    // Get the materi's parent first
     const materi = await Product.findOne({
         where: { idProduk },
         attributes: ['idProduk', 'idParent2', 'namaProduk']
@@ -89,59 +88,70 @@ const getSiswaByMateri = async (idProduk) => {
         throw new Error('Materi tidak ditemukan');
     }
 
-    // Get all students enrolled in this kelas
-    const siswaKelasRecords = await SiswaKelas.findAll({
-        where: {
-            idParent2: materi.idParent2,
-            statusEnrollment: 'Aktif' // Only active students
+    // Use raw query with proper JOINs to avoid N+1 and association issues
+    const query = `
+        SELECT 
+            sk.idSiswaKelas,
+            sk.idSiswa,
+            sk.tanggalMasuk,
+            sk.statusEnrollment,
+            s.namaLengkap,
+            s.email,
+            s.noHp,
+            s.jenjangKelas,
+            s.asalSekolah,
+            pp2.namaParent2,
+            am.idAksesMateri,
+            am.statusAkses,
+            am.tanggalAkses,
+            o.idOrder,
+            o.hargaFinal,
+            o.statusPembayaran,
+            o.tglOrder,
+            o.paidAt
+        FROM siswaKelas sk
+        LEFT JOIN siswa s ON sk.idSiswa = s.idSiswa
+        LEFT JOIN parentProduct2 pp2 ON sk.idParent2 = pp2.idParent2
+        LEFT JOIN aksesMateri am ON sk.idSiswa = am.idSiswa AND am.idProduk = :idProduk
+        LEFT JOIN \`order\` o ON am.idOrder = o.idOrder
+        WHERE sk.idParent2 = :idParent2
+            AND sk.statusEnrollment = 'Aktif'
+            AND s.idSiswa IS NOT NULL
+        ORDER BY sk.tanggalMasuk DESC
+    `;
+
+    const results = await sequelize.query(query, {
+        replacements: {
+            idProduk: idProduk,
+            idParent2: materi.idParent2
         },
-        include: [
-            {
-                model: Siswa,
-                as: 'siswa',
-                attributes: ['idSiswa', 'namaLengkap', 'noHp', 'email', 'jenjangKelas', 'asalSekolah'],
-                required: false
-            },
-            {
-                model: ParentProduct2,
-                as: 'parentProduct2',
-                attributes: ['idParent2', 'namaParent2'],
-                required: false
-            }
-        ],
-        order: [['tanggalMasuk', 'DESC']],
+        type: Sequelize.QueryTypes.SELECT
     });
 
-    // For each student, get their AksesMateri and Order for this specific materi
-    const results = await Promise.all(siswaKelasRecords.map(async (siswaKelas) => {
-        if (!siswaKelas.siswa) return null;
-
-        // Get AksesMateri for this student and materi
-        const aksesMateri = await AksesMateri.findOne({
-            where: {
-                idSiswa: siswaKelas.siswa.idSiswa,
-                idProduk: idProduk
-            },
-            include: {
-                model: Order,
-                as: 'order',
-                attributes: ['idOrder', 'hargaFinal', 'statusPembayaran', 'tglOrder', 'paidAt'],
-                required: false
-            }
-        });
-
-        return {
-            idAksesMateri: aksesMateri?.idAksesMateri || null,
-            statusAkses: aksesMateri?.statusAkses || 'Locked',
-            tanggalAkses: aksesMateri?.tanggalAkses || null,
-            siswa: siswaKelas.siswa,
-            order: aksesMateri?.order || null,
-            ruangKelas: siswaKelas.parentProduct2
-        };
+    // Transform raw results to match expected format
+    return results.map(row => ({
+        idAksesMateri: row.idAksesMateri || null,
+        statusAkses: row.statusAkses || 'Locked',
+        tanggalAkses: row.tanggalAkses || null,
+        siswa: {
+            idSiswa: row.idSiswa,
+            namaLengkap: row.namaLengkap,
+            email: row.email,
+            noHp: row.noHp,
+            jenjangKelas: row.jenjangKelas,
+            asalSekolah: row.asalSekolah
+        },
+        order: row.idOrder ? {
+            idOrder: row.idOrder,
+            hargaFinal: row.hargaFinal,
+            statusPembayaran: row.statusPembayaran,
+            tglOrder: row.tglOrder,
+            paidAt: row.paidAt
+        } : null,
+        ruangKelas: {
+            namaParent2: row.namaParent2
+        }
     }));
-
-    // Filter out null results and return
-    return results.filter(r => r !== null);
 };
 
 module.exports = {
