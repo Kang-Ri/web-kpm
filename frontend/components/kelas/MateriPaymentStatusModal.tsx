@@ -52,7 +52,7 @@ export default function MateriPaymentStatusModal({ isOpen, onClose, idProduk, na
         try {
             setLoading(true);
             const response = await aksesMateriService.getByProduct(idProduk);
-            setData(response.data || []);
+            setData(response.data.data || []);
         } catch (error: any) {
             showError('Gagal memuat data siswa');
             console.error(error);
@@ -149,8 +149,8 @@ export default function MateriPaymentStatusModal({ isOpen, onClose, idProduk, na
                         <button
                             onClick={() => setFilter('all')}
                             className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${filter === 'all'
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-white text-gray-700 hover:bg-gray-100'
                                 }`}
                         >
                             Semua ({data.length})
@@ -158,8 +158,8 @@ export default function MateriPaymentStatusModal({ isOpen, onClose, idProduk, na
                         <button
                             onClick={() => setFilter('paid')}
                             className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${filter === 'paid'
-                                    ? 'bg-green-600 text-white'
-                                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                                ? 'bg-green-600 text-white'
+                                : 'bg-white text-gray-700 hover:bg-gray-100'
                                 }`}
                         >
                             Paid ({data.filter(d => d.order?.statusPembayaran === 'Paid').length})
@@ -167,8 +167,8 @@ export default function MateriPaymentStatusModal({ isOpen, onClose, idProduk, na
                         <button
                             onClick={() => setFilter('unpaid')}
                             className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${filter === 'unpaid'
-                                    ? 'bg-red-600 text-white'
-                                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                                ? 'bg-red-600 text-white'
+                                : 'bg-white text-gray-700 hover:bg-gray-100'
                                 }`}
                         >
                             Unpaid ({data.filter(d => d.order?.statusPembayaran === 'Unpaid').length})
@@ -176,8 +176,8 @@ export default function MateriPaymentStatusModal({ isOpen, onClose, idProduk, na
                         <button
                             onClick={() => setFilter('no-order')}
                             className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${filter === 'no-order'
-                                    ? 'bg-gray-600 text-white'
-                                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                                ? 'bg-gray-600 text-white'
+                                : 'bg-white text-gray-700 hover:bg-gray-100'
                                 }`}
                         >
                             No Order ({data.filter(d => !d.order).length})
@@ -209,7 +209,7 @@ export default function MateriPaymentStatusModal({ isOpen, onClose, idProduk, na
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
                                     {filteredData.map((item, index) => (
-                                        <tr key={item.idAksesMateri} className="hover:bg-gray-50">
+                                        <tr key={item.siswa.idSiswa} className="hover:bg-gray-50">
                                             <td className="px-4 py-3 text-sm text-gray-900">{index + 1}</td>
                                             <td className="px-4 py-3 text-sm font-medium text-gray-900">
                                                 {item.siswa?.namaLengkap || '-'}
