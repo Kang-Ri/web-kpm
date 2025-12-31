@@ -101,7 +101,7 @@ const getSiswaByMateri = async (idProduk) => {
             s.jenjangKelas,
             s.asalSekolah,
             pp2.namaParent2,
-            am.idAksesMateri,
+            am.idAkses,
             am.statusAkses,
             am.tanggalAkses,
             o.idOrder,
@@ -130,7 +130,7 @@ const getSiswaByMateri = async (idProduk) => {
 
     // Transform raw results to match expected format
     return results.map(row => ({
-        idAksesMateri: row.idAksesMateri || null,
+        idAksesMateri: row.idAkses || null,
         statusAkses: row.statusAkses || 'Locked',
         tanggalAkses: row.tanggalAkses || null,
         siswa: {
