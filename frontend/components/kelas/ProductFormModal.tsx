@@ -423,7 +423,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                         variant="primary"
                         type="submit"
                         isLoading={isLoading}
-                        disabled={isLoading}
+                        disabled={isLoading || (product && !hasChanges())}
                     >
                         {product ? 'Update' : 'Simpan'}
                     </Button>
