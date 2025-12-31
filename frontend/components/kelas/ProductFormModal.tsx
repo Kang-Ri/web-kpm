@@ -380,9 +380,9 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                                 id="formTemplate"
                                 value={selectedTemplateId || ''}
                                 onChange={(e) => setSelectedTemplateId(e.target.value ? parseInt(e.target.value) : undefined)}
-                                className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${formData.kategoriHarga === 'Gratis' ? 'bg-gray-100 cursor-not-allowed opacity-60' : ''
+                                className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${formData.kategoriHarga === 'Gratis' || product?.idForm ? 'bg-gray-100 cursor-not-allowed opacity-60' : ''
                                     }`}
-                                disabled={loadingForms || formData.kategoriHarga === 'Gratis'}
+                                disabled={loadingForms || formData.kategoriHarga === 'Gratis' || !!product?.idForm}
                             >
                                 <option value="">Pilih template form...</option>
                                 {availableForms.map((form) => (
@@ -394,6 +394,11 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                             {formData.kategoriHarga === 'Gratis' && (
                                 <p className="text-xs text-gray-500 mt-1">
                                     ℹ️ Form tidak diperlukan untuk materi gratis
+                                </p>
+                            )}
+                            {product?.idForm && formData.kategoriHarga !== 'Gratis' && (
+                                <p className="text-xs text-blue-600 mt-1">
+                                    ℹ️ Materi sudah memiliki form. Gunakan tombol "Edit Form" untuk mengubah.
                                 </p>
                             )}
                         </>
