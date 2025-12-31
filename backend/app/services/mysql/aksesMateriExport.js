@@ -90,7 +90,7 @@ const getSiswaByMateri = async (idProduk) => {
 
     // Use raw query with proper JOINs to avoid N+1 and association issues
     const query = `
-        SELECT 
+        SELECT DISTINCT
             sk.idSiswaKelas,
             sk.idSiswa,
             sk.tanggalMasuk,

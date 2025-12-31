@@ -209,7 +209,7 @@ export default function MateriPaymentStatusModal({ isOpen, onClose, idProduk, na
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
                                     {filteredData.map((item, index) => (
-                                        <tr key={item.siswa.idSiswa} className="hover:bg-gray-50">
+                                        <tr key={`${item.siswa.idSiswa}-${item.idAksesMateri || 'null'}`} className="hover:bg-gray-50">
                                             <td className="px-4 py-3 text-sm text-gray-900">{index + 1}</td>
                                             <td className="px-4 py-3 text-sm font-medium text-gray-900">
                                                 {item.siswa?.namaLengkap || '-'}
