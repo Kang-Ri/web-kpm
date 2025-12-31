@@ -90,7 +90,7 @@ export const formService = {
         idFormTemplate: number,
         formType: 'product' | 'daftar_ulang' = 'product'
     ): Promise<{ data: Form }> => {
-        return apiClient.post(`/cms/forms/product/${idProduk}/duplicate-form`, {
+        return apiClient.post(`/cms/product/${idProduk}/duplicate-form`, {
             idFormTemplate,
             formType
         });

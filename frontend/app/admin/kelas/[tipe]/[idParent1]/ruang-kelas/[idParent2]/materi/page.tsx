@@ -162,7 +162,8 @@ function MateriContent() {
                 console.log('✅ Update Response:', response);
 
                 // Handle form duplication if template was selected during edit
-                if (selectedTemplateId) {
+                // BUT only if product doesn't already have a form!
+                if (selectedTemplateId && !selectedMateri.idForm) {
                     try {
                         console.log(`🔗 Duplicating form template ${selectedTemplateId} for materi ${selectedMateri.idProduk}`);
                         await formService.duplicateFormForProduct(selectedMateri.idProduk, selectedTemplateId, 'product');
@@ -171,6 +172,10 @@ function MateriContent() {
                         console.error('❌ Form duplication error:', formError);
                         showError(formError.response?.data?.message || 'Materi diperbarui tapi gagal menduplikasi form');
                     }
+                } else if (selectedTemplateId && selectedMateri.idForm) {
+                    // Product already has form, just show success for materi update
+                    console.log('ℹ️ Product already has form, skipping duplication');
+                    showSuccess('Materi berhasil diperbarui (Form existing digunakan)');
                 } else {
                     showSuccess('Materi berhasil diperbarui');
                 }
