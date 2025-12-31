@@ -263,41 +263,60 @@ export default function MateriPaymentStatusModal({ isOpen, onClose, idProduk, na
                                                     : '-'}
                                             </td>
                                             <td className="px-4 py-3">
-                                                {/* No access yet - show Grant Access button */}
-                                                {!item.idAksesMateri && (
+                                                {/* Show toggle switch for all students - visual state matches actual state */}
+                                                <div className="flex items-center gap-3">
+                                                    {/* Toggle Switch */}
                                                     <button
-                                                        onClick={() => handleGrantAccess(item.siswa.idSiswa)}
-                                                        disabled={updatingId === item.siswa.idSiswa}
-                                                        className="px-3 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                        title="Berikan akses ke siswa"
+                                                        onClick={() => {
+                                                            if (!item.idAksesMateri) {
+                                                                // No access yet - grant access
+                                                                handleGrantAccess(item.siswa.idSiswa);
+                                                            } else {
+                                                                // Has access - toggle status
+                                                                const newStatus = item.statusAkses === 'Unlocked' ? 'Locked' : 'Unlocked';
+                                                                handleToggleAccess(item.idAksesMateri, item.siswa.idSiswa, newStatus);
+                                                            }
+                                                        }}
+                                                        disabled={updatingId === (item.idAksesMateri || item.siswa.idSiswa)}
+                                                        className={`
+                                                            relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+                                                            ${!item.idAksesMateri || item.statusAkses === 'Locked'
+                                                                ? 'bg-gray-300'
+                                                                : 'bg-green-500'}
+                                                            ${updatingId === (item.idAksesMateri || item.siswa.idSiswa) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                                                        `}
+                                                        title={
+                                                            !item.idAksesMateri
+                                                                ? 'No access - Click to grant'
+                                                                : item.statusAkses === 'Unlocked'
+                                                                    ? 'Unlocked - Click to lock'
+                                                                    : 'Locked - Click to unlock'
+                                                        }
                                                     >
-                                                        {updatingId === item.siswa.idSiswa ? 'Granting...' : '🔓 Grant Access'}
+                                                        <span
+                                                            className={`
+                                                                inline-block h-4 w-4 transform rounded-full bg-white transition-transform
+                                                                ${!item.idAksesMateri || item.statusAkses === 'Locked'
+                                                                    ? 'translate-x-1'
+                                                                    : 'translate-x-6'}
+                                                            `}
+                                                        />
                                                     </button>
-                                                )}
 
-                                                {/* Has access and Unlocked - show Lock button */}
-                                                {item.idAksesMateri && item.statusAkses === 'Unlocked' && (
-                                                    <button
-                                                        onClick={() => handleToggleAccess(item.idAksesMateri!, item.siswa.idSiswa, 'Locked')}
-                                                        disabled={updatingId === item.idAksesMateri}
-                                                        className="px-3 py-1 text-xs font-medium text-white bg-orange-600 rounded hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                        title="Lock akses siswa"
-                                                    >
-                                                        {updatingId === item.idAksesMateri ? 'Locking...' : '🔒 Lock'}
-                                                    </button>
-                                                )}
-
-                                                {/* Has access but Locked - show Unlock button */}
-                                                {item.idAksesMateri && item.statusAkses === 'Locked' && (
-                                                    <button
-                                                        onClick={() => handleToggleAccess(item.idAksesMateri!, item.siswa.idSiswa, 'Unlocked')}
-                                                        disabled={updatingId === item.idAksesMateri}
-                                                        className="px-3 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                        title="Unlock akses siswa"
-                                                    >
-                                                        {updatingId === item.idAksesMateri ? 'Unlocking...' : '🔓 Unlock'}
-                                                    </button>
-                                                )}
+                                                    {/* Status Label */}
+                                                    <span className={`text-xs font-medium ${!item.idAksesMateri
+                                                            ? 'text-gray-500'
+                                                            : item.statusAkses === 'Unlocked'
+                                                                ? 'text-green-600'
+                                                                : 'text-gray-500'
+                                                        }`}>
+                                                        {!item.idAksesMateri
+                                                            ? 'No Access'
+                                                            : item.statusAkses === 'Unlocked'
+                                                                ? '🔓 Unlocked'
+                                                                : '🔒 Locked'}
+                                                    </span>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
