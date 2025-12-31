@@ -79,9 +79,7 @@ export default function MateriPaymentStatusModal({ isOpen, onClose, idProduk, na
         }
     };
 
-    const handleToggleAccess = async (idAkses: number, newStatus: 'Locked' | 'Unlocked') => {
-        const action = newStatus === 'Locked' ? 'lock' : 'unlock';
-
+    const handleToggleAccess = async (idAkses: number, idSiswa: number, newStatus: 'Locked' | 'Unlocked') => {
         try {
             setUpdatingId(idAkses);
 
@@ -90,18 +88,18 @@ export default function MateriPaymentStatusModal({ isOpen, onClose, idProduk, na
                 await aksesMateriService.revoke(idAkses);
                 showSuccess('Access berhasil di-lock');
             } else {
-                // Call grant/update API to unlock - need to use PATCH to update existing record
-                // Since we're toggling existing record, we'll use the revoke endpoint twice
-                // Actually, we need an unlock endpoint. For now, delete and recreate
-                // Better: add proper update endpoint
-                await aksesMateriService.revoke(idAkses); // This sets to Locked
-                // We need to call grant again or have an unlock endpoint
-                // Let me check if there's an update endpoint
+                // Call grant API - it will update existing record to Unlocked
+                await aksesMateriService.grant({
+                    idSiswa: idSiswa,
+                    idProduk: idProduk,
+                    idOrder: null
+                });
                 showSuccess('Access berhasil di-unlock');
             }
 
             await fetchData(); // Refresh data
         } catch (error: any) {
+            const action = newStatus === 'Locked' ? 'lock' : 'unlock';
             showError(`Gagal ${action} access`);
             console.error(error);
         } finally {
