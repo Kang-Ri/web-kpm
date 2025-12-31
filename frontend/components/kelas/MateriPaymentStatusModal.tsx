@@ -75,6 +75,42 @@ export default function MateriPaymentStatusModal({ isOpen, onClose, idProduk, na
         }
     };
 
+    const handleRevokeAccess = async (idAkses: number) => {
+        if (!confirm('Yakin ingin revoke access? Siswa tidak bisa akses materi (record tetap ada).')) {
+            return;
+        }
+
+        try {
+            setUpdatingId(idAkses);
+            await aksesMateriService.revoke(idAkses);
+            showSuccess('Access berhasil di-revoke (Locked)');
+            await fetchData(); // Refresh data
+        } catch (error: any) {
+            showError('Gagal revoke access');
+            console.error(error);
+        } finally {
+            setUpdatingId(null);
+        }
+    };
+
+    const handleDeleteAccess = async (idAkses: number) => {
+        if (!confirm('Yakin ingin DELETE access? Siswa harus bayar lagi untuk dapat akses!')) {
+            return;
+        }
+
+        try {
+            setUpdatingId(idAkses);
+            await aksesMateriService.delete(idAkses);
+            showSuccess('Access berhasil dihapus. Siswa harus bayar lagi.');
+            await fetchData(); // Refresh data
+        } catch (error: any) {
+            showError('Gagal delete access');
+            console.error(error);
+        } finally {
+            setUpdatingId(null);
+        }
+    };
+
     const getFilteredData = () => {
         if (filter === 'all') return data;
         return data.filter(item => {
@@ -240,8 +276,25 @@ export default function MateriPaymentStatusModal({ isOpen, onClose, idProduk, na
                                                         {updatingId === item.order.idOrder ? 'Updating...' : 'Mark Paid'}
                                                     </button>
                                                 )}
-                                                {item.order && item.order.statusPembayaran === 'Paid' && (
-                                                    <span className="text-xs text-gray-500">✓ Paid</span>
+                                                {item.order && item.order.statusPembayaran === 'Paid' && item.idAksesMateri && (
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() => handleRevokeAccess(item.idAksesMateri!)}
+                                                            disabled={updatingId === item.idAksesMateri}
+                                                            className="px-3 py-1 text-xs font-medium text-white bg-orange-600 rounded hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            title="Lock access (siswa masih punya record)"
+                                                        >
+                                                            {updatingId === item.idAksesMateri ? 'Revoking...' : 'Revoke'}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteAccess(item.idAksesMateri!)}
+                                                            disabled={updatingId === item.idAksesMateri}
+                                                            className="px-3 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            title="Delete access (siswa harus bayar lagi)"
+                                                        >
+                                                            {updatingId === item.idAksesMateri ? 'Deleting...' : 'Delete'}
+                                                        </button>
+                                                    </div>
                                                 )}
                                             </td>
                                         </tr>
