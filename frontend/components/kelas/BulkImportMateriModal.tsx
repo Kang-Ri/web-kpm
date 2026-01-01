@@ -44,10 +44,17 @@ export const BulkImportMateriModal: React.FC<BulkImportMateriModalProps> = ({
         const loadForms = async () => {
             try {
                 setLoadingForms(true);
+                console.log('🔄 Loading form templates...');
                 const response = await formService.getAll({ formType: 'template' });
-                setFormTemplates(response.data || []);
+                console.log('📋 Form templates response:', response);
+
+                // Backend returns { data: [...] }, but axios already unwraps to response.data
+                const templates = response.data?.data || response.data || [];
+                console.log('✅ Form templates loaded:', templates);
+
+                setFormTemplates(templates);
             } catch (error) {
-                console.error('Failed to load form templates:', error);
+                console.error('❌ Failed to load form templates:', error);
             } finally {
                 setLoadingForms(false);
             }
