@@ -64,20 +64,25 @@ export const ParentProduct1FormModal: React.FC<ParentProduct1FormModalProps> = (
 
         try {
             console.log('📝 Form Submit Data:', formData);
-            const response: any = await onSubmit(formData);
+            console.log('🖼️ Media IDs:', uploadedMediaIds);
 
-            // Link uploaded media to kategori (optional)
-            if (uploadedMediaIds.length > 0 && response?.data?.idParent1) {
-                console.log('🔗 Linking media to kategori:', response.data.idParent1);
-                for (const idMedia of uploadedMediaIds) {
-                    await mediaService.linkToEntity(idMedia, response.data.idParent1);
-                }
-                console.log('✅ Media linked successfully');
-            }
+            // Submit form data
+            await onSubmit(formData);
+
+            // NOTE: Media linking should be handled by parent component
+            // because onSubmit doesn't return the created entity ID
+            // Parent can access uploadedMediaIds via window.__uploadedMediaIds
         } catch (error) {
             console.error('❌ Form Submit Error:', error);
         }
     };
+
+    // Expose uploadedMediaIds for parent to use
+    React.useEffect(() => {
+        if (typeof window !== 'undefined') {
+            (window as any).__uploadedMediaIds = uploadedMediaIds;
+        }
+    }, [uploadedMediaIds]);
 
     return (
         <Modal
