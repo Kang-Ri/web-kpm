@@ -33,7 +33,7 @@ export interface FormField {
 
 export const formService = {
     // Get all forms
-    getAll: async (params?: { formType?: string }): Promise<{ data: Form[] }> => {
+    getAll: async (params?: { formType?: string }): Promise<{ data: { data: Form[] } | Form[] }> => {
         return apiClient.get('/cms/forms', { params });
     },
 
