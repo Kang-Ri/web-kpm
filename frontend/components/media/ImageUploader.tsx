@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect, useImperativeHandle } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Upload, X, CheckCircle, Loader2, Image as ImageIcon } from 'lucide-react';
 import { mediaService, Media, UploadOptions } from '@/lib/api/media.service';
 import { showSuccess, showError } from '@/lib/utils/toast';
@@ -180,21 +180,6 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
             onUploadComplete(completedUploads);
         }
     }, [uploadedMedia, onUploadComplete]);
-
-    // =====================================================
-    // Get uploaded media IDs for form submission
-    // =====================================================
-
-    const getUploadedMediaIds = (): number[] => {
-        return uploadedMedia
-            .filter(m => !m.uploading && !m.error)
-            .map(m => m.idMedia);
-    };
-
-    // Expose getUploadedMediaIds via ref (or return it for parent to use)
-    useImperativeHandle((ref: any) => ({
-        getUploadedMediaIds
-    }));
 
     // =====================================================
     // Render
