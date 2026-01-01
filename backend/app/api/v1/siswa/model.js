@@ -49,12 +49,12 @@ const Siswa = sequelize.define('Siswa', {
     nik: {
         type: DataTypes.STRING(16),
         allowNull: true,
-        unique: true,
+        // unique: true, // REMOVED - already defined in indexes below
     },
     nisn: {
         type: DataTypes.STRING(10),
         allowNull: true,
-        unique: true,
+        // unique: true, // REMOVED - already defined in indexes below
     },
     alamatLengkap: {
         type: DataTypes.TEXT,
