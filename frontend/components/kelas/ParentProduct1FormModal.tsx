@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { ParentProduct1, CreateParentProduct1Dto } from '@/lib/api/parentProduct1.service';
+import { ImageUploader, UploadedMedia } from '@/components/media/ImageUploader';
+import { mediaService } from '@/lib/api/media.service';
 
 interface ParentProduct1FormModalProps {
     isOpen: boolean;
@@ -24,6 +26,9 @@ export const ParentProduct1FormModal: React.FC<ParentProduct1FormModalProps> = (
         tglPublish: '',
         status: 'Non-Aktif',
     });
+
+    // Image upload state (optional)
+    const [uploadedMediaIds, setUploadedMediaIds] = useState<number[]>([]);
 
     useEffect(() => {
         if (kategori) {
@@ -48,12 +53,27 @@ export const ParentProduct1FormModal: React.FC<ParentProduct1FormModalProps> = (
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const handleUploadComplete = (media: UploadedMedia[]) => {
+        const ids = media.map(m => m.idMedia);
+        setUploadedMediaIds(ids);
+        console.log('🖼️ Uploaded media IDs:', ids);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         try {
             console.log('📝 Form Submit Data:', formData);
-            await onSubmit(formData);
+            const response: any = await onSubmit(formData);
+
+            // Link uploaded media to kategori (optional)
+            if (uploadedMediaIds.length > 0 && response?.data?.idParent1) {
+                console.log('🔗 Linking media to kategori:', response.data.idParent1);
+                for (const idMedia of uploadedMediaIds) {
+                    await mediaService.linkToEntity(idMedia, response.data.idParent1);
+                }
+                console.log('✅ Media linked successfully');
+            }
         } catch (error) {
             console.error('❌ Form Submit Error:', error);
         }
@@ -131,6 +151,19 @@ export const ParentProduct1FormModal: React.FC<ParentProduct1FormModalProps> = (
                         <option value="Aktif">Aktif</option>
                         <option value="Non-Aktif">Non-Aktif</option>
                     </select>
+                </div>
+
+                {/* Image Upload (Optional) */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Gambar Thumbnail <span className="text-gray-400 text-xs">(Opsional)</span>
+                    </label>
+                    <ImageUploader
+                        entityType="parent1"
+                        category="thumbnail"
+                        maxFiles={1}
+                        onUploadComplete={handleUploadComplete}
+                    />
                 </div>
 
                 {/* Actions */}
