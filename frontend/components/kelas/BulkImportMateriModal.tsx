@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Upload, Download, FileSpreadsheet, CheckCircle, XCircle, Table } from 'lucide-react';
 import { showSuccess, showError } from '@/lib/utils/toast';
 import * as XLSX from 'xlsx';
 import { productService } from '@/lib/api/product.service';
+import { formService, Form } from '@/lib/api/form.service';
 
 interface BulkImportMateriModalProps {
     isOpen: boolean;
@@ -28,6 +29,8 @@ export const BulkImportMateriModal: React.FC<BulkImportMateriModalProps> = ({
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [importing, setImporting] = useState(false);
     const [importResult, setImportResult] = useState<ImportResult | null>(null);
+    const [formTemplates, setFormTemplates] = useState<Form[]>([]);
+    const [loadingForms, setLoadingForms] = useState(false);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -36,12 +39,31 @@ export const BulkImportMateriModal: React.FC<BulkImportMateriModalProps> = ({
         }
     };
 
+    // Load form templates on mount
+    useEffect(() => {
+        const loadForms = async () => {
+            try {
+                setLoadingForms(true);
+                const response = await formService.getAll({ formType: 'template' });
+                setFormTemplates(response.data || []);
+            } catch (error) {
+                console.error('Failed to load form templates:', error);
+            } finally {
+                setLoadingForms(false);
+            }
+        };
+
+        if (isOpen) {
+            loadForms();
+        }
+    }, [isOpen]);
+
     const handleDownloadTemplate = () => {
-        // Generate template with ID Ruang Kelas column
+        // Generate template with ID Ruang Kelas and ID Form columns
         const data = [
-            ['ID Ruang Kelas', 'Nama Materi', 'Deskripsi', 'Kategori Harga', 'Harga Jual', 'Harga Coret', 'Auth', 'Tanggal Publish'],
-            [23, 'Contoh Materi 1', 'Deskripsi singkat materi', 'Gratis', 0, 0, 'Umum', ''],
-            [23, 'Contoh Materi 2', 'Materi berbayar', 'Bernominal', 100000, 150000, 'Khusus', '2024-12-25 14:30:00']
+            ['ID Ruang Kelas', 'Nama Materi', 'Deskripsi', 'Kategori Harga', 'Harga Jual', 'Harga Coret', 'Auth', 'ID Form', 'Tanggal Publish'],
+            [23, 'Contoh Materi 1', 'Deskripsi singkat materi', 'Gratis', 0, 0, 'Umum', '', ''],
+            [23, 'Contoh Materi 2', 'Materi berbayar', 'Bernominal', 100000, 150000, 'Khusus', 3, '2024-12-25 14:30:00']
         ];
 
         const worksheet = XLSX.utils.aoa_to_sheet(data);
@@ -55,6 +77,7 @@ export const BulkImportMateriModal: React.FC<BulkImportMateriModalProps> = ({
             { wch: 12 }, // Harga Jual
             { wch: 12 }, // Harga Coret
             { wch: 10 }, // Auth
+            { wch: 12 }, // ID Form
             { wch: 20 }, // Tanggal Publish
         ];
 
@@ -169,6 +192,43 @@ export const BulkImportMateriModal: React.FC<BulkImportMateriModalProps> = ({
                     </div>
                     <p className="text-xs text-gray-600 mt-2">
                         📋 Gunakan ID di atas pada kolom "ID Ruang Kelas" di file Excel
+                    </p>
+                </div>
+
+                {/* Form Templates Table */}
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                        <FileSpreadsheet className="w-5 h-5 text-green-600" />
+                        <h3 className="font-semibold text-gray-900">Daftar Template Form</h3>
+                    </div>
+                    {loadingForms ? (
+                        <p className="text-sm text-gray-600">Loading form templates...</p>
+                    ) : formTemplates.length > 0 ? (
+                        <div className="max-h-48 overflow-y-auto">
+                            <table className="w-full text-sm">
+                                <thead className="bg-green-100 sticky top-0">
+                                    <tr>
+                                        <th className="px-3 py-2 text-left font-semibold text-gray-700">ID Form</th>
+                                        <th className="px-3 py-2 text-left font-semibold text-gray-700">Nama Form</th>
+                                        <th className="px-3 py-2 text-left font-semibold text-gray-700">Fields</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {formTemplates.map((form) => (
+                                        <tr key={form.idForm} className="hover:bg-gray-50">
+                                            <td className="px-3 py-2 font-mono text-green-600">{form.idForm}</td>
+                                            <td className="px-3 py-2">{form.namaForm}</td>
+                                            <td className="px-3 py-2 text-gray-600">{form.fields?.length || 0}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <p className="text-sm text-gray-600">Tidak ada template form tersedia</p>
+                    )}
+                    <p className="text-xs text-gray-600 mt-2">
+                        📋 Gunakan ID Form di atas pada kolom "ID Form" di Excel (opsional)
                     </p>
                 </div>
 

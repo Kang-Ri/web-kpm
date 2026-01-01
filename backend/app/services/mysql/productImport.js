@@ -270,6 +270,25 @@ const bulkImportMateriFromExcel = async (fileBuffer) => {
                     tanggalPublish: tanggalPublish,
                 });
 
+                // Handle form duplication if ID Form is provided
+                if (row['ID Form']) {
+                    const idFormTemplate = parseInt(row['ID Form']);
+                    if (!isNaN(idFormTemplate) && idFormTemplate > 0) {
+                        try {
+                            const { duplicateFormForProduct } = require('./forms');
+                            await duplicateFormForProduct(
+                                newMateri.idProduk,
+                                idFormTemplate,
+                                'product'
+                            );
+                            console.log(`✅ Form ${idFormTemplate} duplicated for materi ${newMateri.idProduk}`);
+                        } catch (formError) {
+                            console.error(`⚠️ Failed to duplicate form for row ${rowNumber}:`, formError.message);
+                            // Don't fail the import, just log warning
+                        }
+                    }
+                }
+
                 results.success.push({
                     row: rowNumber,
                     name: row['Nama Materi'],
