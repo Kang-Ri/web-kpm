@@ -78,7 +78,7 @@ export const ParentProduct1FormModal: React.FC<ParentProduct1FormModalProps> = (
     };
 
     // Expose uploadedMediaIds for parent to use
-    React.useEffect(() => {
+    useEffect(() => {
         if (typeof window !== 'undefined') {
             (window as any).__uploadedMediaIds = uploadedMediaIds;
         }
