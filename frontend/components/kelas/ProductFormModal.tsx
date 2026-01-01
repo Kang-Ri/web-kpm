@@ -3,6 +3,8 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Product, CreateProductDto } from '@/lib/api/product.service';
 import { formService, Form } from '@/lib/api/form.service';
+import { ImageUploader, UploadedMedia } from '@/components/media/ImageUploader';
+import { mediaService } from '@/lib/api/media.service';
 import { showSuccess, showError } from '@/lib/utils/toast';
 import { useRouter } from 'next/navigation';
 
@@ -46,6 +48,9 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
     const [selectedTemplateId, setSelectedTemplateId] = useState<number | undefined>(undefined);
     const [attachedFormName, setAttachedFormName] = useState<string | null>(null);
     const [isAttachingForm, setIsAttachingForm] = useState(false);
+
+    // Image upload state (optional)
+    const [uploadedMediaIds, setUploadedMediaIds] = useState<number[]>([]);
 
     // Check if form has changes
     const hasChanges = (): boolean => {
@@ -159,16 +164,37 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
         }
     };
 
+    const handleUploadComplete = (media: UploadedMedia[]) => {
+        const ids = media.map(m => m.idMedia);
+        setUploadedMediaIds(ids);
+        console.log('🖼️ Uploaded media IDs for product:', ids);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         try {
             console.log('📝 Form Submit Data:', formData);
+            console.log('🖼️ Media IDs to link:', uploadedMediaIds);
+
+            // Pass media IDs to parent via onSubmit
+            // Parent will handle linking after product creation
             await onSubmit(formData, selectedTemplateId);
+
+            // Note: Media linking will be handled in parent component
+            // because we need the product ID from response
         } catch (error) {
             console.error('❌ Form Submit Error:', error);
         }
     };
+
+    // Expose uploadedMediaIds for parent to use
+    React.useEffect(() => {
+        // Store in window/global for parent access if needed
+        if (typeof window !== 'undefined') {
+            (window as any).__uploadedMediaIds = uploadedMediaIds;
+        }
+    }, [uploadedMediaIds]);
 
     return (
         <Modal
@@ -420,6 +446,21 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                     </p>
                 </div>
 
+                {/* Image Upload (Optional) */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Gambar Produk <span className="text-gray-400 text-xs">(Opsional, max 5)</span>
+                    </label>
+                    <ImageUploader
+                        entityType="product"
+                        category="gallery"
+                        maxFiles={5}
+                        onUploadComplete={handleUploadComplete}
+                    />
+                    <p className="text-xs text-gray-500 mt-2">
+                        📌 Gambar akan diupload saat Anda pilih file. Pada submit, gambar akan di-link ke produk.
+                    </p>
+                </div>
 
                 {/* Actions */}
                 <div className="flex items-center justify-end gap-3 pt-4 border-t">
