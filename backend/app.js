@@ -43,6 +43,7 @@ const materiButtonRouter = require("./app/api/v1/materiButton/router");
 const aksesMateriRouter = require("./app/api/v1/aksesMateri/router");
 const materiButtonClickRouter = require("./app/api/v1/materiButtonClick/router");
 const variableTemplatesRouter = require("./app/api/v1/variableTemplates/router");
+const mediaRouter = require("./app/api/v1/media/router"); // NEW
 const paymentRouter = require("./app/api/v1/payment/router");
 const testRouter = require("./app/api/v1/test/router"); // Test helpers
 
@@ -56,6 +57,9 @@ app.get("/", (req, res) => {
 // Auth & Users (No params)
 app.use(`${v1}/cms`, authRouter);
 app.use(`${v1}/cms/users`, usersRouter);
+
+// Media Routes (Specific paths)
+app.use(`${v1}/cms/media`, mediaRouter); // NEW
 
 // LMS Routes (Specific paths - must be BEFORE parameterized routes!)
 app.use(`${v1}/cms`, siswaRouter);
