@@ -51,6 +51,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
     // Image upload state (optional)
     const [uploadedMediaIds, setUploadedMediaIds] = useState<number[]>([]);
+    const [existingMedia, setExistingMedia] = useState<any[]>([]);
 
     // Check if form has changes
     const hasChanges = (): boolean => {
@@ -90,7 +91,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
             // Format tanggalPublish for datetime-local input (YYYY-MM-DDTHH:mm)
             const formattedDate = product.tanggalPublish
                 ? new Date(product.tanggalPublish).toISOString().slice(0, 16)
-                : '';
+                : null; // Use null if no date
 
             const loadedData = {
                 idParent2: product.idParent2,
@@ -103,11 +104,24 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 authProduk: product.authProduk || 'Umum',
                 refCode: product.refCode || '',
                 statusProduk: product.statusProduk || 'Draft',
-                tanggalPublish: formattedDate || null,
+                tanggalPublish: formattedDate,
             };
 
             setFormData(loadedData);
             setInitialFormData(loadedData); // Store initial state for change detection
+
+            // Load existing media for edit mode
+            const loadMedia = async () => {
+                try {
+                    const response = await mediaService.getMediaByEntity('product', product.idProduk);
+                    setExistingMedia(response.data || []);
+                    console.log('🖼️ Loaded existing media:', response.data);
+                } catch (error) {
+                    console.error('❌ Failed to load media:', error);
+                }
+            };
+
+            loadMedia();
 
             // Fetch attached form name if exists
             if (product.idForm) {
@@ -116,12 +130,14 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 setAttachedFormName(formName);
                 setSelectedTemplateId(product.idForm);
                 setInitialTemplateId(product.idForm); // Store initial template
+                console.log('📋 Product has attached form:', formName);
             } else {
                 setAttachedFormName(null);
                 setSelectedTemplateId(undefined);
                 setInitialTemplateId(undefined);
             }
         } else {
+            // Creating new product - reset form
             setFormData({
                 idParent2: 0,
                 namaProduk: '',
@@ -139,6 +155,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
             setAttachedFormName(null);
             setSelectedTemplateId(undefined);
             setInitialTemplateId(undefined);
+            setExistingMedia([]); // Clear existing media for new product
         }
     }, [product, isOpen]);
 
@@ -455,6 +472,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                         entityType="product"
                         category="gallery"
                         maxFiles={5}
+                        existingMedia={existingMedia}
                         onUploadComplete={handleUploadComplete}
                     />
                     <p className="text-xs text-gray-500 mt-2">
