@@ -7,29 +7,29 @@ CREATE TABLE media (
     idMedia INT PRIMARY KEY AUTO_INCREMENT,
     
     -- Polymorphic Relationship (link to any entity)
-    entityType VARCHAR(50) NOT NULL COMMENT 'Entity type: user, parent1, parent2, product, etc',
-    entityId INT NOT NULL COMMENT 'ID of the entity',
+    entityType VARCHAR(50) NOT NULL COMMENT "Entity type: user, parent1, parent2, product, etc",
+    entityId INT COMMENT "ID of the entity",
     
     -- File Information
-    fileName VARCHAR(255) NOT NULL COMMENT 'Original or processed filename',
-    fileUrl VARCHAR(500) NOT NULL COMMENT 'URL or path to the file',
-    fileSize INT COMMENT 'File size in bytes',
-    mimeType VARCHAR(100) COMMENT 'MIME type: image/jpeg, image/png, etc',
+    fileName VARCHAR(255) NOT NULL COMMENT "Original or processed filename",
+    fileUrl VARCHAR(500) NOT NULL COMMENT "URL or path to the file",
+    fileSize INT COMMENT "File size in bytes",
+    mimeType VARCHAR(100) COMMENT "MIME type: image/jpeg, image/png, etc",
     
     -- Media Classification
     mediaType ENUM('image', 'video', 'document', 'audio') DEFAULT 'image',
-    mediaCategory VARCHAR(50) DEFAULT 'general' COMMENT 'Category: profile, thumbnail, gallery, banner, icon, etc',
+    mediaCategory VARCHAR(50) DEFAULT 'general' COMMENT "Category: profile, thumbnail, gallery, banner, icon, etc",
     
     -- Ordering and Primary Flag
-    orderIndex INT DEFAULT 0 COMMENT 'Order for sorting (lower = first)',
-    isPrimary BOOLEAN DEFAULT FALSE COMMENT 'Primary/featured image for the entity',
+    orderIndex INT DEFAULT 0 COMMENT "Order for sorting (lower = first)",
+    isPrimary BOOLEAN DEFAULT FALSE COMMENT "Primary/featured image for the entity",
     
     -- Metadata
-    altText VARCHAR(255) COMMENT 'Alt text for SEO and accessibility',
-    caption TEXT COMMENT 'Caption or description',
+    altText VARCHAR(255) COMMENT "Alt text for SEO and accessibility",
+    caption TEXT COMMENT "Caption or description",
     
     -- Audit Fields
-    uploadedBy INT COMMENT 'User ID who uploaded this media',
+    uploadedBy INT COMMENT "User ID who uploaded this media",
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
@@ -40,7 +40,7 @@ CREATE TABLE media (
     INDEX idx_uploaded_by (uploadedBy)
     
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Universal media storage for all entities (polymorphic)';
+COMMENT="Universal media storage for all entities (polymorphic)";
 
 -- =====================================================
 -- Entity Types Reference
