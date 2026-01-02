@@ -17,7 +17,8 @@ const Form = sequelize.define('Form', {
     namaForm: {
         type: DataTypes.STRING(255),
         allowNull: false,
-        unique: true, // Memastikan nama form unik
+        // unique: true, // REMOVED - already defined in indexes below
+        comment: 'Memastikan nama form unik',
         // field: 'namaForm', // Dihapus karena nama atribut model sama dengan nama kolom DB
         validate: {
             notEmpty: {
