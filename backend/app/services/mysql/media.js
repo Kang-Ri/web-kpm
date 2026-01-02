@@ -56,28 +56,29 @@ const uploadMediaInstant = async (file, entityType, options = {}) => {
 
         console.log(`✅ Media uploaded instantly: ${media.idMedia} (orphaned)`);
 
-        // Manually construct response with correct camelCase field names
-        // Database has 'filename' and 'fileUrl1' columns, we need 'fileName' and 'fileUrl'
-        const data = media.dataValues;
-
-        return {
-            idMedia: data.idMedia,
-            entityType: data.entityType,
-            entityId: data.entityId,
-            fileName: data.filename,      // Map DB column 'filename' to camelCase
-            fileUrl: data.fileUrl1,       // Map DB column 'fileUrl1' to camelCase
-            fileSize: data.fileSize,
-            mimeType: data.mimeType,
-            mediaType: data.mediaType,
-            mediaCategory: data.mediaCategory,
-            orderIndex: data.orderIndex,
-            isPrimary: data.isPrimary,
-            altText: data.altText,
-            caption: data.caption,
-            uploadedBy: data.uploadedBy,
-            createdAt: data.createdAt,
-            updatedAt: data.updatedAt
+        // Access fields directly from Sequelize instance (uses getters/field mapping)
+        // NOT from dataValues (which has raw DB column names)
+        const response = {
+            idMedia: media.idMedia,
+            entityType: media.entityType,
+            entityId: media.entityId,
+            fileName: media.fileName,      // Uses Sequelize getter - maps from 'filename' column
+            fileUrl: media.fileUrl,        // Uses Sequelize getter - maps from 'fileUrl1' column
+            fileSize: media.fileSize,
+            mimeType: media.mimeType,
+            mediaType: media.mediaType,
+            mediaCategory: media.mediaCategory,
+            orderIndex: media.orderIndex,
+            isPrimary: media.isPrimary,
+            altText: media.altText,
+            caption: media.caption,
+            uploadedBy: media.uploadedBy,
+            createdAt: media.createdAt,
+            updatedAt: media.updatedAt
         };
+
+        console.log('🔍 DEBUG Response Object:', JSON.stringify(response, null, 2));
+        return response;
 
     } catch (error) {
         console.error('❌ Upload media instant error:', error);
