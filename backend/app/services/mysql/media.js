@@ -55,7 +55,9 @@ const uploadMediaInstant = async (file, entityType, options = {}) => {
         });
 
         console.log(`✅ Media uploaded instantly: ${media.idMedia} (orphaned)`);
-        return media;
+
+        // Convert to plain object to return correct attribute names (not column names)
+        return media.get({ plain: true });
 
     } catch (error) {
         console.error('❌ Upload media instant error:', error);
