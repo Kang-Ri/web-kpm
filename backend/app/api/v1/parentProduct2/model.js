@@ -28,7 +28,8 @@ const ParentProduct2 = sequelize.define('ParentProduct2', {
     namaParent2: {
         type: DataTypes.STRING(100),
         allowNull: false,
-        unique: true,
+        // unique: true, // REMOVED - already defined in indexes below
+        comment: 'Nama kategori level 2 (sub-kategori/ruang kelas)',
         validate: {
             notEmpty: { msg: 'Nama Parent Product 2 tidak boleh kosong.' },
         }
