@@ -10,7 +10,8 @@ const ParentProduct1 = sequelize.define('ParentProduct1', {
     namaParent1: {
         type: DataTypes.STRING(100),
         allowNull: false,
-        unique: true, // Pastikan nama tidak duplikat
+        // unique: true, // REMOVED - already defined in indexes below
+        comment: 'Pastikan nama tidak duplikat',
     },
     descParent1: {
         type: DataTypes.TEXT,
@@ -29,7 +30,7 @@ const ParentProduct1 = sequelize.define('ParentProduct1', {
 }, {
     // Sequelize secara default mencari kolom createdAt dan updatedAt.
     // Jika tabel Anda menggunakan nama ini, biarkan. Jika tidak, set timestamps: false
-    timestamps: false, 
+    timestamps: false,
     tableName: 'ParentProduct1'
 });
 
