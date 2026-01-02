@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { ParentProduct1, CreateParentProduct1Dto } from '@/lib/api/parentProduct1.service';
@@ -53,11 +53,11 @@ export const ParentProduct1FormModal: React.FC<ParentProduct1FormModalProps> = (
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleUploadComplete = (media: UploadedMedia[]) => {
+    const handleUploadComplete = useCallback((media: UploadedMedia[]) => {
         const ids = media.map(m => m.idMedia);
         setUploadedMediaIds(ids);
         console.log('🖼️ Uploaded media IDs:', ids);
-    };
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
