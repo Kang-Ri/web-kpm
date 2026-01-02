@@ -43,7 +43,7 @@ const uploadMediaInstant = async (file, entityType, options = {}) => {
             entityType,
             entityId: null, // Will be linked later
             fileName: file.filename,
-            fileUrl: file.path.replace(/\\/g, '/'), // Normalize path
+            fileUrl: file.path.replace(/\\/g, '/').replace(/^.*\/backend\//, ''), // Relative path from backend root
             fileSize: file.size,
             mimeType: file.mimetype,
             mediaType: file.mimetype.startsWith('image/') ? 'image' : 'document',
