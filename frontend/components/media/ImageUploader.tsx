@@ -91,13 +91,16 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 
                 const response = await mediaService.uploadInstant(file, entityType, uploadOptions);
 
+                console.log('📦 Upload response:', response);
+                console.log('📦 Response data:', response.data);
+
                 // Update with real media data
                 setUploadedMedia(prev => prev.map(m =>
                     m.fileName === file.name
                         ? {
-                            idMedia: response.data.idMedia,
-                            fileUrl: response.data.fileUrl,
-                            fileName: response.data.fileName,
+                            idMedia: response.data?.idMedia || 0,
+                            fileUrl: response.data?.fileUrl || '',
+                            fileName: response.data?.fileName || file.name,
                             uploading: false
                         }
                         : m
