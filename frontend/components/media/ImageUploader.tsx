@@ -91,12 +91,18 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 
                 const response = await mediaService.uploadInstant(file, entityType, uploadOptions);
 
+                // Construct full URL for preview (backend returns relative path)
+                const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+                const fullImageUrl = response.data?.fileUrl?.startsWith('http')
+                    ? response.data.fileUrl
+                    : `${backendUrl}/${response.data?.fileUrl}`;
+
                 // Update with real media data
                 setUploadedMedia(prev => prev.map(m =>
                     m.fileName === file.name
                         ? {
                             idMedia: response.data?.idMedia || 0,
-                            fileUrl: response.data?.fileUrl || '',
+                            fileUrl: fullImageUrl, // Use full URL for preview
                             fileName: response.data?.fileName || file.name,
                             uploading: false
                         }
