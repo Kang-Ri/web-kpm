@@ -56,8 +56,25 @@ const uploadMediaInstant = async (file, entityType, options = {}) => {
 
         console.log(`✅ Media uploaded instantly: ${media.idMedia} (orphaned)`);
 
-        // Convert to plain object to return correct attribute names (not column names)
-        return media.get({ plain: true });
+        // Manually construct response with correct camelCase field names
+        return {
+            idMedia: media.idMedia,
+            entityType: media.entityType,
+            entityId: media.entityId,
+            fileName: media.fileName,  // This will use the getter from Sequelize model
+            fileUrl: media.fileUrl,    // This will use the getter from Sequelize model
+            fileSize: media.fileSize,
+            mimeType: media.mimeType,
+            mediaType: media.mediaType,
+            mediaCategory: media.mediaCategory,
+            orderIndex: media.orderIndex,
+            isPrimary: media.isPrimary,
+            altText: media.altText,
+            caption: media.caption,
+            uploadedBy: media.uploadedBy,
+            createdAt: media.createdAt,
+            updatedAt: media.updatedAt
+        };
 
     } catch (error) {
         console.error('❌ Upload media instant error:', error);
