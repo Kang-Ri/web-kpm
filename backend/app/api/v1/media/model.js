@@ -32,11 +32,13 @@ const Media = sequelize.define('Media', {
     fileName: {
         type: DataTypes.STRING(255),
         allowNull: false,
+        field: 'filename', // Map to actual DB column name
     },
 
     fileUrl: {
         type: DataTypes.STRING(500),
         allowNull: false,
+        field: 'fileUrl1', // Map to actual DB column name
         comment: 'Relative path or full URL to the file',
     },
 
