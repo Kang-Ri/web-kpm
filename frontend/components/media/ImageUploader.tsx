@@ -237,14 +237,22 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
             {uploadedMedia.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {uploadedMedia.map((media) => (
-                        <div key={media.idMedia} className="relative group">
+                        <div key={media.idMedia ||
+
+                            media.fileName} className="relative group">
                             {/* Image Preview */}
                             <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
-                                <img
-                                    src={media.fileUrl.startsWith('http') ? media.fileUrl : `http://localhost:5000/${media.fileUrl}`}
-                                    alt={media.fileName}
-                                    className="w-full h-full object-cover"
-                                />
+                                {media.fileUrl && media.fileUrl !== '' ? (
+                                    <img
+                                        src={media.fileUrl.startsWith('http') ? media.fileUrl : `http://localhost:5000/${media.fileUrl}`}
+                                        alt={media.fileName}
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                        <Upload className="h-8 w-8" />
+                                    </div>
+                                )}
                             </div>
 
                             {/* Overlay with status */}
