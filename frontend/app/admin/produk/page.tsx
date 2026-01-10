@@ -57,9 +57,11 @@ function ProdukContent() {
         const mediaPromises = categories.map(async (kategori) => {
             try {
                 const response = await mediaService.getPrimaryMedia('parent1', kategori.idParent1);
+                // apiClient returns full axios response
                 // Backend returns { message, data: mediaObject }
-                // Access response.data.data to get the actual media object
-                const media = (response as any).data?.data;
+                // So response.data = { message, data: mediaObject }
+                const backendResponse = response.data as any;
+                const media = backendResponse?.data || null;
                 console.log(`Media for ${kategori.namaParent1}:`, media);
                 return { id: kategori.idParent1, media };
             } catch (error) {
