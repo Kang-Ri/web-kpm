@@ -126,7 +126,7 @@ function ProdukContent() {
 
                             // Delete all old media for this entity
                             for (const media of oldMedia) {
-                                await mediaService.delete(media.idMedia);
+                                await mediaService.deleteMedia(media.idMedia);
                                 console.log(`🗑️ Deleted old media ${media.idMedia}`);
                             }
                         } catch (err) {
