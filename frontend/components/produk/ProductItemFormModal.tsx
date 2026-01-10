@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
+import { ImageUploader } from '@/components/media/ImageUploader';
 import { Product, CreateProductDto } from '@/lib/api/product.service';
 import { formService, Form } from '@/lib/api/form.service';
+import { mediaService, Media } from '@/lib/api/media.service';
 import { showSuccess, showError } from '@/lib/utils/toast';
 import { useRouter } from 'next/navigation';
 
@@ -42,6 +44,17 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
     const [selectedTemplateId, setSelectedTemplateId] = useState<number | undefined>(undefined);
     const [attachedFormName, setAttachedFormName] = useState<string | null>(null);
     const [isAttachingForm, setIsAttachingForm] = useState(false);
+
+    // Media state
+    const [uploadedMediaIds, setUploadedMediaIds] = useState<number[]>([]);
+    const [existingMedia, setExistingMedia] = useState<Media | null>(null);
+    const [loadingMedia, setLoadingMedia] = useState(false);
+
+    const handleUploadComplete = useCallback((media: Array<{ idMedia: number, fileUrl: string, fileName: string }>) => {
+        const mediaIds = media.map(m => m.idMedia);
+        setUploadedMediaIds(mediaIds);
+        (window as any).__uploadedMediaIds = mediaIds;
+    }, []);
 
     // Load available form templates
     useEffect(() => {
@@ -91,6 +104,23 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
                 setAttachedFormName(null);
                 setSelectedTemplateId(undefined);
             }
+
+            // Fetch existing media
+            const fetchExistingMedia = async () => {
+                try {
+                    setLoadingMedia(true);
+                    const response = await mediaService.getPrimaryMedia('product', product.idProduk);
+                    const media = (response.data as any)?.data || null;
+                    setExistingMedia(media);
+                } catch (error) {
+                    console.log('No existing media found');
+                    setExistingMedia(null);
+                } finally {
+                    setLoadingMedia(false);
+                }
+            };
+
+            fetchExistingMedia();
         } else {
             setFormData({
                 idParent2: 0,
@@ -107,6 +137,7 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
             });
             setAttachedFormName(null);
             setSelectedTemplateId(undefined);
+            setExistingMedia(null);
         }
     }, [product, isOpen]);
 
@@ -194,6 +225,46 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
                         rows={3}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder="Deskripsi produk"
+                    />
+                </div>
+
+                {/* Image Upload */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Gambar Produk
+                    </label>
+
+                    {/* Show existing thumbnail if editing */}
+                    {product && existingMedia && (
+                        <div className="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <p className="text-xs text-gray-600 mb-2">Gambar Saat Ini:</p>
+                            <div className="flex items-center gap-3">
+                                <img
+                                    src={existingMedia.fileUrl.startsWith('http')
+                                        ? existingMedia.fileUrl
+                                        : `http://localhost:5000/${existingMedia.fileUrl}`
+                                    }
+                                    alt="Current thumbnail"
+                                    className="w-24 h-24 object-cover rounded-lg border border-gray-300"
+                                />
+                                <div className="flex-1">
+                                    <p className="text-sm font-medium text-gray-700">{existingMedia.fileName}</p>
+                                    <p className="text-xs text-gray-500 mt-1">Upload gambar baru untuk mengganti</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {loadingMedia && (
+                        <div className="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <p className="text-sm text-gray-500">Loading existing image...</p>
+                        </div>
+                    )}
+
+                    <ImageUploader
+                        entityType="product"
+                        maxFiles={1}
+                        onUploadComplete={handleUploadComplete}
                     />
                 </div>
 

@@ -6,10 +6,11 @@ import { DashboardLayout } from '@/components/layouts';
 import { Card, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Plus, Edit, Trash2, Upload, FileText } from 'lucide-react';
+import { Plus, Edit, Trash2, Upload, FileText, Image as ImageIcon } from 'lucide-react';
 import { productService, Product, CreateProductDto } from '@/lib/api/product.service';
 import { parentProduct2Service } from '@/lib/api/parentProduct2.service';
 import { parentProduct1Service } from '@/lib/api/parentProduct1.service';
+import { mediaService, Media } from '@/lib/api/media.service';
 import { ProductItemFormModal } from '@/components/produk/ProductItemFormModal';
 import { ImportMateriModal } from '@/components/kelas/ImportMateriModal';
 import { formService } from '@/lib/api/form.service';
@@ -32,6 +33,7 @@ function ItemProdukContent() {
     const [selectedItem, setSelectedItem] = useState<Product | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [mediaMap, setMediaMap] = useState<Record<number, Media | null>>({});
 
     useEffect(() => {
         setMounted(true);
@@ -80,6 +82,7 @@ function ItemProdukContent() {
 
             if (Array.isArray(data)) {
                 setItemList(data);
+                fetchMediaForItems(data);
             } else {
                 setItemList([]);
             }
@@ -89,6 +92,26 @@ function ItemProdukContent() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const fetchMediaForItems = async (items: Product[]) => {
+        const mediaPromises = items.map(async (item) => {
+            try {
+                const response = await mediaService.getPrimaryMedia('product', item.idProduk);
+                const backendResponse = response.data as any;
+                const media = backendResponse?.data || null;
+                return { id: item.idProduk, media };
+            } catch (error) {
+                return { id: item.idProduk, media: null };
+            }
+        });
+
+        const results = await Promise.all(mediaPromises);
+        const newMediaMap: Record<number, Media | null> = {};
+        results.forEach(result => {
+            newMediaMap[result.id] = result.media;
+        });
+        setMediaMap(newMediaMap);
     };
 
     const handleNavigateBack = () => {
@@ -116,29 +139,58 @@ function ItemProdukContent() {
 
             const submitData = { ...data, idParent2 };
 
+            let entityId: number;
+
             if (selectedItem) {
                 await productService.update(selectedItem.idProduk, submitData);
+                entityId = selectedItem.idProduk;
                 showSuccess('Item produk berhasil diperbarui');
             } else {
                 const response = await productService.create(submitData);
+                const createdProduct = response.data.data || response.data;
+                entityId = createdProduct.idProduk;
 
                 // Handle form duplication if template was selected
-                if (selectedTemplateId && response.data) {
-                    const createdProduct = response.data.data || response.data;
-                    const idProduk = createdProduct.idProduk;
-
-                    if (idProduk) {
-                        try {
-                            console.log(`🔗 Duplicating form template ${selectedTemplateId} for product ${idProduk}`);
-                            await formService.duplicateFormForProduct(idProduk, selectedTemplateId, 'product');
-                            showSuccess('Produk dan form berhasil dibuat!');
-                        } catch (formError: any) {
-                            console.error('❌ Form duplication error:', formError);
-                            showError(formError.response?.data?.message || 'Produk dibuat tapi gagal menduplikasi form');
-                        }
+                if (selectedTemplateId && entityId) {
+                    try {
+                        console.log(`🔗 Duplicating form template ${selectedTemplateId} for product ${entityId}`);
+                        await formService.duplicateFormForProduct(entityId, selectedTemplateId, 'product');
+                        showSuccess('Produk dan form berhasil dibuat!');
+                    } catch (formError: any) {
+                        console.error('❌ Form duplication error:', formError);
+                        showError(formError.response?.data?.message || 'Produk dibuat tapi gagal menduplikasi form');
                     }
                 } else {
                     showSuccess('Item produk baru berhasil ditambahkan');
+                }
+            }
+
+            // Auto-link uploaded media to the entity (both CREATE and UPDATE)
+            const uploadedMediaIds = (window as any).__uploadedMediaIds || [];
+            if (uploadedMediaIds.length > 0) {
+                try {
+                    // If updating, delete old media first to replace instead of add
+                    if (selectedItem) {
+                        try {
+                            const oldMediaResponse = await mediaService.getMediaByEntity('product', entityId);
+                            const oldMedia = (oldMediaResponse.data as any)?.data || [];
+
+                            for (const media of oldMedia) {
+                                await mediaService.deleteMedia(media.idMedia);
+                            }
+                        } catch (err) {
+                            console.error('Failed to delete old media:', err);
+                        }
+                    }
+
+                    // Link new media
+                    for (const mediaId of uploadedMediaIds) {
+                        await mediaService.linkToEntity(mediaId, entityId);
+                    }
+
+                    (window as any).__uploadedMediaIds = [];
+                } catch (linkError) {
+                    console.error('Failed to link media:', linkError);
                 }
             }
 
@@ -254,6 +306,7 @@ function ItemProdukContent() {
                             <table className="w-full">
                                 <thead>
                                     <tr className="border-b border-gray-200">
+                                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Thumbnail</th>
                                         <th className="text-left py-3 px-4 font-semibold text-gray-700">Nama Produk</th>
                                         <th className="text-left py-3 px-4 font-semibold text-gray-700">Jenis</th>
                                         <th className="text-left py-3 px-4 font-semibold text-gray-700">Kategori Harga</th>
@@ -265,70 +318,90 @@ function ItemProdukContent() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {itemList.map((item) => (
-                                        <tr key={item.idProduk} className="border-b border-gray-100 hover:bg-gray-50">
-                                            <td className="py-3 px-4 font-medium text-gray-900">
-                                                {item.namaProduk}
-                                            </td>
-                                            <td className="py-3 px-4">
-                                                <Badge variant="info">
-                                                    {item.jenisProduk}
-                                                </Badge>
-                                            </td>
-                                            <td className="py-3 px-4 text-gray-600">
-                                                {item.kategoriHarga}
-                                            </td>
-                                            <td className="py-3 px-4 text-gray-600">
-                                                {item.kategoriHarga === 'Bernominal'
-                                                    ? `Rp ${item.hargaJual?.toLocaleString('id-ID') || 0}`
-                                                    : '-'}
-                                            </td>
-                                            <td className="py-3 px-4">
-                                                <Badge variant={item.authProduk === 'Khusus' ? 'warning' : 'success'}>
-                                                    {item.authProduk}
-                                                </Badge>
-                                            </td>
-                                            <td className="py-3 px-4">
-                                                <Badge variant={item.statusProduk === 'Publish' ? 'success' : 'warning'}>
-                                                    {item.statusProduk}
-                                                </Badge>
-                                            </td>
-                                            <td className="py-3 px-4">
-                                                {item.idForm ? (
-                                                    <Badge variant="success">✓</Badge>
-                                                ) : (
-                                                    <Badge variant="warning">-</Badge>
-                                                )}
-                                            </td>
-                                            <td className="py-3 px-4">
-                                                <div className="flex items-center gap-2">
-                                                    <button
-                                                        className="p-2 hover:bg-blue-50 rounded"
-                                                        title="Edit"
-                                                        onClick={() => handleEdit(item)}
-                                                    >
-                                                        <Edit className="h-4 w-4 text-blue-600" />
-                                                    </button>
-                                                    {item.idForm && (
+                                    {itemList.map((item) => {
+                                        const media = mediaMap[item.idProduk];
+                                        const thumbnailUrl = media?.fileUrl
+                                            ? (media.fileUrl.startsWith('http') ? media.fileUrl : `http://localhost:5000/${media.fileUrl}`)
+                                            : null;
+
+                                        return (
+                                            <tr key={item.idProduk} className="border-b border-gray-100 hover:bg-gray-50">
+                                                <td className="py-3 px-4">
+                                                    <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+                                                        {thumbnailUrl ? (
+                                                            <img
+                                                                src={thumbnailUrl}
+                                                                alt={item.namaProduk}
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <ImageIcon className="h-8 w-8 text-gray-400" />
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="py-3 px-4 font-medium text-gray-900">
+                                                    {item.namaProduk}
+                                                </td>
+                                                <td className="py-3 px-4">
+                                                    <Badge variant="info">
+                                                        {item.jenisProduk}
+                                                    </Badge>
+                                                </td>
+                                                <td className="py-3 px-4 text-gray-600">
+                                                    {item.kategoriHarga}
+                                                </td>
+                                                <td className="py-3 px-4 text-gray-600">
+                                                    {item.kategoriHarga === 'Bernominal'
+                                                        ? `Rp ${item.hargaJual?.toLocaleString('id-ID') || 0}`
+                                                        : '-'}
+                                                </td>
+                                                <td className="py-3 px-4">
+                                                    <Badge variant={item.authProduk === 'Khusus' ? 'warning' : 'success'}>
+                                                        {item.authProduk}
+                                                    </Badge>
+                                                </td>
+                                                <td className="py-3 px-4">
+                                                    <Badge variant={item.statusProduk === 'Publish' ? 'success' : 'warning'}>
+                                                        {item.statusProduk}
+                                                    </Badge>
+                                                </td>
+                                                <td className="py-3 px-4">
+                                                    {item.idForm ? (
+                                                        <Badge variant="success">✓</Badge>
+                                                    ) : (
+                                                        <Badge variant="warning">-</Badge>
+                                                    )}
+                                                </td>
+                                                <td className="py-3 px-4">
+                                                    <div className="flex items-center gap-2">
                                                         <button
                                                             className="p-2 hover:bg-blue-50 rounded"
-                                                            title="Edit Form"
-                                                            onClick={() => router.push(`/admin/form-builder/edit/${item.idForm}`)}
+                                                            title="Edit"
+                                                            onClick={() => handleEdit(item)}
                                                         >
-                                                            <FileText className="h-4 w-4 text-blue-600" />
+                                                            <Edit className="h-4 w-4 text-blue-600" />
                                                         </button>
-                                                    )}
-                                                    <button
-                                                        className="p-2 hover:bg-red-50 rounded"
-                                                        title="Delete"
-                                                        onClick={() => handleDelete(item.idProduk)}
-                                                    >
-                                                        <Trash2 className="h-4 w-4 text-red-600" />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                                        {item.idForm && (
+                                                            <button
+                                                                className="p-2 hover:bg-blue-50 rounded"
+                                                                title="Edit Form"
+                                                                onClick={() => router.push(`/admin/form-builder/edit/${item.idForm}`)}
+                                                            >
+                                                                <FileText className="h-4 w-4 text-blue-600" />
+                                                            </button>
+                                                        )}
+                                                        <button
+                                                            className="p-2 hover:bg-red-50 rounded"
+                                                            title="Delete"
+                                                            onClick={() => handleDelete(item.idProduk)}
+                                                        >
+                                                            <Trash2 className="h-4 w-4 text-red-600" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>

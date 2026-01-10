@@ -120,12 +120,17 @@ function SubKategoriContent() {
                 showSuccess('Sub-kategori berhasil diperbarui');
             } else {
                 const response = await parentProduct2Service.create(submitData);
+                console.log('✅ CREATE RESPONSE:', response);
+                console.log('✅ response.data:', response.data);
                 entityId = response.data.idParent2;
+                console.log('✅ entityId extracted:', entityId);
                 showSuccess('Sub-kategori baru berhasil ditambahkan');
             }
 
             // Auto-link uploaded media to the entity (both CREATE and UPDATE)
             const uploadedMediaIds = (window as any).__uploadedMediaIds || [];
+            console.log('📦 uploadedMediaIds:', uploadedMediaIds);
+            console.log('🔑 Final entityId for linking:', entityId);
             if (uploadedMediaIds.length > 0) {
                 try {
                     // If updating, delete old media first to replace instead of add
@@ -144,6 +149,7 @@ function SubKategoriContent() {
 
                     // Link new media
                     for (const mediaId of uploadedMediaIds) {
+                        console.log(`🔗 Linking mediaId ${mediaId} to entityId ${entityId}`);
                         await mediaService.linkToEntity(mediaId, entityId);
                     }
 
