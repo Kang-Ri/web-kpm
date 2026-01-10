@@ -91,14 +91,14 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 
                 const response = await mediaService.uploadInstant(file, entityType, uploadOptions);
 
-                // DEBUG: Log full response structure
-                console.log('📡 Full response:', response);
-                console.log('📦 response.data:', response.data);
-                console.log('📦 response.data.data:', (response as any).data?.data);
+                // Backend returns { message, data: {...media} }
+                // Axios wraps it in response.data
+                // So actual media is at response.data.data
+                const mediaData = (response as any).data?.data || response.data;
 
                 // Construct full URL for preview (backend returns relative path)
                 const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-                const relativePath = response.data?.fileUrl || '';
+                const relativePath = mediaData?.fileUrl || '';
 
                 // Only construct URL if we have a valid relativePath
                 const fullImageUrl = !relativePath ? '' :
@@ -109,16 +109,16 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                     fileName: file.name,
                     relativePath,
                     fullImageUrl,
-                    idMedia: response.data?.idMedia
+                    idMedia: mediaData?.idMedia
                 });
 
                 // Update with real media data
                 setUploadedMedia(prev => prev.map(m =>
                     m.fileName === file.name
                         ? {
-                            idMedia: response.data?.idMedia || 0,
+                            idMedia: mediaData?.idMedia || 0,
                             fileUrl: fullImageUrl, // Use full URL for preview
-                            fileName: response.data?.fileName || file.name,
+                            fileName: mediaData?.fileName || file.name,
                             uploading: false
                         }
                         : m
