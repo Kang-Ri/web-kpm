@@ -110,22 +110,22 @@ function ProdukContent() {
                 const response = await parentProduct1Service.create(submitData);
                 entityId = response.data.idParent1;
                 showSuccess('Kategori produk baru berhasil ditambahkan');
+            }
 
-                // Auto-link uploaded media to the new entity
-                const uploadedMediaIds = (window as any).__uploadedMediaIds || [];
-                if (uploadedMediaIds.length > 0) {
-                    try {
-                        const { mediaService } = await import('@/lib/api/media.service');
-                        for (const mediaId of uploadedMediaIds) {
-                            await mediaService.linkToEntity(mediaId, entityId);
-                        }
-                        console.log(`✅ Linked ${uploadedMediaIds.length} media items to entity ${entityId}`);
-                        // Clear uploaded media IDs
-                        (window as any).__uploadedMediaIds = [];
-                    } catch (linkError) {
-                        console.error('Failed to link media:', linkError);
-                        // Don't fail the whole operation if media linking fails
+            // Auto-link uploaded media to the entity (both CREATE and UPDATE)
+            const uploadedMediaIds = (window as any).__uploadedMediaIds || [];
+            if (uploadedMediaIds.length > 0) {
+                try {
+                    const { mediaService } = await import('@/lib/api/media.service');
+                    for (const mediaId of uploadedMediaIds) {
+                        await mediaService.linkToEntity(mediaId, entityId);
                     }
+                    console.log(`✅ Linked ${uploadedMediaIds.length} media items to entity ${entityId}`);
+                    // Clear uploaded media IDs
+                    (window as any).__uploadedMediaIds = [];
+                } catch (linkError) {
+                    console.error('Failed to link media:', linkError);
+                    // Don't fail the whole operation if media linking fails
                 }
             }
 
