@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
+import { ImageUploader } from '@/components/media/ImageUploader';
 import { ParentProduct2, CreateParentProduct2Dto } from '@/lib/api/parentProduct2.service';
 import { formService, Form } from '@/lib/api/form.service';
 
@@ -38,6 +39,13 @@ export const ParentProduct2FormModal: React.FC<ParentProduct2FormModalProps> = (
 
     const [availableForms, setAvailableForms] = useState<Form[]>([]);
     const [loadingForms, setLoadingForms] = useState(false);
+
+    const [uploadedMediaIds, setUploadedMediaIds] = useState<number[]>([]);
+
+    const handleUploadComplete = useCallback((mediaIds: number[]) => {
+        setUploadedMediaIds(mediaIds);
+        (window as any).__uploadedMediaIds = mediaIds;
+    }, []);
 
     // Load available forms
     useEffect(() => {
@@ -178,6 +186,18 @@ export const ParentProduct2FormModal: React.FC<ParentProduct2FormModalProps> = (
                         rows={3}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder="Masukkan deskripsi ruang kelas"
+                    />
+                </div>
+
+                {/* Image Upload */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Gambar Ruang Kelas
+                    </label>
+                    <ImageUploader
+                        entityType="parent2"
+                        maxFiles={1}
+                        onUploadComplete={handleUploadComplete}
                     />
                 </div>
 
