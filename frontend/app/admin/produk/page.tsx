@@ -5,8 +5,9 @@ import { DashboardLayout } from '@/components/layouts';
 import { Card, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Plus, Edit, Trash2, FolderOpen } from 'lucide-react';
+import { Plus, Edit, Trash2, FolderOpen, Image as ImageIcon } from 'lucide-react';
 import { parentProduct1Service, ParentProduct1, CreateParentProduct1Dto } from '@/lib/api/parentProduct1.service';
+import { mediaService, Media } from '@/lib/api/media.service';
 import { ParentProduct1FormModal } from '@/components/kelas/ParentProduct1FormModal';
 import { showSuccess, showError } from '@/lib/utils/toast';
 import { useRouter } from 'next/navigation';
@@ -16,6 +17,7 @@ function ProdukContent() {
     const [mounted, setMounted] = useState(false);
     const [kategoriList, setKategoriList] = useState<ParentProduct1[]>([]);
     const [loading, setLoading] = useState(true);
+    const [mediaMap, setMediaMap] = useState<Record<number, Media | null>>({});
 
     // Modal states
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -41,12 +43,34 @@ function ProdukContent() {
             console.log("isi data kategori produk => ", data);
             if (Array.isArray(data)) {
                 setKategoriList(data);
+                // Fetch media for each category
+                fetchMediaForCategories(data);
             }
         } catch (error: any) {
             showError('Gagal memuat data kategori produk');
         } finally {
             setLoading(false);
         }
+    };
+
+    const fetchMediaForCategories = async (categories: ParentProduct1[]) => {
+        const mediaPromises = categories.map(async (kategori) => {
+            try {
+                const response = await mediaService.getPrimaryMedia('parent1', kategori.idParent1);
+                // Handle nested response structure
+                const media = (response as any).data?.data || (response as any).data || null;
+                return { id: kategori.idParent1, media };
+            } catch (error) {
+                return { id: kategori.idParent1, media: null };
+            }
+        });
+
+        const results = await Promise.all(mediaPromises);
+        const newMediaMap: Record<number, Media | null> = {};
+        results.forEach(result => {
+            newMediaMap[result.id] = result.media;
+        });
+        setMediaMap(newMediaMap);
     };
 
     const handleCreate = () => {
@@ -184,9 +208,10 @@ function ProdukContent() {
                             <table className="w-full">
                                 <thead>
                                     <tr className="border-b border-gray-200">
+                                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Thumbnail</th>
                                         <th className="text-left py-3 px-4 font-semibold text-gray-700">Nama Kategori</th>
-                                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Deskripsi</th>
                                         <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
+                                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Tanggal Publish</th>
                                         <th className="text-left py-3 px-4 font-semibold text-gray-700">Actions</th>
                                     </tr>
                                 </thead>
