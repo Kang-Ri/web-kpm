@@ -93,9 +93,19 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 
                 // Construct full URL for preview (backend returns relative path)
                 const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-                const fullImageUrl = response.data?.fileUrl?.startsWith('http')
-                    ? response.data.fileUrl
-                    : `${backendUrl}/${response.data?.fileUrl}`;
+                const relativePath = response.data?.fileUrl || '';
+
+                // Only construct URL if we have a valid relativePath
+                const fullImageUrl = !relativePath ? '' :
+                    relativePath.startsWith('http') ? relativePath :
+                        `${backendUrl}/${relativePath}`;
+
+                console.log('🖼️ Upload complete:', {
+                    fileName: file.name,
+                    relativePath,
+                    fullImageUrl,
+                    idMedia: response.data?.idMedia
+                });
 
                 // Update with real media data
                 setUploadedMedia(prev => prev.map(m =>
