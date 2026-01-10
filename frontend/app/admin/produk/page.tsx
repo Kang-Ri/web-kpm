@@ -117,10 +117,30 @@ function ProdukContent() {
             if (uploadedMediaIds.length > 0) {
                 try {
                     const { mediaService } = await import('@/lib/api/media.service');
+
+                    // If updating (not creating), delete old media first to replace instead of add
+                    if (selectedKategori) {
+                        try {
+                            const oldMediaResponse = await mediaService.getMediaByEntity('parent1', entityId);
+                            const oldMedia = (oldMediaResponse.data as any)?.data || [];
+
+                            // Delete all old media for this entity
+                            for (const media of oldMedia) {
+                                await mediaService.delete(media.idMedia);
+                                console.log(`🗑️ Deleted old media ${media.idMedia}`);
+                            }
+                        } catch (err) {
+                            console.error('Failed to delete old media:', err);
+                            // Continue even if delete fails
+                        }
+                    }
+
+                    // Link new media
                     for (const mediaId of uploadedMediaIds) {
                         await mediaService.linkToEntity(mediaId, entityId);
                     }
                     console.log(`✅ Linked ${uploadedMediaIds.length} media items to entity ${entityId}`);
+
                     // Clear uploaded media IDs
                     (window as any).__uploadedMediaIds = [];
                 } catch (linkError) {
