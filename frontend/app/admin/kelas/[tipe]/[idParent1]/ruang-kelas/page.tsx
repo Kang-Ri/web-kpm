@@ -6,9 +6,10 @@ import { DashboardLayout } from '@/components/layouts';
 import { Card, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Plus, Edit, Trash2, Download, UserPlus, Users, FileSpreadsheet } from 'lucide-react';
+import { Plus, Edit, Trash2, Download, UserPlus, Users, FileSpreadsheet, Image as ImageIcon } from 'lucide-react';
 import { parentProduct2Service, ParentProduct2, CreateParentProduct2Dto } from '@/lib/api/parentProduct2.service';
 import { parentProduct1Service } from '@/lib/api/parentProduct1.service';
+import { mediaService, Media } from '@/lib/api/media.service';
 import { ParentProduct2FormModal } from '@/components/kelas/ParentProduct2FormModal';
 import { BulkImportMateriModal } from '@/components/kelas/BulkImportMateriModal';
 import { EnrollSiswaModal } from '@/components/kelas/EnrollSiswaModal';
@@ -26,6 +27,7 @@ function RuangKelasContent() {
     const [ruangKelasList, setRuangKelasList] = useState<ParentProduct2[]>([]);
     const [loading, setLoading] = useState(true);
     const [kategoriName, setKategoriName] = useState('');
+    const [mediaMap, setMediaMap] = useState<Record<number, Media | null>>({});
 
     // Modal states
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -63,15 +65,36 @@ function RuangKelasContent() {
         try {
             setLoading(true);
             const response = await parentProduct2Service.getAll({ idParent1 });
-            const data = response.data.data || response.data;
+            const data = (response as any).data?.data || (response as any).data || [];
             if (Array.isArray(data)) {
                 setRuangKelasList(data);
+                fetchMediaForRuangKelas(data);
             }
         } catch (error: any) {
             showError('Gagal memuat data ruang kelas');
         } finally {
             setLoading(false);
         }
+    };
+
+    const fetchMediaForRuangKelas = async (ruangKelas: ParentProduct2[]) => {
+        const mediaPromises = ruangKelas.map(async (kelas) => {
+            try {
+                const response = await mediaService.getPrimaryMedia('parent2', kelas.idParent2);
+                const backendResponse = response.data as any;
+                const media = backendResponse?.data || null;
+                return { id: kelas.idParent2, media };
+            } catch (error) {
+                return { id: kelas.idParent2, media: null };
+            }
+        });
+
+        const results = await Promise.all(mediaPromises);
+        const newMediaMap: Record<number, Media | null> = {};
+        results.forEach(result => {
+            newMediaMap[result.id] = result.media;
+        });
+        setMediaMap(newMediaMap);
     };
 
     const handleCreate = () => {
@@ -101,12 +124,45 @@ function RuangKelasContent() {
                 tautanProduk: tautanProduk as any
             };
 
+            let entityId: number;
+
             if (selectedRuangKelas) {
                 await parentProduct2Service.update(selectedRuangKelas.idParent2, submitData);
+                entityId = selectedRuangKelas.idParent2;
                 showSuccess('Ruang kelas berhasil diperbarui');
             } else {
-                await parentProduct2Service.create(submitData);
+                const response = await parentProduct2Service.create(submitData);
+                entityId = response.data.idParent2;
                 showSuccess('Ruang kelas baru berhasil ditambahkan');
+            }
+
+            // Auto-link uploaded media to the entity (both CREATE and UPDATE)
+            const uploadedMediaIds = (window as any).__uploadedMediaIds || [];
+            if (uploadedMediaIds.length > 0) {
+                try {
+                    // If updating, delete old media first to replace instead of add
+                    if (selectedRuangKelas) {
+                        try {
+                            const oldMediaResponse = await mediaService.getMediaByEntity('parent2', entityId);
+                            const oldMedia = (oldMediaResponse.data as any)?.data || [];
+
+                            for (const media of oldMedia) {
+                                await mediaService.deleteMedia(media.idMedia);
+                            }
+                        } catch (err) {
+                            console.error('Failed to delete old media:', err);
+                        }
+                    }
+
+                    // Link new media
+                    for (const mediaId of uploadedMediaIds) {
+                        await mediaService.linkToEntity(mediaId, entityId);
+                    }
+
+                    (window as any).__uploadedMediaIds = [];
+                } catch (linkError) {
+                    console.error('Failed to link media:', linkError);
+                }
             }
 
             setIsModalOpen(false);
@@ -229,6 +285,7 @@ function RuangKelasContent() {
                             <table className="w-full">
                                 <thead>
                                     <tr className="border-b border-gray-200">
+                                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Thumbnail</th>
                                         <th className="text-left py-3 px-4 font-semibold text-gray-700">Nama Ruang Kelas</th>
                                         <th className="text-left py-3 px-4 font-semibold text-gray-700">Tahun Ajaran</th>
                                         <th className="text-left py-3 px-4 font-semibold text-gray-700">Kapasitas</th>
@@ -239,103 +296,123 @@ function RuangKelasContent() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {ruangKelasList.map((ruangKelas) => (
-                                        <tr key={ruangKelas.idParent2} className="border-b border-gray-100 hover:bg-gray-50">
-                                            <td className="py-3 px-4">
-                                                <button
-                                                    onClick={() => router.push(`/admin/kelas/${tipe}/${idParent1}/ruang-kelas/${ruangKelas.idParent2}/materi`)}
-                                                    className="text-blue-600 hover:text-blue-800 font-medium hover:underline text-left"
-                                                    title="Lihat Materi"
-                                                >
-                                                    {ruangKelas.namaParent2}
-                                                </button>
-                                            </td>
-                                            <td className="py-3 px-4 text-gray-600">
-                                                {ruangKelas.tahunAjaran || '-'}
-                                            </td>
-                                            <td className="py-3 px-4 text-gray-600">
-                                                {ruangKelas.kapasitasMaksimal || 'Unlimited'}
-                                            </td>
-                                            <td className="py-3 px-4">
-                                                {ruangKelas.jenjangKelasIzin && ruangKelas.jenjangKelasIzin.length > 0 ? (
-                                                    <div className="flex flex-wrap gap-1">
-                                                        {ruangKelas.jenjangKelasIzin.map(jenjang => (
-                                                            <span key={jenjang} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                                                Kelas {jenjang}
+                                    {ruangKelasList.map((ruangKelas) => {
+                                        const media = mediaMap[ruangKelas.idParent2];
+                                        const thumbnailUrl = media?.fileUrl
+                                            ? (media.fileUrl.startsWith('http') ? media.fileUrl : `http://localhost:5000/${media.fileUrl}`)
+                                            : null;
+
+                                        return (
+                                            <tr key={ruangKelas.idParent2} className="border-b border-gray-100 hover:bg-gray-50">
+                                                <td className="py-3 px-4">
+                                                    <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+                                                        {thumbnailUrl ? (
+                                                            <img
+                                                                src={thumbnailUrl}
+                                                                alt={ruangKelas.namaParent2}
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <ImageIcon className="h-8 w-8 text-gray-400" />
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="py-3 px-4">
+                                                    <button
+                                                        onClick={() => router.push(`/admin/kelas/${tipe}/${idParent1}/ruang-kelas/${ruangKelas.idParent2}/materi`)}
+                                                        className="text-blue-600 hover:text-blue-800 font-medium hover:underline text-left"
+                                                        title="Lihat Materi"
+                                                    >
+                                                        {ruangKelas.namaParent2}
+                                                    </button>
+                                                </td>
+                                                <td className="py-3 px-4 text-gray-600">
+                                                    {ruangKelas.tahunAjaran || '-'}
+                                                </td>
+                                                <td className="py-3 px-4 text-gray-600">
+                                                    {ruangKelas.kapasitasMaksimal || 'Unlimited'}
+                                                </td>
+                                                <td className="py-3 px-4">
+                                                    {ruangKelas.jenjangKelasIzin && ruangKelas.jenjangKelasIzin.length > 0 ? (
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {ruangKelas.jenjangKelasIzin.map(jenjang => (
+                                                                <span key={jenjang} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                                                    Kelas {jenjang}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-gray-500 text-sm">Semua Jenjang</span>
+                                                    )}
+                                                </td>
+                                                <td className="py-3 px-4">
+                                                    {ruangKelas.daftarUlangAktif ? (
+                                                        <div className="flex flex-col gap-1">
+                                                            <Badge variant="success">Aktif</Badge>
+                                                            <span className="text-xs text-gray-600">
+                                                                {ruangKelas.kategoriHargaDaftarUlang === 'Gratis'
+                                                                    ? 'Gratis'
+                                                                    : `Rp ${ruangKelas.hargaDaftarUlang?.toLocaleString('id-ID') || 0}`
+                                                                }
                                                             </span>
-                                                        ))}
+                                                        </div>
+                                                    ) : (
+                                                        <Badge variant="secondary">Tidak Aktif</Badge>
+                                                    )}
+                                                </td>
+                                                <td className="py-3 px-4">
+                                                    <Badge variant={ruangKelas.status === 'Aktif' ? 'success' : 'info'}>
+                                                        {ruangKelas.status}
+                                                    </Badge>
+                                                </td>
+                                                <td className="py-3 px-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            className="p-2 hover:bg-purple-50 rounded"
+                                                            title="Download Data Siswa"
+                                                            onClick={() => handleExportSiswa(ruangKelas.idParent2, ruangKelas.namaParent2)}
+                                                        >
+                                                            <Download className="h-4 w-4 text-purple-600" />
+                                                        </button>
+                                                        <button
+                                                            className="p-2 hover:bg-green-50 rounded"
+                                                            title="Tambah Siswa"
+                                                            onClick={() => {
+                                                                setEnrollingKelas(ruangKelas);
+                                                                setIsEnrollModalOpen(true);
+                                                            }}
+                                                        >
+                                                            <UserPlus className="h-4 w-4 text-green-600" />
+                                                        </button>
+                                                        <button
+                                                            className="p-2 hover:bg-indigo-50 rounded"
+                                                            title="Lihat Siswa"
+                                                            onClick={() => {
+                                                                setViewingKelas(ruangKelas);
+                                                                setIsViewSiswaModalOpen(true);
+                                                            }}
+                                                        >
+                                                            <Users className="h-4 w-4 text-indigo-600" />
+                                                        </button>
+                                                        <button
+                                                            className="p-2 hover:bg-blue-50 rounded"
+                                                            title="Edit"
+                                                            onClick={() => handleEdit(ruangKelas)}
+                                                        >
+                                                            <Edit className="h-4 w-4 text-blue-600" />
+                                                        </button>
+                                                        <button
+                                                            className="p-2 hover:bg-red-50 rounded"
+                                                            title="Delete"
+                                                            onClick={() => handleDelete(ruangKelas.idParent2)}
+                                                        >
+                                                            <Trash2 className="h-4 w-4 text-red-600" />
+                                                        </button>
                                                     </div>
-                                                ) : (
-                                                    <span className="text-gray-500 text-sm">Semua Jenjang</span>
-                                                )}
-                                            </td>
-                                            <td className="py-3 px-4">
-                                                {ruangKelas.daftarUlangAktif ? (
-                                                    <div className="flex flex-col gap-1">
-                                                        <Badge variant="success">Aktif</Badge>
-                                                        <span className="text-xs text-gray-600">
-                                                            {ruangKelas.kategoriHargaDaftarUlang === 'Gratis'
-                                                                ? 'Gratis'
-                                                                : `Rp ${ruangKelas.hargaDaftarUlang?.toLocaleString('id-ID') || 0}`
-                                                            }
-                                                        </span>
-                                                    </div>
-                                                ) : (
-                                                    <Badge variant="secondary">Tidak Aktif</Badge>
-                                                )}
-                                            </td>
-                                            <td className="py-3 px-4">
-                                                <Badge variant={ruangKelas.status === 'Aktif' ? 'success' : 'info'}>
-                                                    {ruangKelas.status}
-                                                </Badge>
-                                            </td>
-                                            <td className="py-3 px-4">
-                                                <div className="flex items-center gap-2">
-                                                    <button
-                                                        className="p-2 hover:bg-purple-50 rounded"
-                                                        title="Download Data Siswa"
-                                                        onClick={() => handleExportSiswa(ruangKelas.idParent2, ruangKelas.namaParent2)}
-                                                    >
-                                                        <Download className="h-4 w-4 text-purple-600" />
-                                                    </button>
-                                                    <button
-                                                        className="p-2 hover:bg-green-50 rounded"
-                                                        title="Tambah Siswa"
-                                                        onClick={() => {
-                                                            setEnrollingKelas(ruangKelas);
-                                                            setIsEnrollModalOpen(true);
-                                                        }}
-                                                    >
-                                                        <UserPlus className="h-4 w-4 text-green-600" />
-                                                    </button>
-                                                    <button
-                                                        className="p-2 hover:bg-indigo-50 rounded"
-                                                        title="Lihat Siswa"
-                                                        onClick={() => {
-                                                            setViewingKelas(ruangKelas);
-                                                            setIsViewSiswaModalOpen(true);
-                                                        }}
-                                                    >
-                                                        <Users className="h-4 w-4 text-indigo-600" />
-                                                    </button>
-                                                    <button
-                                                        className="p-2 hover:bg-blue-50 rounded"
-                                                        title="Edit"
-                                                        onClick={() => handleEdit(ruangKelas)}
-                                                    >
-                                                        <Edit className="h-4 w-4 text-blue-600" />
-                                                    </button>
-                                                    <button
-                                                        className="p-2 hover:bg-red-50 rounded"
-                                                        title="Delete"
-                                                        onClick={() => handleDelete(ruangKelas.idParent2)}
-                                                    >
-                                                        <Trash2 className="h-4 w-4 text-red-600" />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>
