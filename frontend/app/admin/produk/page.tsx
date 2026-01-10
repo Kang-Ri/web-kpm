@@ -57,10 +57,13 @@ function ProdukContent() {
         const mediaPromises = categories.map(async (kategori) => {
             try {
                 const response = await mediaService.getPrimaryMedia('parent1', kategori.idParent1);
-                // Handle nested response structure
-                const media = (response as any).data?.data || (response as any).data || null;
+                // Backend returns { message, data: mediaObject }
+                // Access response.data.data to get the actual media object
+                const media = (response as any).data?.data;
+                console.log(`Media for ${kategori.namaParent1}:`, media);
                 return { id: kategori.idParent1, media };
             } catch (error) {
+                console.error(`Failed to fetch media for ${kategori.namaParent1}:`, error);
                 return { id: kategori.idParent1, media: null };
             }
         });
