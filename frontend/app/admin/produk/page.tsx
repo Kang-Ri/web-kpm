@@ -216,46 +216,71 @@ function ProdukContent() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {kategoriList.map((kategori) => (
-                                        <tr key={kategori.idParent1} className="border-b border-gray-100 hover:bg-gray-50">
-                                            <td className="py-3 px-4">
-                                                <button
-                                                    onClick={() => handleNavigateToSubKategori(kategori.idParent1)}
-                                                    className="text-blue-600 hover:text-blue-800 font-medium hover:underline flex items-center gap-2"
-                                                    title="Lihat Sub-Kategori"
-                                                >
-                                                    <FolderOpen className="h-4 w-4" />
-                                                    {kategori.namaParent1}
-                                                </button>
-                                            </td>
-                                            <td className="py-3 px-4 text-gray-600">
-                                                {kategori.descParent1 || '-'}
-                                            </td>
-                                            <td className="py-3 px-4">
-                                                <Badge variant={kategori.status === 'Aktif' ? 'success' : 'info'}>
-                                                    {kategori.status}
-                                                </Badge>
-                                            </td>
-                                            <td className="py-3 px-4">
-                                                <div className="flex items-center gap-2">
+                                    {kategoriList.map((kategori) => {
+                                        const media = mediaMap[kategori.idParent1];
+                                        const thumbnailUrl = media?.fileUrl
+                                            ? (media.fileUrl.startsWith('http') ? media.fileUrl : `http://localhost:5000/${media.fileUrl}`)
+                                            : null;
+
+                                        return (
+                                            <tr key={kategori.idParent1} className="border-b border-gray-100 hover:bg-gray-50">
+                                                {/* Thumbnail Column */}
+                                                <td className="py-3 px-4">
+                                                    <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+                                                        {thumbnailUrl ? (
+                                                            <img
+                                                                src={thumbnailUrl}
+                                                                alt={kategori.namaParent1}
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <ImageIcon className="h-8 w-8 text-gray-400" />
+                                                        )}
+                                                    </div>
+                                                </td>
+
+                                                <td className="py-3 px-4">
                                                     <button
-                                                        className="p-2 hover:bg-blue-50 rounded"
-                                                        title="Edit"
-                                                        onClick={() => handleEdit(kategori)}
+                                                        onClick={() => handleNavigateToSubKategori(kategori.idParent1)}
+                                                        className="text-blue-600 hover:text-blue-800 font-medium hover:underline flex items-center gap-2"
+                                                        title="Lihat Sub-Kategori"
                                                     >
-                                                        <Edit className="h-4 w-4 text-blue-600" />
+                                                        <FolderOpen className="h-4 w-4" />
+                                                        {kategori.namaParent1}
                                                     </button>
-                                                    <button
-                                                        className="p-2 hover:bg-red-50 rounded"
-                                                        title="Delete"
-                                                        onClick={() => handleDelete(kategori.idParent1)}
-                                                    >
-                                                        <Trash2 className="h-4 w-4 text-red-600" />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                                </td>
+                                                <td className="py-3 px-4">
+                                                    <Badge variant={kategori.status === 'Aktif' ? 'success' : 'info'}>
+                                                        {kategori.status}
+                                                    </Badge>
+                                                </td>
+                                                <td className="py-3 px-4 text-gray-600">
+                                                    {kategori.tglPublish
+                                                        ? new Date(kategori.tglPublish).toLocaleDateString('id-ID')
+                                                        : '-'
+                                                    }
+                                                </td>
+                                                <td className="py-3 px-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            className="p-2 hover:bg-blue-50 rounded"
+                                                            title="Edit"
+                                                            onClick={() => handleEdit(kategori)}
+                                                        >
+                                                            <Edit className="h-4 w-4 text-blue-600" />
+                                                        </button>
+                                                        <button
+                                                            className="p-2 hover:bg-red-50 rounded"
+                                                            title="Delete"
+                                                            onClick={() => handleDelete(kategori.idParent1)}
+                                                        >
+                                                            <Trash2 className="h-4 w-4 text-red-600" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>
