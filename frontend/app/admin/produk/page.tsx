@@ -39,7 +39,7 @@ function ProdukContent() {
             setLoading(true);
             // Filter by tautanProduk = 'Produk Komersial'
             const response = await parentProduct1Service.getAll({ tautanProduk: 'Produk Komersial' });
-            const data = response.data.data || response.data;
+            const data = (response as any).data?.data || (response as any).data || [];
             console.log("isi data kategori produk => ", data);
             if (Array.isArray(data)) {
                 setKategoriList(data);
