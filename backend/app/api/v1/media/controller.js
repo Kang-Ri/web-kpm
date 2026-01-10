@@ -106,15 +106,10 @@ const getPrimaryMedia = async (req, res, next) => {
             parseInt(entityId)
         );
 
-        if (!media) {
-            return res.status(StatusCodes.NOT_FOUND).json({
-                message: 'No primary media found'
-            });
-        }
-
+        // Return null data instead of 404 for graceful frontend handling
         res.status(StatusCodes.OK).json({
-            message: 'Primary media retrieved successfully',
-            data: media
+            message: media ? 'Primary media retrieved successfully' : 'No primary media found',
+            data: media || null
         });
 
     } catch (error) {
