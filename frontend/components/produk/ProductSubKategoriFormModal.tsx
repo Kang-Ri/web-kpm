@@ -29,7 +29,8 @@ export const ProductSubKategoriFormModal: React.FC<ProductSubKategoriFormModalPr
 
     const [uploadedMediaIds, setUploadedMediaIds] = useState<number[]>([]);
 
-    const handleUploadComplete = useCallback((mediaIds: number[]) => {
+    const handleUploadComplete = useCallback((media: Array<{ idMedia: number, fileUrl: string, fileName: string }>) => {
+        const mediaIds = media.map(m => m.idMedia);
         setUploadedMediaIds(mediaIds);
         (window as any).__uploadedMediaIds = mediaIds;
     }, []);
