@@ -23,6 +23,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public")));
 
+// Serve uploaded media files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 require('./app/db/index');
 
 const v1 = "/api/v1";
