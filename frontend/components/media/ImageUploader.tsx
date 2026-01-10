@@ -91,6 +91,11 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 
                 const response = await mediaService.uploadInstant(file, entityType, uploadOptions);
 
+                // DEBUG: Log full response structure
+                console.log('📡 Full response:', response);
+                console.log('📦 response.data:', response.data);
+                console.log('📦 response.data.data:', (response as any).data?.data);
+
                 // Construct full URL for preview (backend returns relative path)
                 const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
                 const relativePath = response.data?.fileUrl || '';
