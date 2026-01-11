@@ -40,22 +40,6 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
 
     // Form templates state
     const [availableForms, setAvailableForms] = useState<Form[]>([]);
-    const [loadingForms, setLoadingForms] = useState(false);
-    const [selectedTemplateId, setSelectedTemplateId] = useState<number | undefined>(undefined);
-    const [attachedFormName, setAttachedFormName] = useState<string | null>(null);
-    const [isAttachingForm, setIsAttachingForm] = useState(false);
-
-    // Media state
-    const [uploadedMediaIds, setUploadedMediaIds] = useState<number[]>([]);
-    const [existingMedia, setExistingMedia] = useState<Media[]>([]);
-    const [loadingMedia, setLoadingMedia] = useState(false);
-
-    const handleUploadComplete = useCallback((media: Array<{ idMedia: number, fileUrl: string, fileName: string }>) => {
-        const mediaIds = media.map(m => m.idMedia);
-        setUploadedMediaIds(mediaIds);
-        (window as any).__uploadedMediaIds = mediaIds;
-    }, []);
-
     // Load available form templates
     useEffect(() => {
         const loadForms = async () => {
@@ -146,7 +130,7 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
     useEffect(() => {
         const calculateFinalPrice = () => {
             const { hargaJual, diskonAktif, tipeDiskon, nilaiDiskon, diskonMulai, diskonBerakhir } = formData;
-            
+
             // If no discount active, final price = selling price
             if (!diskonAktif || !nilaiDiskon || nilaiDiskon <= 0) {
                 setHargaAkhir(hargaJual);
@@ -157,7 +141,7 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
             const now = new Date();
             const startValid = !diskonMulai || now >= new Date(diskonMulai);
             const endValid = !diskonBerakhir || now <= new Date(diskonBerakhir);
-            
+
             if (!startValid || !endValid) {
                 setHargaAkhir(hargaJual);
                 return;
@@ -170,7 +154,7 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
             } else if (tipeDiskon === 'nominal') {
                 finalPrice = Math.max(0, hargaJual - nilaiDiskon);
             }
-            
+
             setHargaAkhir(finalPrice);
         };
 
@@ -276,8 +260,8 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
                                 {existingMedia.map((media, index) => (
                                     <div key={media.idMedia} className="flex items-center gap-2 p-2 bg-white rounded border">
                                         <img
-                                            src={media.fileUrl.startsWith('http') 
-                                                ? media.fileUrl 
+                                            src={media.fileUrl.startsWith('http')
+                                                ? media.fileUrl
                                                 : `http://localhost:5000/${media.fileUrl}`
                                             }
                                             alt={`Image ${index + 1}`}
@@ -403,7 +387,7 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
                         💰 Harga Saran & Diskon
                         <span className="text-xs text-gray-500 font-normal">(Opsional)</span>
                     </summary>
-                    
+
                     <div className="mt-4 space-y-4">
                         {/* Harga Saran */}
                         <div>
@@ -541,7 +525,7 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
                         📦 Stok & Inventory
                         <span className="text-xs text-gray-500 font-normal">(Manajemen stok)</span>
                     </summary>
-                    
+
                     <div className="mt-4 space-y-4">
                         {/* Digital Product Toggle */}
                         <div className="flex items-center gap-2 p-3 bg-white rounded-lg border border-gray-200">
