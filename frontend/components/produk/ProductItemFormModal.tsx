@@ -40,6 +40,27 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
 
     // Form templates state
     const [availableForms, setAvailableForms] = useState<Form[]>([]);
+    const [loadingForms, setLoadingForms] = useState(false);
+    const [selectedTemplateId, setSelectedTemplateId] = useState<number | undefined>(undefined);
+    const [attachedFormName, setAttachedFormName] = useState<string | null>(null);
+    const [isAttachingForm, setIsAttachingForm] = useState(false);
+
+    // Media state
+    const [uploadedMediaIds, setUploadedMediaIds] = useState<number[]>([]);
+    const [existingMedia, setExistingMedia] = useState<Media[]>([]);
+    const [loadingMedia, setLoadingMedia] = useState(false);
+
+    // Calculated field for discount
+    const [hargaAkhir, setHargaAkhir] = useState(0);
+
+    // Tab state
+    const [activeTab, setActiveTab] = useState<'basic' | 'pricing' | 'inventory'>('basic');
+
+    const handleUploadComplete = useCallback((media: Array<{ idMedia: number, fileUrl: string, fileName: string }>) => {
+        const mediaIds = media.map(m => m.idMedia);
+        setUploadedMediaIds(mediaIds);
+        (window as any).__uploadedMediaIds = mediaIds;
+    }, []);
     // Load available form templates
     useEffect(() => {
         const loadForms = async () => {
