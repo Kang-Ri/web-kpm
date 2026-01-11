@@ -396,6 +396,245 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
                     </div>
                 )}
 
+
+                {/* === COLLAPSIBLE SECTION 1: PRICING & DISCOUNT === */}
+                <details className="border border-gray-300 rounded-lg p-4 bg-gray-50" open>
+                    <summary className="cursor-pointer font-semibold text-gray-900 flex items-center gap-2">
+                        💰 Harga Saran & Diskon
+                        <span className="text-xs text-gray-500 font-normal">(Opsional)</span>
+                    </summary>
+                    
+                    <div className="mt-4 space-y-4">
+                        {/* Harga Saran */}
+                        <div>
+                            <label htmlFor="hargaSaran" className="block text-sm font-medium text-gray-700 mb-1">
+                                Harga Saran (MSRP)
+                            </label>
+                            <input
+                                type="number"
+                                id="hargaSaran"
+                                name="hargaSaran"
+                                value={formData.hargaSaran}
+                                onChange={handleChange}
+                                min="0"
+                                step="0.01"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="Harga rekomendasi pasar"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">Harga yang disarankan untuk konsumen</p>
+                        </div>
+
+                        {/* Discount Toggle */}
+                        <div className="flex items-center gap-2 p-3 bg-white rounded-lg border border-gray-200">
+                            <input
+                                type="checkbox"
+                                id="diskonAktif"
+                                name="diskonAktif"
+                                checked={formData.diskonAktif}
+                                onChange={handleChange}
+                                className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                            />
+                            <label htmlFor="diskonAktif" className="text-sm font-medium text-gray-900 cursor-pointer">
+                                Aktifkan Diskon
+                            </label>
+                        </div>
+
+                        {/* Discount Fields (conditional) */}
+                        {formData.diskonAktif && (
+                            <div className="pl-6 border-l-4 border-green-500 space-y-4">
+                                {/* Discount Type & Value */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label htmlFor="tipeDiskon" className="block text-sm font-medium text-gray-700 mb-1">
+                                            Tipe Diskon
+                                        </label>
+                                        <select
+                                            id="tipeDiskon"
+                                            name="tipeDiskon"
+                                            value={formData.tipeDiskon}
+                                            onChange={handleChange}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        >
+                                            <option value="percentage">Persentase (%)</option>
+                                            <option value="nominal">Nominal (Rp)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label htmlFor="nilaiDiskon" className="block text-sm font-medium text-gray-700 mb-1">
+                                            Nilai Diskon
+                                        </label>
+                                        <input
+                                            type="number"
+                                            id="nilaiDiskon"
+                                            name="nilaiDiskon"
+                                            value={formData.nilaiDiskon}
+                                            onChange={handleChange}
+                                            min="0"
+                                            step={formData.tipeDiskon === 'percentage' ? '1' : '0.01'}
+                                            max={formData.tipeDiskon === 'percentage' ? '100' : undefined}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            placeholder={formData.tipeDiskon === 'percentage' ? 'Contoh: 20' : 'Contoh: 10000'}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Discount Period */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label htmlFor="diskonMulai" className="block text-sm font-medium text-gray-700 mb-1">
+                                            Berlaku Dari
+                                        </label>
+                                        <input
+                                            type="datetime-local"
+                                            id="diskonMulai"
+                                            name="diskonMulai"
+                                            value={formData.diskonMulai || ''}
+                                            onChange={handleChange}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="diskonBerakhir" className="block text-sm font-medium text-gray-700 mb-1">
+                                            Sampai
+                                        </label>
+                                        <input
+                                            type="datetime-local"
+                                            id="diskonBerakhir"
+                                            name="diskonBerakhir"
+                                            value={formData.diskonBerakhir || ''}
+                                            onChange={handleChange}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Final Price Preview */}
+                                {hargaAkhir !== formData.hargaJual && (
+                                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <p className="text-sm text-gray-600">Harga Akhir:</p>
+                                                <p className="text-2xl font-bold text-green-700">
+                                                    Rp {hargaAkhir.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                                </p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-sm text-gray-600">Hemat:</p>
+                                                <p className="text-lg font-semibold text-green-600">
+                                                    Rp {(formData.hargaJual - hargaAkhir).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                                </p>
+                                                <p className="text-xs text-gray-500">
+                                                    ({((formData.hargaJual - hargaAkhir) / formData.hargaJual * 100).toFixed(1)}%)
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </details>
+
+                {/* === COLLAPSIBLE SECTION 2: INVENTORY === */}
+                <details className="border border-gray-300 rounded-lg p-4 bg-gray-50" open>
+                    <summary className="cursor-pointer font-semibold text-gray-900 flex items-center gap-2">
+                        📦 Stok & Inventory
+                        <span className="text-xs text-gray-500 font-normal">(Manajemen stok)</span>
+                    </summary>
+                    
+                    <div className="mt-4 space-y-4">
+                        {/* Digital Product Toggle */}
+                        <div className="flex items-center gap-2 p-3 bg-white rounded-lg border border-gray-200">
+                            <input
+                                type="checkbox"
+                                id="produkDigital"
+                                name="produkDigital"
+                                checked={formData.produkDigital}
+                                onChange={handleChange}
+                                className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                            />
+                            <label htmlFor="produkDigital" className="text-sm font-medium text-gray-900 cursor-pointer">
+                                Produk Digital (E-book, Video, dll)
+                            </label>
+                        </div>
+
+                        {/* Inventory Fields (conditional - hidden for digital products) */}
+                        {!formData.produkDigital && (
+                            <div className="pl-6 border-l-4 border-blue-500 space-y-4">
+                                {/* Track Inventory Toggle */}
+                                <div className="flex items-center gap-2 p-3 bg-white rounded-lg border border-gray-200">
+                                    <input
+                                        type="checkbox"
+                                        id="trackInventory"
+                                        name="trackInventory"
+                                        checked={formData.trackInventory}
+                                        onChange={handleChange}
+                                        className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                                    />
+                                    <label htmlFor="trackInventory" className="text-sm font-medium text-gray-900 cursor-pointer">
+                                        Lacak Stok (Track Inventory)
+                                    </label>
+                                </div>
+
+                                {/* Stock Fields (conditional) */}
+                                {formData.trackInventory && (
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label htmlFor="stokProduk" className="block text-sm font-medium text-gray-700 mb-1">
+                                                Jumlah Stok <span className="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                type="number"
+                                                id="stokProduk"
+                                                name="stokProduk"
+                                                value={formData.stokProduk}
+                                                onChange={handleChange}
+                                                min="0"
+                                                step="1"
+                                                required={formData.trackInventory && !formData.produkDigital}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                placeholder="Contoh: 100"
+                                            />
+                                            {formData.stokProduk <= formData.minStokAlert && formData.stokProduk > 0 && (
+                                                <p className="text-xs text-yellow-600 mt-1">⚠️ Stok rendah!</p>
+                                            )}
+                                            {formData.stokProduk === 0 && (
+                                                <p className="text-xs text-red-600 mt-1">❌ Stok habis!</p>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <label htmlFor="minStokAlert" className="block text-sm font-medium text-gray-700 mb-1">
+                                                Alert Stok Minimum
+                                            </label>
+                                            <input
+                                                type="number"
+                                                id="minStokAlert"
+                                                name="minStokAlert"
+                                                value={formData.minStokAlert}
+                                                onChange={handleChange}
+                                                min="0"
+                                                step="1"
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                placeholder="Contoh: 10"
+                                            />
+                                            <p className="text-xs text-gray-500 mt-1">Notifikasi saat stok {'<'} nilai ini</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Info for digital products */}
+                        {formData.produkDigital && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                <p className="text-sm text-blue-800">
+                                    ℹ️ Produk digital tidak memerlukan manajemen stok (unlimited)
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </details>
+
                 {/* Row: Ref Code & Status */}
                 <div className="grid grid-cols-2 gap-4">
                     <div>
