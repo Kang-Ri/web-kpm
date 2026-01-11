@@ -47,7 +47,7 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
 
     // Media state
     const [uploadedMediaIds, setUploadedMediaIds] = useState<number[]>([]);
-    const [existingMedia, setExistingMedia] = useState<Media | null>(null);
+    const [existingMedia, setExistingMedia] = useState<Media[]>([]);
     const [loadingMedia, setLoadingMedia] = useState(false);
 
     const handleUploadComplete = useCallback((media: Array<{ idMedia: number, fileUrl: string, fileName: string }>) => {
@@ -105,16 +105,16 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
                 setSelectedTemplateId(undefined);
             }
 
-            // Fetch existing media
+            // Fetch existing media (all images, not just primary)
             const fetchExistingMedia = async () => {
                 try {
                     setLoadingMedia(true);
-                    const response = await mediaService.getPrimaryMedia('product', product.idProduk);
-                    const media = (response.data as any)?.data || null;
-                    setExistingMedia(media);
+                    const response = await mediaService.getMediaByEntity('product', product.idProduk);
+                    const mediaList = (response.data as any)?.data || [];
+                    setExistingMedia(Array.isArray(mediaList) ? mediaList : []);
                 } catch (error) {
                     console.log('No existing media found');
-                    setExistingMedia(null);
+                    setExistingMedia([]);
                 } finally {
                     setLoadingMedia(false);
                 }
@@ -137,7 +137,7 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
             });
             setAttachedFormName(null);
             setSelectedTemplateId(undefined);
-            setExistingMedia(null);
+            setExistingMedia([]);
         }
     }, [product, isOpen]);
 
@@ -263,7 +263,7 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
 
                     <ImageUploader
                         entityType="product"
-                        maxFiles={1}
+                        maxFiles={5}
                         onUploadComplete={handleUploadComplete}
                     />
                 </div>
