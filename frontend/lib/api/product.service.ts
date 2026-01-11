@@ -18,19 +18,19 @@ export interface Product {
     refCode?: string;
     statusProduk: 'Draft' | 'Publish' | 'Non-Aktif';
     tanggalPublish?: string | null;
-    // Inventory fields
-    stokProduk?: number;
-    trackInventory?: boolean;
-    minStokAlert?: number;
-    produkDigital?: boolean;
-    // Discount fields
-    hargaSaran?: number;
-    diskonAktif?: boolean;
-    tipeDiskon?: 'percentage' | 'nominal';
-    nilaiDiskon?: number;
-    hargaAkhir?: number;
-    diskonMulai?: string | null;
-    diskonBerakhir?: string | null;
+    // Inventory fields - required with defaults
+    stokProduk: number;
+    trackInventory: boolean;
+    minStokAlert: number;
+    produkDigital: boolean;
+    // Discount fields - required with defaults
+    hargaSaran: number;
+    diskonAktif: boolean;
+    tipeDiskon: 'percentage' | 'nominal';
+    nilaiDiskon: number;
+    hargaAkhir: number;
+    diskonMulai: string | null;
+    diskonBerakhir: string | null;
 }
 
 export interface CreateProductDto {
@@ -46,12 +46,12 @@ export interface CreateProductDto {
     refCode?: string;
     statusProduk?: 'Draft' | 'Publish' | 'Non-Aktif';
     tanggalPublish?: string | null;
-    // Inventory fields
+    // Inventory fields - optional for DTO
     stokProduk?: number;
     trackInventory?: boolean;
     minStokAlert?: number;
     produkDigital?: boolean;
-    // Discount fields
+    // Discount fields - optional for DTO
     hargaSaran?: number;
     diskonAktif?: boolean;
     tipeDiskon?: 'percentage' | 'nominal';
