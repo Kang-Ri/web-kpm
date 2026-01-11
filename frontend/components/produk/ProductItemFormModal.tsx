@@ -232,26 +232,29 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                         Gambar Produk
-                    </label>
-
-                    {/* Show existing thumbnail if editing */}
-                    {product && existingMedia && (
+                    </label>                    {/* Show existing thumbnails if editing */}
+                    {product && existingMedia.length > 0 && (
                         <div className="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                            <p className="text-xs text-gray-600 mb-2">Gambar Saat Ini:</p>
-                            <div className="flex items-center gap-3">
-                                <img
-                                    src={existingMedia.fileUrl.startsWith('http')
-                                        ? existingMedia.fileUrl
-                                        : `http://localhost:5000/${existingMedia.fileUrl}`
-                                    }
-                                    alt="Current thumbnail"
-                                    className="w-24 h-24 object-cover rounded-lg border border-gray-300"
-                                />
-                                <div className="flex-1">
-                                    <p className="text-sm font-medium text-gray-700">{existingMedia.fileName}</p>
-                                    <p className="text-xs text-gray-500 mt-1">Upload gambar baru untuk mengganti</p>
-                                </div>
+                            <p className="text-xs text-gray-600 mb-2">Gambar Saat Ini ({existingMedia.length}):</p>
+                            <div className="grid grid-cols-2 gap-2">
+                                {existingMedia.map((media, index) => (
+                                    <div key={media.idMedia} className="flex items-center gap-2 p-2 bg-white rounded border">
+                                        <img
+                                            src={media.fileUrl.startsWith('http') 
+                                                ? media.fileUrl 
+                                                : `http://localhost:5000/${media.fileUrl}`
+                                            }
+                                            alt={`Image ${index + 1}`}
+                                            className="w-16 h-16 object-cover rounded border border-gray-300"
+                                        />
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-medium text-gray-700 truncate">{media.fileName}</p>
+                                            <p className="text-xs text-gray-500">#{index + 1}</p>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
+                            <p className="text-xs text-gray-500 mt-2">Upload gambar baru untuk mengganti semua</p>
                         </div>
                     )}
 
