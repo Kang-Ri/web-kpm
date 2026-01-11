@@ -31,11 +31,23 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
         kategoriHarga: 'Gratis',
         hargaModal: 0,
         hargaJual: 0,
-        jenisProduk: 'Produk', // Default to 'Produk' for Product management
+        jenisProduk: 'Produk',
         authProduk: 'Umum',
         refCode: '',
         statusProduk: 'Draft',
         tanggalPublish: null,
+        // Inventory fields with defaults
+        stokProduk: 0,
+        trackInventory: true,
+        minStokAlert: 5,
+        produkDigital: false,
+        // Discount fields with defaults
+        hargaSaran: 0,
+        diskonAktif: false,
+        tipeDiskon: 'percentage',
+        nilaiDiskon: 0,
+        diskonMulai: null,
+        diskonBerakhir: null,
     });
 
     // Form templates state
