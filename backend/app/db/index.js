@@ -29,7 +29,7 @@ defineAssociations();
 // 3. SINKRONISASI (Contoh)
 // ==========================================================
 // PENTING: Gunakan alter: true untuk menambahkan FK ke tabel yang sudah ada.
-sequelize.sync()
+sequelize.sync({ alter: true })
     .then(() => {
         console.log('Database & tabel berhasil disinkronkan. Semua asosiasi telah aktif!');
     })
