@@ -18,6 +18,19 @@ export interface Product {
     refCode?: string;
     statusProduk: 'Draft' | 'Publish' | 'Non-Aktif';
     tanggalPublish?: string | null;
+    // Inventory fields
+    stokProduk?: number;
+    trackInventory?: boolean;
+    minStokAlert?: number;
+    produkDigital?: boolean;
+    // Discount fields
+    hargaSaran?: number;
+    diskonAktif?: boolean;
+    tipeDiskon?: 'percentage' | 'nominal';
+    nilaiDiskon?: number;
+    hargaAkhir?: number;
+    diskonMulai?: string | null;
+    diskonBerakhir?: string | null;
 }
 
 export interface CreateProductDto {
@@ -33,6 +46,18 @@ export interface CreateProductDto {
     refCode?: string;
     statusProduk?: 'Draft' | 'Publish' | 'Non-Aktif';
     tanggalPublish?: string | null;
+    // Inventory fields
+    stokProduk?: number;
+    trackInventory?: boolean;
+    minStokAlert?: number;
+    produkDigital?: boolean;
+    // Discount fields
+    hargaSaran?: number;
+    diskonAktif?: boolean;
+    tipeDiskon?: 'percentage' | 'nominal';
+    nilaiDiskon?: number;
+    diskonMulai?: string | null;
+    diskonBerakhir?: string | null;
 }
 
 export const productService = {
