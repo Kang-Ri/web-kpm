@@ -111,7 +111,23 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
                 refCode: product.refCode || '',
                 statusProduk: product.statusProduk || 'Draft',
                 tanggalPublish: formattedDate || null,
+                // Inventory fields
+                stokProduk: product.stokProduk ?? 0,
+                trackInventory: product.trackInventory ?? true,
+                minStokAlert: product.minStokAlert ?? 5,
+                produkDigital: product.produkDigital ?? false,
+                // Discount fields
+                hargaSaran: product.hargaSaran ?? 0,
+                diskonAktif: product.diskonAktif ?? false,
+                tipeDiskon: product.tipeDiskon ?? 'percentage',
+                nilaiDiskon: product.nilaiDiskon ?? 0,
+                diskonMulai: product.diskonMulai ? new Date(product.diskonMulai).toISOString().slice(0, 16) : null,
+                diskonBerakhir: product.diskonBerakhir ? new Date(product.diskonBerakhir).toISOString().slice(0, 16) : null,
             });
+
+            // Set calculated field
+            const finalPrice = product.hargaAkhir ?? product.hargaJual ?? 0;
+            setHargaAkhir(finalPrice);
 
             // Fetch attached form name if exists
             if (product.customForm) {
