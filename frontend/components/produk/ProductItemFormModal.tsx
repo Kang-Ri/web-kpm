@@ -141,6 +141,42 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
         }
     }, [product, isOpen]);
 
+
+    // Auto-calculate hargaAkhir when discount fields change
+    useEffect(() => {
+        const calculateFinalPrice = () => {
+            const { hargaJual, diskonAktif, tipeDiskon, nilaiDiskon, diskonMulai, diskonBerakhir } = formData;
+            
+            // If no discount active, final price = selling price
+            if (!diskonAktif || !nilaiDiskon || nilaiDiskon <= 0) {
+                setHargaAkhir(hargaJual);
+                return;
+            }
+
+            // Check if discount period is valid
+            const now = new Date();
+            const startValid = !diskonMulai || now >= new Date(diskonMulai);
+            const endValid = !diskonBerakhir || now <= new Date(diskonBerakhir);
+            
+            if (!startValid || !endValid) {
+                setHargaAkhir(hargaJual);
+                return;
+            }
+
+            // Calculate discount
+            let finalPrice = hargaJual;
+            if (tipeDiskon === 'percentage') {
+                finalPrice = hargaJual - (hargaJual * nilaiDiskon / 100);
+            } else if (tipeDiskon === 'nominal') {
+                finalPrice = Math.max(0, hargaJual - nilaiDiskon);
+            }
+            
+            setHargaAkhir(finalPrice);
+        };
+
+        calculateFinalPrice();
+    }, [formData.hargaJual, formData.diskonAktif, formData.tipeDiskon, formData.nilaiDiskon, formData.diskonMulai, formData.diskonBerakhir]);
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
 
