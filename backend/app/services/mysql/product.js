@@ -29,6 +29,47 @@ const checkingFormOrder = async (idForm) => {
     }
 };
 
+// Helper untuk menghitung harga akhir setelah diskon
+const calculateFinalPrice = (productData) => {
+    const {
+        hargaJual,
+        diskonAktif,
+        tipeDiskon,
+        nilaiDiskon,
+        diskonMulai,
+        diskonBerakhir
+    } = productData;
+
+    // If no discount active, return original price
+    if (!diskonAktif || !nilaiDiskon || nilaiDiskon <= 0) {
+        return hargaJual || 0;
+    }
+
+    // Check if discount period is valid
+    const now = new Date();
+    const isTimeValid = (!diskonMulai || now >= new Date(diskonMulai)) &&
+        (!diskonBerakhir || now <= new Date(diskonBerakhir));
+
+    if (!isTimeValid) {
+        return hargaJual || 0;
+    }
+
+    // Calculate discount
+    let finalPrice = parseFloat(hargaJual) || 0;
+    const discountValue = parseFloat(nilaiDiskon) || 0;
+
+    if (tipeDiskon === 'percentage') {
+        // Discount by percentage
+        finalPrice = finalPrice - (finalPrice * discountValue / 100);
+    } else if (tipeDiskon === 'nominal') {
+        // Discount by fixed amount
+        finalPrice = finalPrice - discountValue;
+    }
+
+    // Ensure price doesn't go negative
+    return Math.max(0, finalPrice);
+};
+
 // Helper untuk auto-unlock materi gratis ke semua siswa di kelas
 const autoUnlockFreeMateri = async (idProduk, idParent2) => {
     try {
@@ -162,7 +203,20 @@ const createProduct = async (req) => {
         authProduk,
         idForm, // Menerima FK Form
         refCode,
-        statusProduk
+        statusProduk,
+        tanggalPublish,
+        // New inventory fields
+        stokProduk,
+        trackInventory,
+        minStokAlert,
+        produkDigital,
+        // New discount fields
+        hargaSaran,
+        diskonAktif,
+        tipeDiskon,
+        nilaiDiskon,
+        diskonMulai,
+        diskonBerakhir
     } = req.body;
 
     // 1. Cek keberadaan ParentProduct2
@@ -187,6 +241,9 @@ const createProduct = async (req) => {
         throw new BadRequestError('Harga Jual wajib diisi dan harus lebih dari 0 jika Kategori Harga adalah Bernominal.');
     }
 
+    // 5. Calculate hargaAkhir
+    const hargaAkhir = calculateFinalPrice(req.body);
+
     const result = await Product.create({
         idParent2,
         namaProduk,
@@ -198,7 +255,21 @@ const createProduct = async (req) => {
         authProduk,
         idForm: idForm || null, // Pastikan tersimpan NULL jika kosong
         refCode,
-        statusProduk
+        statusProduk,
+        tanggalPublish: tanggalPublish || null,
+        // Inventory fields
+        stokProduk: stokProduk !== undefined ? stokProduk : 0,
+        trackInventory: trackInventory !== undefined ? trackInventory : true,
+        minStokAlert: minStokAlert !== undefined ? minStokAlert : 5,
+        produkDigital: produkDigital !== undefined ? produkDigital : false,
+        // Discount fields
+        hargaSaran: hargaSaran || null,
+        diskonAktif: diskonAktif !== undefined ? diskonAktif : false,
+        tipeDiskon: tipeDiskon || null,
+        nilaiDiskon: nilaiDiskon || null,
+        hargaAkhir,
+        diskonMulai: diskonMulai || null,
+        diskonBerakhir: diskonBerakhir || null
     });
 
     // Auto-unlock access for all students if kategoriHarga is 'Gratis' and jenisProduk is 'Materi'
@@ -246,15 +317,34 @@ const updateProduct = async (req) => {
         }
     }
 
-    // 5. Update Database
+    // 5. Recalculate hargaAkhir if any pricing fields changed
+    const needsRecalc = updateFields.hargaJual || updateFields.diskonAktif !== undefined ||
+        updateFields.tipeDiskon || updateFields.nilaiDiskon ||
+        updateFields.diskonMulai || updateFields.diskonBerakhir;
+
+    if (needsRecalc) {
+        // Merge current product data with update fields for calculation
+        const dataForCalculation = {
+            hargaJual: updateFields.hargaJual || current.hargaJual,
+            diskonAktif: updateFields.diskonAktif !== undefined ? updateFields.diskonAktif : current.diskonAktif,
+            tipeDiskon: updateFields.tipeDiskon || current.tipeDiskon,
+            nilaiDiskon: updateFields.nilaiDiskon !== undefined ? updateFields.nilaiDiskon : current.nilaiDiskon,
+            diskonMulai: updateFields.diskonMulai || current.diskonMulai,
+            diskonBerakhir: updateFields.diskonBerakhir || current.diskonBerakhir
+        };
+
+        updateFields.hargaAkhir = calculateFinalPrice(dataForCalculation);
+    }
+
+    // 6. Update Database
     await Product.update(updateFields, {
         where: { idProduk: id }
     });
 
-    // 6. Dapatkan data yang sudah di-update
+    // 7. Dapatkan data yang sudah di-update
     const updatedProduct = await getOneProduct(req);
 
-    // 7. Auto-unlock access if kategoriHarga changed to 'Gratis' and jenisProduk is 'Materi'
+    // 8. Auto-unlock access if kategoriHarga changed to 'Gratis' and jenisProduk is 'Materi'
     if (updateFields.kategoriHarga === 'Gratis' && updatedProduct.jenisProduk === 'Materi') {
         await autoUnlockFreeMateri(updatedProduct.idProduk, updatedProduct.idParent2);
     }

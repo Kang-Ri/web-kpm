@@ -66,6 +66,70 @@ const Product = sequelize.define('Product', {
         allowNull: true,
         comment: 'Tanggal publish materi',
     },
+
+    // === INVENTORY MANAGEMENT ===
+    stokProduk: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+        allowNull: false,
+        comment: 'Current stock quantity',
+    },
+    trackInventory: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true,
+        allowNull: false,
+        comment: 'Enable/disable stock tracking',
+    },
+    minStokAlert: {
+        type: DataTypes.INTEGER,
+        defaultValue: 5,
+        allowNull: false,
+        comment: 'Low stock alert threshold',
+    },
+    produkDigital: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        allowNull: false,
+        comment: 'Is digital product (no shipping, unlimited stock)',
+    },
+
+    // === PRICING & DISCOUNTS ===
+    hargaSaran: {
+        type: DataTypes.DECIMAL(15, 2),
+        allowNull: true,
+        comment: 'Suggested retail price (MSRP)',
+    },
+    diskonAktif: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        allowNull: false,
+        comment: 'Is discount currently active',
+    },
+    tipeDiskon: {
+        type: DataTypes.ENUM('percentage', 'nominal'),
+        allowNull: true,
+        comment: 'Discount type: percentage or fixed amount',
+    },
+    nilaiDiskon: {
+        type: DataTypes.DECIMAL(15, 2),
+        allowNull: true,
+        comment: 'Discount value (% or Rp)',
+    },
+    hargaAkhir: {
+        type: DataTypes.DECIMAL(15, 2),
+        allowNull: true,
+        comment: 'Final price after discount (auto-calculated)',
+    },
+    diskonMulai: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        comment: 'Discount start date/time',
+    },
+    diskonBerakhir: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        comment: 'Discount end date/time',
+    },
 }, {
     timestamps: false,
     tableName: 'product', // Pastikan nama tabel di database adalah 'product'
