@@ -182,7 +182,7 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
 
             // If no discount active, final price = selling price
             if (!diskonAktif || !nilaiDiskon || nilaiDiskon <= 0) {
-                setHargaAkhir(hargaJual);
+                setHargaAkhir(hargaJual ?? 0);
                 return;
             }
 
@@ -192,16 +192,16 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
             const endValid = !diskonBerakhir || now <= new Date(diskonBerakhir);
 
             if (!startValid || !endValid) {
-                setHargaAkhir(hargaJual);
+                setHargaAkhir(hargaJual ?? 0);
                 return;
             }
 
             // Calculate discount
-            let finalPrice = hargaJual;
+            let finalPrice = hargaJual ?? 0;
             if (tipeDiskon === 'percentage') {
-                finalPrice = hargaJual - (hargaJual * nilaiDiskon / 100);
+                finalPrice = finalPrice - (finalPrice * (nilaiDiskon ?? 0) / 100);
             } else if (tipeDiskon === 'nominal') {
-                finalPrice = Math.max(0, hargaJual - nilaiDiskon);
+                finalPrice = Math.max(0, finalPrice - (nilaiDiskon ?? 0));
             }
 
             setHargaAkhir(finalPrice);
