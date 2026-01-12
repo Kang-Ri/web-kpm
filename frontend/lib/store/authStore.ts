@@ -7,6 +7,7 @@ interface User {
   namaLengkap: string;
   role: string;
   idRole?: number; // TEMP: for backward compatibility
+  idSiswa?: number; // For siswa users
 }
 
 interface AuthState {
