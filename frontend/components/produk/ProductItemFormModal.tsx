@@ -80,7 +80,7 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
             try {
                 setLoadingForms(true);
                 const response = await formService.getAll({ formType: 'template' });
-                const forms = response.data.data || [];
+                const forms = (response.data as any).data || response.data || [];
                 setAvailableForms(forms.filter((f: Form) => f.statusForm === 'Aktif'));
             } catch (error) {
                 console.error('Failed to load forms:', error);
@@ -599,10 +599,10 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
                                             <div className="text-right">
                                                 <p className="text-sm text-gray-600">Hemat:</p>
                                                 <p className="text-lg font-semibold text-green-600">
-                                                    Rp {(formData.hargaJual - hargaAkhir).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                                    Rp {((formData.hargaJual ?? 0) - hargaAkhir).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                                                 </p>
                                                 <p className="text-xs text-gray-500">
-                                                    ({((formData.hargaJual - hargaAkhir) / formData.hargaJual * 100).toFixed(1)}%)
+                                                    ({(((formData.hargaJual ?? 0) - hargaAkhir) / ((formData.hargaJual ?? 1) || 1) * 100).toFixed(1)}%)
                                                 </p>
                                             </div>
                                         </div>
@@ -673,10 +673,10 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                                 placeholder="Contoh: 100"
                                             />
-                                            {formData.stokProduk <= formData.minStokAlert && formData.stokProduk > 0 && (
+                                            {(formData.stokProduk ?? 0) <= (formData.minStokAlert ?? 5) && (formData.stokProduk ?? 0) > 0 && (
                                                 <p className="text-xs text-yellow-600 mt-1">⚠️ Stok rendah!</p>
                                             )}
-                                            {formData.stokProduk === 0 && (
+                                            {(formData.stokProduk ?? 0) === 0 && (
                                                 <p className="text-xs text-red-600 mt-1">❌ Stok habis!</p>
                                             )}
                                         </div>
