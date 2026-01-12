@@ -4,20 +4,16 @@ export interface Product {
     idProduk: number;
     idParent2: number;
     namaProduk: string;
-    descProduk?: string;
-    kategoriHarga: 'Gratis' | 'Seikhlasnya' | 'Bernominal';
+    descProduk: string;
+    kategoriHarga: string;
     hargaModal: number;
     hargaJual: number;
-    jenisProduk: 'Materi' | 'Produk' | 'Daftar Ulang' | 'Lainnya';
-    authProduk: 'Umum' | 'Khusus';
-    idForm?: number | null;
-    customForm?: {
-        idForm: number;
-        namaForm: string;
-    };
-    refCode?: string;
-    statusProduk: 'Draft' | 'Publish' | 'Non-Aktif';
-    tanggalPublish?: string | null;
+    jenisProduk: string;
+    authProduk: string;
+    refCode: string;
+    statusProduk: string;
+    tanggalPublish: string | null;
+    idForm?: number;
     // Inventory fields - required with defaults
     stokProduk: number;
     trackInventory: boolean;
@@ -31,6 +27,15 @@ export interface Product {
     hargaAkhir: number;
     diskonMulai: string | null;
     diskonBerakhir: string | null;
+    // Sequelize timestamps
+    createdAt: string;
+    updatedAt: string;
+    // Relations
+    customForm?: {
+        idForm: number;
+        namaForm: string;
+    };
+    parentProduct2?: any;
 }
 
 export interface CreateProductDto {
