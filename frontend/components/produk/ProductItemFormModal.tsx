@@ -213,18 +213,38 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
 
+        // Handle checkbox - CRITICAL for toggle functionality
+        if (type === 'checkbox') {
+            const checked = (e.target as HTMLInputElement).checked;
+            setFormData(prev => ({ ...prev, [name]: checked }));
+            return;
+        }
+
+        // Handle number inputs
         if (type === 'number') {
             setFormData(prev => ({ ...prev, [name]: value ? parseFloat(value) : 0 }));
-        } else if (name === 'tanggalPublish') {
+            return;
+        }
+
+        // Handle datetime for publish date
+        if (name === 'tanggalPublish') {
             const newStatus = value ? 'Publish' : 'Draft';
             setFormData(prev => ({
                 ...prev,
                 tanggalPublish: value || null,
                 statusProduk: newStatus
             }));
-        } else {
-            setFormData(prev => ({ ...prev, [name]: value }));
+            return;
         }
+
+        // Handle datetime for discount dates
+        if (name === 'diskonMulai' || name === 'diskonBerakhir') {
+            setFormData(prev => ({ ...prev, [name]: value || null }));
+            return;
+        }
+
+        // Default: text, select, textarea
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
