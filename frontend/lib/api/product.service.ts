@@ -27,9 +27,6 @@ export interface Product {
     hargaAkhir: number;
     diskonMulai: string | null;
     diskonBerakhir: string | null;
-    // Sequelize timestamps
-    createdAt: string;
-    updatedAt: string;
     // Relations
     customForm?: {
         idForm: number;

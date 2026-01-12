@@ -95,41 +95,19 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
 
     useEffect(() => {
         if (product) {
-            // DEBUG: Check tanggalPublish value from database
-            console.log('🔍 DEBUG product.tanggalPublish:', product.tanggalPublish);
-            console.log('🔍 DEBUG product.statusProduk:', product.statusProduk);
-            console.log('🔍 DEBUG product.createdAt:', product.createdAt);
-
             // Format tanggalPublish for datetime-local input (YYYY-MM-DDTHH:mm)
             let formattedDate = '';
-
             if (product.tanggalPublish) {
-                // Use tanggalPublish if available
                 try {
                     const date = new Date(product.tanggalPublish);
                     if (!isNaN(date.getTime())) {
                         formattedDate = date.toISOString().slice(0, 16);
-                        console.log('✅ Using tanggalPublish:', formattedDate);
-                    } else {
-                        console.warn('⚠️ Invalid date object from tanggalPublish');
                     }
                 } catch (error) {
-                    console.warn('❌ Error parsing tanggalPublish:', product.tanggalPublish, error);
+                    console.warn('Error parsing tanggalPublish:', error);
                 }
-            } else if (product.statusProduk === 'Publish' && product.createdAt) {
-                // SMART FALLBACK: For published products without tanggalPublish, use createdAt
-                try {
-                    const date = new Date(product.createdAt);
-                    if (!isNaN(date.getTime())) {
-                        formattedDate = date.toISOString().slice(0, 16);
-                        console.log('📅 Using createdAt as fallback for Publish:', formattedDate);
-                    }
-                } catch (error) {
-                    console.warn('❌ Error parsing createdAt:', product.createdAt, error);
-                }
-            } else {
-                console.log('ℹ️ tanggalPublish and createdAt both null/undefined or status is Draft');
             }
+            // Note: Leave empty if null - user can fill manually for published products
 
             setFormData({
                 idParent2: product.idParent2,
