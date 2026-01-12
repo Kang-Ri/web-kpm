@@ -397,6 +397,194 @@ const resetSiswaPassword = async (idSiswa) => {
     };
 };
 
+
+// --- 11. GET ENROLLMENT DASHBOARD DATA ---
+const getEnrollmentDashboard = async (idSiswa) => {
+    const ParentProduct1 = require('../../api/v1/parentProduct1/model');
+    const ParentProduct2 = require('../../api/v1/parentProduct2/model');
+
+    // 1. Get siswa profile
+    const siswa = await Siswa.findByPk(idSiswa, {
+        attributes: ['idSiswa', 'namaLengkap', 'jenjangKelas', 'email', 'asalSekolah']
+    });
+
+    if (!siswa) {
+        throw new NotFoundError(`Siswa dengan ID: ${idSiswa} tidak ditemukan.`);
+    }
+
+    // 2. Check if profile complete (jenjangKelas required)
+    const needsProfileCompletion = !siswa.jenjangKelas;
+
+    // 3. If profile incomplete, return early
+    if (needsProfileCompletion) {
+        return {
+            siswa: siswa.dataValues,
+            needsProfileCompletion: true,
+            sections: {}
+        };
+    }
+
+    // 4. Get parent1 with filtered parent2
+    const parent1List = await ParentProduct1.findAll({
+        where: {
+            status: 'Aktif',
+            tampilDiDashboard: true
+        },
+        include: [{
+            model: ParentProduct2,
+            as: 'parentProduct2s',
+            where: {
+                status: 'Aktif',
+                jenjangKelasIzin: siswa.jenjangKelas
+            },
+            required: false,
+            attributes: ['idParent2', 'namaParent2', 'kapasitasMaksimal']
+        }],
+        order: [['tautanProduk', 'ASC'], ['namaParent1', 'ASC']]
+    });
+
+    // 5. Group by tautanProduk
+    const sections = {
+        kelasPeriodik: parent1List
+            .filter(p => p.tautanProduk === 'Kelas Periodik')
+            .map(p => ({
+                idParent1: p.idParent1,
+                namaParent1: p.namaParent1,
+                descParent1: p.descParent1,
+                tautanProduk: p.tautanProduk,
+                jumlahRuangKelas: p.parentProduct2s?.length || 0
+            })),
+        kelasInsidental: parent1List
+            .filter(p => p.tautanProduk === 'Kelas Insidental')
+            .map(p => ({
+                idParent1: p.idParent1,
+                namaParent1: p.namaParent1,
+                descParent1: p.descParent1,
+                tautanProduk: p.tautanProduk,
+                jumlahRuangKelas: p.parentProduct2s?.length || 0
+            })),
+        produkKomersial: parent1List
+            .filter(p => p.tautanProduk === 'Produk Komersial')
+            .map(p => ({
+                idParent1: p.idParent1,
+                namaParent1: p.namaParent1,
+                descParent1: p.descParent1,
+                tautanProduk: p.tautanProduk,
+                jumlahRuangKelas: p.parentProduct2s?.length || 0
+            }))
+    };
+
+    return {
+        siswa: siswa.dataValues,
+        needsProfileCompletion: false,
+        sections
+    };
+};
+
+// --- 12. GET PARENT2 LIST FOR ENROLLMENT ---
+const getParent2ForEnrollment = async (idSiswa, idParent1) => {
+    const ParentProduct1 = require('../../api/v1/parentProduct1/model');
+    const ParentProduct2 = require('../../api/v1/parentProduct2/model');
+    const SiswaKelas = require('../../api/v1/siswaKelas/model');
+
+    // 1. Get siswa to check jenjangKelas
+    const siswa = await Siswa.findByPk(idSiswa);
+    if (!siswa) {
+        throw new NotFoundError(`Siswa dengan ID: ${idSiswa} tidak ditemukan.`);
+    }
+
+    if (!siswa.jenjangKelas) {
+        throw new BadRequestError('Lengkapi profil Anda terlebih dahulu sebelum mendaftar kelas.');
+    }
+
+    // 2. Get parent1 info
+    const parent1 = await ParentProduct1.findByPk(idParent1);
+    if (!parent1) {
+        throw new NotFoundError(`Parent1 dengan ID: ${idParent1} tidak ditemukan.`);
+    }
+
+    // 3. Get parent2 list filtered by jenjangKelas
+    const parent2List = await ParentProduct2.findAll({
+        where: {
+            idParent1,
+            status: 'Aktif',
+            jenjangKelasIzin: siswa.jenjangKelas
+        },
+        order: [['namaParent2', 'ASC']]
+    });
+
+    // 4. For each parent2, count enrolled students
+    const SiswaKelas = require('../../api/v1/siswaKelas/model');
+    const ruangKelasWithCapacity = await Promise.all(
+        parent2List.map(async (p2) => {
+            const enrolledCount = await SiswaKelas.count({
+                where: {
+                    idParent2: p2.idParent2,
+                    statusEnrollment: ['Aktif', 'Pending']
+                }
+            });
+
+            const tersedia = (p2.kapasitasMaksimal || 0) - enrolledCount;
+
+            return {
+                idParent2: p2.idParent2,
+                namaParent2: p2.namaParent2,
+                descParent2: p2.descParent2,
+                jenjangKelasIzin: p2.jenjangKelasIzin,
+                tahunAjaran: p2.tahunAjaran,
+                kapasitasMaksimal: p2.kapasitasMaksimal,
+                siswaEnrolled: enrolledCount,
+                tersedia,
+                isFull: tersedia <= 0,
+                kategoriHargaDaftarUlang: p2.kategoriHargaDaftarUlang,
+                hargaDaftarUlang: p2.hargaDaftarUlang
+            };
+        })
+    );
+
+    return {
+        parent1: {
+            idParent1: parent1.idParent1,
+            namaParent1: parent1.namaParent1,
+            descParent1: parent1.descParent1
+        },
+        ruangKelas: ruangKelasWithCapacity
+    };
+};
+
+// --- 13. COMPLETE SISWA PROFILE ---
+const completeProfile = async (idSiswa, data) => {
+    const { tempatLahir, tanggalLahir, jenisKelamin, jenjangKelas, asalSekolah, noHp, agama } = data;
+
+    // Validasi jenjangKelas required
+    if (!jenjangKelas) {
+        throw new BadRequestError('Jenjang Kelas wajib diisi.');
+    }
+
+    const siswa = await Siswa.findByPk(idSiswa);
+    if (!siswa) {
+        throw new NotFoundError(`Siswa dengan ID: ${idSiswa} tidak ditemukan.`);
+    }
+
+    // Update profile
+    await siswa.update({
+        tempatLahir: tempatLahir || siswa.tempatLahir,
+        tanggalLahir: tanggalLahir || siswa.tanggalLahir,
+        jenisKelamin: jenisKelamin || siswa.jenisKelamin,
+        jenjangKelas,  // Always update
+        asalSekolah: asalSekolah || siswa.asalSekolah,
+        noHp: noHp || siswa.noHp,
+        agama: agama || siswa.agama
+    });
+
+    return {
+        idSiswa: siswa.idSiswa,
+        namaLengkap: siswa.namaLengkap,
+        jenjangKelas: siswa.jenjangKelas,
+        needsProfileCompletion: false
+    };
+};
+
 // EXPORT SEMUA FUNGSI
 module.exports = {
     createSiswa,
@@ -408,4 +596,8 @@ module.exports = {
     bulkDeleteSiswa,
     exportSiswaData,
     resetSiswaPassword,
+    // New enrollment methods
+    getEnrollmentDashboard,
+    getParent2ForEnrollment,
+    completeProfile,
 };
