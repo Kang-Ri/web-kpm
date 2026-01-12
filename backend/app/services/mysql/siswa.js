@@ -586,6 +586,86 @@ const completeProfile = async (idSiswa, data) => {
 };
 
 // EXPORT SEMUA FUNGSI
+// --- 14. ENROLL TO KELAS ---
+const enrollToKelas = async (idSiswa, idParent2) => {
+    const ParentProduct2 = require('../../api/v1/parentProduct2/model');
+    const SiswaKelas = require('../../api/v1/siswaKelas/model');
+
+    // 1. Validate siswa exists
+    const siswa = await Siswa.findByPk(idSiswa);
+    if (!siswa) {
+        throw new NotFoundError(`Siswa dengan ID: ${idSiswa} tidak ditemukan.`);
+    }
+
+    // 2. Validate parent2 exists
+    const parent2 = await ParentProduct2.findByPk(idParent2);
+    if (!parent2) {
+        throw new NotFoundError(`Ruang Kelas dengan ID: ${idParent2} tidak ditemukan.`);
+    }
+
+    // 3. Check if already enrolled
+    const existingEnrollment = await SiswaKelas.findOne({
+        where: {
+            idSiswa,
+            idParent2,
+            statusEnrollment: ['Aktif', 'Pending']
+        }
+    });
+
+    if (existingEnrollment) {
+        throw new BadRequestError('Anda sudah terdaftar di ruang kelas ini.');
+    }
+
+    // 4. Check capacity
+    const enrolledCount = await SiswaKelas.count({
+        where: {
+            idParent2,
+            statusEnrollment: ['Aktif', 'Pending']
+        }
+    });
+
+    const tersedia = (parent2.kapasitasMaksimal || 0) - enrolledCount;
+
+    if (tersedia <= 0) {
+        throw new BadRequestError('Ruang kelas sudah penuh. Silakan pilih ruang kelas lain.');
+    }
+
+    // 5. Determine enrollment status based on price
+    let statusEnrollment = 'Aktif';
+    let requiresPayment = false;
+
+    if (parent2.kategoriHargaDaftarUlang === 'Bernominal' && parent2.hargaDaftarUlang > 0) {
+        statusEnrollment = 'Pending'; // Wait for payment
+        requiresPayment = true;
+    }
+
+    // 6. Create enrollment record
+    const enrollment = await SiswaKelas.create({
+        idSiswa,
+        idParent2,
+        statusEnrollment,
+        tanggalDaftar: new Date()
+    });
+
+    return {
+        enrollment: {
+            idSiswaKelas: enrollment.idSiswaKelas,
+            statusEnrollment: enrollment.statusEnrollment,
+            tanggalDaftar: enrollment.tanggalDaftar
+        },
+        ruangKelas: {
+            idParent2: parent2.idParent2,
+            namaParent2: parent2.namaParent2,
+            kategoriHargaDaftarUlang: parent2.kategoriHargaDaftarUlang,
+            hargaDaftarUlang: parent2.hargaDaftarUlang
+        },
+        requiresPayment,
+        message: requiresPayment
+            ? 'Pendaftaran berhasil! Silakan lakukan pembayaran untuk mengaktifkan kelas.'
+            : 'Pendaftaran berhasil! Anda sudah terdaftar di kelas ini.'
+    };
+};
+
 module.exports = {
     createSiswa,
     getAllSiswa,
@@ -596,8 +676,9 @@ module.exports = {
     bulkDeleteSiswa,
     exportSiswaData,
     resetSiswaPassword,
-    // New enrollment methods
+    // Enrollment methods
     getEnrollmentDashboard,
     getParent2ForEnrollment,
     completeProfile,
+    enrollToKelas,
 };

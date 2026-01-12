@@ -13,6 +13,7 @@ const {
     getEnrollmentDashboard,
     getParent2ForEnrollment,
     completeProfile,
+    enrollToKelas,
 } = require('../../../services/mysql/siswa');
 
 // CREATE Siswa
@@ -212,6 +213,28 @@ const finishProfile = async (req, res, next) => {
     }
 };
 
+// ENROLL TO KELAS
+const enroll = async (req, res, next) => {
+    try {
+        const { idSiswa, idParent2 } = req.body;
+
+        if (!idSiswa || !idParent2) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                message: 'idSiswa dan idParent2 wajib diisi'
+            });
+        }
+
+        const result = await enrollToKelas(parseInt(idSiswa), parseInt(idParent2));
+
+        res.status(StatusCodes.CREATED).json({
+            message: result.message,
+            data: result,
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports = {
     create,
     index,
@@ -226,4 +249,5 @@ module.exports = {
     enrollmentDashboard,
     parent2List,
     finishProfile,
+    enroll,
 };

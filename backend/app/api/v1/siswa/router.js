@@ -16,6 +16,7 @@ const {
     enrollmentDashboard,
     parent2List,
     finishProfile,
+    enroll,
 } = require('./controller');
 
 // Middleware (uncomment when ready)
@@ -130,6 +131,12 @@ router.get(
 router.patch(
     '/siswa/:idSiswa/complete-profile',
     finishProfile
+);
+
+// Enroll to kelas
+router.post(
+    '/siswa/enroll',
+    enroll
 );
 
 module.exports = router;
