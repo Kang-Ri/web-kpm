@@ -88,9 +88,8 @@ export default function SiswaDashboardPage() {
     };
 
     const handleParent1Click = (idParent1: number, namaParent1: string) => {
-        // TODO: Navigate to parent2 list page or open modal
-        toast.success(`Membuka ${namaParent1}...`);
-        console.log('Parent1 clicked:', idParent1);
+        setSelectedParent1({ id: idParent1, nama: namaParent1 });
+        setShowRuangKelasModal(true);
     };
 
     const handleLogout = () => {
@@ -118,6 +117,17 @@ export default function SiswaDashboardPage() {
                         siswaName={dashboardData.siswa.namaLengkap}
                         onComplete={handleProfileComplete}
                         isLoading={isSubmitting}
+                    />
+                )}
+
+                {/* Ruang Kelas Modal */}
+                {showRuangKelasModal && selectedParent1 && user?.idSiswa && (
+                    <RuangKelasModal
+                        isOpen={showRuangKelasModal}
+                        onClose={() => setShowRuangKelasModal(false)}
+                        idSiswa={user.idSiswa}
+                        idParent1={selectedParent1.id}
+                        namaParent1={selectedParent1.nama}
                     />
                 )}
 
@@ -175,8 +185,8 @@ export default function SiswaDashboardPage() {
                                     key={item.href}
                                     onClick={() => router.push(item.href)}
                                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${isActive
-                                            ? 'bg-blue-50 text-blue-600'
-                                            : 'text-gray-700 hover:bg-gray-50'
+                                        ? 'bg-blue-50 text-blue-600'
+                                        : 'text-gray-700 hover:bg-gray-50'
                                         }`}
                                 >
                                     <Icon className="w-5 h-5" />
