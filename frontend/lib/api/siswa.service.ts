@@ -105,7 +105,22 @@ export const siswaService = {
         return response.data;
     },
 
+
     resetPassword: async (id: number): Promise<{ message: string }> => {
         return apiClient.post(`/cms/siswa/${id}/reset-password`);
+    },
+
+    // === ENROLLMENT METHODS ===
+
+    getEnrollmentDashboard: async (idSiswa: number) => {
+        return apiClient.get(`/cms/siswa/${idSiswa}/enrollment-dashboard`);
+    },
+
+    getParent2List: async (idSiswa: number, idParent1: number) => {
+        return apiClient.get(`/cms/siswa/${idSiswa}/parent1/${idParent1}/parent2`);
+    },
+
+    completeProfile: async (idSiswa: number, data: any) => {
+        return apiClient.patch(`/cms/siswa/${idSiswa}/complete-profile`, data);
     },
 };
