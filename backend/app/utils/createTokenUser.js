@@ -15,6 +15,7 @@ const createTokenUser = (user) => {
     idRole: user.idRole, // Keep for reference
     role: user.Role?.namaRole || user.namaRole, // CRITICAL: Role NAME for authorization checks
     namaLengkap: user.namaLengkap,
+    idSiswa: user.idSiswa, // NEW: Include idSiswa if present (for Siswa role)
   };
 };
 
