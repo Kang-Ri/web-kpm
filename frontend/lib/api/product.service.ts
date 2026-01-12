@@ -58,6 +58,7 @@ export interface CreateProductDto {
     diskonAktif?: boolean;
     tipeDiskon?: 'percentage' | 'nominal';
     nilaiDiskon?: number;
+    hargaAkhir?: number;
     diskonMulai?: string | null;
     diskonBerakhir?: string | null;
 }
