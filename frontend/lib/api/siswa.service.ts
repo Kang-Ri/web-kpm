@@ -123,4 +123,9 @@ export const siswaService = {
     completeProfile: async (idSiswa: number, data: any) => {
         return apiClient.patch(`/cms/siswa/${idSiswa}/complete-profile`, data);
     },
+
+    // Enroll to kelas
+    enroll: async (idSiswa: number, idParent2: number) => {
+        return apiClient.post('/cms/siswa/enroll', { idSiswa, idParent2 });
+    },
 };
