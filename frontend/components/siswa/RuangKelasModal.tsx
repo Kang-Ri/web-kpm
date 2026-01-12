@@ -54,15 +54,30 @@ export const RuangKelasModal: FC<RuangKelasModalProps> = ({
     };
 
     const handleEnroll = async (idParent2: number) => {
-        // TODO: Implement enrollment logic
-        setEnrollingId(idParent2);
+        try {
+            setEnrollingId(idParent2);
 
-        // Simulate enrollment
-        setTimeout(() => {
-            toast.success('Pendaftaran berhasil! (Demo mode)');
+            // Call real enrollment API
+            const response = await siswaService.enroll(idSiswa, idParent2);
+
+            // Show success message from backend
+            const message = response.data?.message || 'Pendaftaran berhasil!';
+            toast.success(message);
+
+            // Reload data to update capacity
+            await fetchRuangKelas();
+
+            // Close modal after short delay
+            setTimeout(() => {
+                onClose();
+            }, 1500);
+        } catch (error: any) {
+            console.error('Error enrolling:', error);
+            const errorMessage = error.response?.data?.message || 'Gagal mendaftar. Silakan coba lagi.';
+            toast.error(errorMessage);
+        } finally {
             setEnrollingId(null);
-            onClose();
-        }, 1500);
+        }
     };
 
     if (!isOpen) return null;
