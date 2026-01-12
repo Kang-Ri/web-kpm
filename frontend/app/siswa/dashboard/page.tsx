@@ -186,8 +186,8 @@ export default function SiswaDashboardPage() {
                                     key={item.href}
                                     onClick={() => router.push(item.href)}
                                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${isActive
-                                            ? 'bg-blue-50 text-blue-600'
-                                            : 'text-gray-700 hover:bg-gray-50'
+                                        ? 'bg-blue-50 text-blue-600'
+                                        : 'text-gray-700 hover:bg-gray-50'
                                         }`}
                                 >
                                     <Icon className="w-5 h-5" />
@@ -295,21 +295,21 @@ export default function SiswaDashboardPage() {
                                             <div className="mb-6">
                                                 <h3 className="text-lg font-bold text-gray-900 mb-4">📚 Kelas Periodik</h3>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                                    {dashboardData.sections kelasPeriodik.map((parent1) => (
-                                                    <button
-                                                        key={parent1.idParent1}
-                                                        onClick={() => handleParent1Click(parent1.idParent1, parent1.namaParent1)}
-                                                        className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-left hover:shadow-md transition-shadow"
-                                                    >
-                                                        <h4 className="font-semibold text-gray-900 mb-2">{parent1.namaParent1}</h4>
-                                                        {parent1.descParent1 && (
-                                                            <p className="text-sm text-gray-600 mb-3 line-clamp-2">{parent1.descParent1}</p>
-                                                        )}
-                                                        <div className="flex items-center justify-between text-sm">
-                                                            <span className="text-gray-500">{parent1.jumlahRuangKelas} Ruang Kelas</span>
-                                                            <span className="text-blue-600 font-medium">Lihat →</span>
-                                                        </div>
-                                                    </button>
+                                                    {dashboardData.sections.kelasPeriodik.map((parent1) => (
+                                                        <button
+                                                            key={parent1.idParent1}
+                                                            onClick={() => handleParent1Click(parent1.idParent1, parent1.namaParent1)}
+                                                            className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-left hover:shadow-md transition-shadow"
+                                                        >
+                                                            <h4 className="font-semibold text-gray-900 mb-2">{parent1.namaParent1}</h4>
+                                                            {parent1.descParent1 && (
+                                                                <p className="text-sm text-gray-600 mb-3 line-clamp-2">{parent1.descParent1}</p>
+                                                            )}
+                                                            <div className="flex items-center justify-between text-sm">
+                                                                <span className="text-gray-500">{parent1.jumlahRuangKelas} Ruang Kelas</span>
+                                                                <span className="text-blue-600 font-medium">Lihat →</span>
+                                                            </div>
+                                                        </button>
                                                     ))}
                                                 </div>
                                             </div>
