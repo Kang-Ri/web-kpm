@@ -95,9 +95,18 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
 
     useEffect(() => {
         if (product) {
-            const formattedDate = product.tanggalPublish
-                ? new Date(product.tanggalPublish).toISOString().slice(0, 16)
-                : '';
+            // Format tanggalPublish for datetime-local input (YYYY-MM-DDTHH:mm)
+            let formattedDate = '';
+            if (product.tanggalPublish) {
+                try {
+                    const date = new Date(product.tanggalPublish);
+                    if (!isNaN(date.getTime())) {
+                        formattedDate = date.toISOString().slice(0, 16);
+                    }
+                } catch (error) {
+                    console.warn('Invalid tanggalPublish format:', product.tanggalPublish);
+                }
+            }
 
             setFormData({
                 idParent2: product.idParent2,
@@ -110,7 +119,7 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
                 authProduk: product.authProduk || 'Umum',
                 refCode: product.refCode || '',
                 statusProduk: product.statusProduk || 'Draft',
-                tanggalPublish: formattedDate || null,
+                tanggalPublish: formattedDate || '',
                 // Inventory fields
                 stokProduk: product.stokProduk ?? 0,
                 trackInventory: product.trackInventory ?? true,
