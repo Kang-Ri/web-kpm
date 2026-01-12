@@ -96,6 +96,20 @@ const signIn = async (req) => {
     result.dataValues.namaRole = role ? role.dataValues.namaRole : 'Unknown';
     console.log("result", result);
 
+    // NEW: If user is Siswa, fetch idSiswa and attach to dataValues
+    if (result.idRole === 5) { // Role Siswa
+        const Siswa = require('../../api/v1/siswa/model');
+        const siswa = await Siswa.findOne({
+            where: { idUser: result.idUser },
+            attributes: ['idSiswa']
+        });
+
+        if (siswa) {
+            result.dataValues.idSiswa = siswa.idSiswa;
+            console.log("Siswa found! idSiswa:", siswa.idSiswa);
+        }
+    }
+
     const tokenUser = createTokenUser(result.dataValues);
     const token = createJWT({ payload: tokenUser });
     console.log("tokenUser", tokenUser);
@@ -120,6 +134,7 @@ const signIn = async (req) => {
             email: result.email,
             namaLengkap: result.namaLengkap,
             role: tokenUser.role,
+            idSiswa: tokenUser.idSiswa, // NEW: Include idSiswa in response
         }
     };
 };
