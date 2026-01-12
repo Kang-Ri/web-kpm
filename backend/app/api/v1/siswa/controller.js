@@ -9,6 +9,10 @@ const {
     bulkDeleteSiswa,
     exportSiswaData,
     resetSiswaPassword,
+    // Enrollment methods
+    getEnrollmentDashboard,
+    getParent2ForEnrollment,
+    completeProfile,
 } = require('../../../services/mysql/siswa');
 
 // CREATE Siswa
@@ -160,6 +164,54 @@ const resetPassword = async (req, res, next) => {
     }
 };
 
+// GET ENROLLMENT DASHBOARD
+const enrollmentDashboard = async (req, res, next) => {
+    try {
+        const { idSiswa } = req.params;
+        const result = await getEnrollmentDashboard(parseInt(idSiswa));
+
+        res.status(StatusCodes.OK).json({
+            message: 'Berhasil mengambil data enrollment dashboard',
+            data: result,
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// GET PARENT2 LIST FOR ENROLLMENT
+const parent2List = async (req, res, next) => {
+    try {
+        const { idSiswa, idParent1 } = req.params;
+        const result = await getParent2ForEnrollment(
+            parseInt(idSiswa),
+            parseInt(idParent1)
+        );
+
+        res.status(StatusCodes.OK).json({
+            message: 'Berhasil mengambil daftar ruang kelas',
+            data: result,
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// COMPLETE SISWA PROFILE
+const finishProfile = async (req, res, next) => {
+    try {
+        const { idSiswa } = req.params;
+        const result = await completeProfile(parseInt(idSiswa), req.body);
+
+        res.status(StatusCodes.OK).json({
+            message: 'Profil berhasil dilengkapi',
+            data: result,
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports = {
     create,
     index,
@@ -170,4 +222,8 @@ module.exports = {
     bulkDelete,
     exportData,
     resetPassword,
+    // Enrollment controllers
+    enrollmentDashboard,
+    parent2List,
+    finishProfile,
 };

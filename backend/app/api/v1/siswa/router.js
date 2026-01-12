@@ -12,6 +12,10 @@ const {
     bulkDelete,
     exportData,
     resetPassword,
+    // Enrollment controllers
+    enrollmentDashboard,
+    parent2List,
+    finishProfile,
 } = require('./controller');
 
 // Middleware (uncomment when ready)
@@ -106,6 +110,26 @@ router.delete(
     // authenticatedUser,
     // authorizeRoles('Super Admin'),
     destroy
+);
+
+// === ENROLLMENT ROUTES ===
+
+// Get enrollment dashboard data (3 sections filtered by jenjangKelas)
+router.get(
+    '/siswa/:idSiswa/enrollment-dashboard',
+    enrollmentDashboard
+);
+
+// Get parent2 list for specific parent1
+router.get(
+    '/siswa/:idSiswa/parent1/:idParent1/parent2',
+    parent2List
+);
+
+// Complete siswa profile
+router.patch(
+    '/siswa/:idSiswa/complete-profile',
+    finishProfile
 );
 
 module.exports = router;
