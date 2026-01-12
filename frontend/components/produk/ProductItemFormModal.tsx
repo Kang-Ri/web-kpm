@@ -46,6 +46,7 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
         diskonAktif: false,
         tipeDiskon: 'percentage',
         nilaiDiskon: 0,
+        hargaAkhir: 0,
         diskonMulai: null,
         diskonBerakhir: null,
     });
@@ -131,6 +132,7 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
                 diskonAktif: product.diskonAktif ?? false,
                 tipeDiskon: product.tipeDiskon ?? 'percentage',
                 nilaiDiskon: product.nilaiDiskon ?? 0,
+                hargaAkhir: product.hargaAkhir ?? 0,
                 diskonMulai: product.diskonMulai ? new Date(product.diskonMulai).toISOString().slice(0, 16) : null,
                 diskonBerakhir: product.diskonBerakhir ? new Date(product.diskonBerakhir).toISOString().slice(0, 16) : null,
             });
