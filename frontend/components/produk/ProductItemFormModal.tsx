@@ -95,6 +95,10 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
 
     useEffect(() => {
         if (product) {
+            // DEBUG: Check tanggalPublish value from database
+            console.log('🔍 DEBUG product.tanggalPublish:', product.tanggalPublish);
+            console.log('🔍 DEBUG product.statusProduk:', product.statusProduk);
+
             // Format tanggalPublish for datetime-local input (YYYY-MM-DDTHH:mm)
             let formattedDate = '';
             if (product.tanggalPublish) {
@@ -102,10 +106,15 @@ export const ProductItemFormModal: React.FC<ProductItemFormModalProps> = ({
                     const date = new Date(product.tanggalPublish);
                     if (!isNaN(date.getTime())) {
                         formattedDate = date.toISOString().slice(0, 16);
+                        console.log('✅ Formatted tanggalPublish:', formattedDate);
+                    } else {
+                        console.warn('⚠️ Invalid date object from tanggalPublish');
                     }
                 } catch (error) {
-                    console.warn('Invalid tanggalPublish format:', product.tanggalPublish);
+                    console.warn('❌ Error parsing tanggalPublish:', product.tanggalPublish, error);
                 }
+            } else {
+                console.log('ℹ️ tanggalPublish is null/undefined');
             }
 
             setFormData({
