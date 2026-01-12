@@ -26,15 +26,22 @@ require('../api/v1/userRefreshTokens/model');
 defineAssociations();
 
 // ==========================================================
-// 3. SINKRONISASI (Contoh)
+// 3. SINKRONISASI (DISABLED - Use Manual Migrations!)
 // ==========================================================
-// PENTING: Gunakan alter: true untuk menambahkan FK ke tabel yang sudah ada.
-sequelize.sync({ alter: true })
-    .then(() => {
-        console.log('Database & tabel berhasil disinkronkan. Semua asosiasi telah aktif!');
-    })
-    .catch(err => {
-        console.error('Error saat sinkronisasi database:', err);
-    });
+// CRITICAL: sequelize.sync({ alter: true }) causes duplicate indexes!
+// MySQL has max 64 indexes per table limit.
+// Use manual migrations instead for schema changes.
+
+// ❌ DISABLED TO PREVENT ER_TOO_MANY_KEYS ERROR
+// sequelize.sync({ alter: true })
+//     .then(() => {
+//         console.log('Database & tabel berhasil disinkronkan. Semua asosiasi telah aktif!');
+//     })
+//     .catch(err => {
+//         console.error('Error saat sinkronisasi database:', err);
+//     });
+
+console.log('✅ Database models loaded. Associations defined.');
+console.log('📝 Use manual migrations for schema changes!');
 
 module.exports = sequelize; // Ekspor instance sequelize
