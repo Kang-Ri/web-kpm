@@ -514,7 +514,6 @@ const getParent2ForEnrollment = async (idSiswa, idParent1) => {
     });
 
     // 4. For each parent2, count enrolled students
-    const SiswaKelas = require('../../api/v1/siswaKelas/model');
     const ruangKelasWithCapacity = await Promise.all(
         parent2List.map(async (p2) => {
             const enrolledCount = await SiswaKelas.count({
