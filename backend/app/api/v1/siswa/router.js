@@ -13,6 +13,7 @@ const {
     exportData,
     resetPassword,
     // Enrollment controllers
+    listParent1Sections,
     enrollmentDashboard,
     parent2List,
     finishProfile,
@@ -114,6 +115,12 @@ router.delete(
 );
 
 // === ENROLLMENT ROUTES ===
+
+// Get all parent1 sections (no filter) - untuk dashboard awal
+router.get(
+    '/parent1-sections',
+    listParent1Sections
+);
 
 // Get enrollment dashboard data (3 sections filtered by jenjangKelas)
 router.get(

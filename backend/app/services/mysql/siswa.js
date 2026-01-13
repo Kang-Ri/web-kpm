@@ -398,7 +398,64 @@ const resetSiswaPassword = async (idSiswa) => {
 };
 
 
-// --- 11. GET ENROLLMENT DASHBOARD DATA ---
+// --- 11. GET PARENT1 SECTIONS (NO FILTER) ---
+// Untuk dashboard awal - tampilkan semua parent1 tanpa filter
+const getParent1Sections = async () => {
+    const ParentProduct1 = require('../../api/v1/parentProduct1/model');
+    const ParentProduct2 = require('../../api/v1/parentProduct2/model');
+
+    // Fetch all active parent1 yang tampil di dashboard
+    const parent1List = await ParentProduct1.findAll({
+        where: {
+            status: 'Aktif',
+            tampilDiDashboard: true
+        },
+        include: [{
+            model: ParentProduct2,
+            as: 'parentProduct2s',
+            where: { status: 'Aktif' },
+            required: false,
+            attributes: ['idParent2']
+        }],
+        order: [['tautanProduk', 'ASC'], ['namaParent1', 'ASC']]
+    });
+
+    // Group by tautanProduk
+    const sections = {
+        kelasPeriodik: parent1List
+            .filter(p => p.tautanProduk === 'Kelas Periodik')
+            .map(p => ({
+                idParent1: p.idParent1,
+                namaParent1: p.namaParent1,
+                descParent1: p.descParent1,
+                tautanProduk: p.tautanProduk,
+                jumlahRuangKelas: p.parentProduct2s?.length || 0
+            })),
+        kelasInsidental: parent1List
+            .filter(p => p.tautanProduk === 'Kelas Insidental')
+            .map(p => ({
+                idParent1: p.idParent1,
+                namaParent1: p.namaParent1,
+                descParent1: p.descParent1,
+                tautanProduk: p.tautanProduk,
+                jumlahRuangKelas: p.parentProduct2s?.length || 0
+            })),
+        produkKomersial: parent1List
+            .filter(p => p.tautanProduk === 'Produk Komersial')
+            .map(p => ({
+                idParent1: p.idParent1,
+                namaParent1: p.namaParent1,
+                descParent1: p.descParent1,
+                tautanProduk: p.tautanProduk,
+                jumlahRuangKelas: p.parentProduct2s?.length || 0
+            }))
+    };
+
+    return sections;
+};
+
+// --- 12. GET ENROLLMENT DASHBOARD (OLD - DEPRECATED) ---
+// Keeping for backward compatibility
 const getEnrollmentDashboard = async (idSiswa) => {
     const ParentProduct1 = require('../../api/v1/parentProduct1/model');
     const ParentProduct2 = require('../../api/v1/parentProduct2/model');
@@ -676,6 +733,7 @@ module.exports = {
     exportSiswaData,
     resetSiswaPassword,
     // Enrollment methods
+    getParent1Sections,
     getEnrollmentDashboard,
     getParent2ForEnrollment,
     completeProfile,

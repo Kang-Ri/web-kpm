@@ -10,6 +10,7 @@ const {
     exportSiswaData,
     resetSiswaPassword,
     // Enrollment methods
+    getParent1Sections,
     getEnrollmentDashboard,
     getParent2ForEnrollment,
     completeProfile,
@@ -165,6 +166,22 @@ const resetPassword = async (req, res, next) => {
     }
 };
 
+// === ENROLLMENT CONTROLLERS ===
+
+// Get Parent1 Sections (No Filter) - Public dashboard
+const listParent1Sections = async (req, res, next) => {
+    try {
+        const sections = await getParent1Sections();
+
+        res.status(StatusCodes.OK).json({
+            message: 'Parent1 sections retrieved successfully',
+            data: sections,
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
 // GET ENROLLMENT DASHBOARD
 const enrollmentDashboard = async (req, res, next) => {
     try {
@@ -246,6 +263,7 @@ module.exports = {
     exportData,
     resetPassword,
     // Enrollment controllers
+    listParent1Sections,
     enrollmentDashboard,
     parent2List,
     finishProfile,
