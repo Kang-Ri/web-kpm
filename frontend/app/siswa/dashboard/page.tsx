@@ -49,19 +49,26 @@ export default function SiswaDashboardPage() {
 
     // Fetch enrollment dashboard data
     useEffect(() => {
+        console.log('🔍 DASHBOARD: useEffect triggered');
+        console.log('📦 DASHBOARD: Current user object:', user);
+        console.log('🆔 DASHBOARD: user.idSiswa =', user?.idSiswa);
+        console.log('👤 DASHBOARD: user.role =', user?.role);
+
         const fetchDashboard = async () => {
             if (!user?.idSiswa) {
-                console.warn('ID Siswa not found in user object');
+                console.warn('⚠️ DASHBOARD: ID Siswa not found in user object');
+                console.warn('Full user object:', JSON.stringify(user, null, 2));
                 return;
             }
 
             try {
                 setIsLoading(true);
+                console.log('🚀 DASHBOARD: Fetching enrollment data for idSiswa:', user.idSiswa);
                 const response = await siswaService.getEnrollmentDashboard(user.idSiswa);
                 setDashboardData(response.data);
                 setShowProfileModal(response.data.needsProfileCompletion);
             } catch (error: any) {
-                console.error('Error fetching dashboard:', error);
+                console.error('❌ DASHBOARD: Error fetching dashboard:', error);
             } finally {
                 setIsLoading(false);
             }
