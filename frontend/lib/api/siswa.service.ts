@@ -128,4 +128,9 @@ export const siswaService = {
     enroll: async (idSiswa: number, idParent2: number) => {
         return apiClient.post('/cms/siswa/enroll', { idSiswa, idParent2 });
     },
+
+    // Get parent1 sections (no filter) - untuk dashboard awal
+    getParent1Sections: async () => {
+        return apiClient.get('/cms/parent1-sections');
+    },
 };

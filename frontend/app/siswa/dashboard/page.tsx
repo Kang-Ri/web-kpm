@@ -47,35 +47,38 @@ export default function SiswaDashboardPage() {
     const [showRuangKelasModal, setShowRuangKelasModal] = useState(false);
     const [selectedParent1, setSelectedParent1] = useState<{ id: number; nama: string } | null>(null);
 
-    // Fetch enrollment dashboard data
+    // Fetch parent1 sections (NO FILTER - tidak perlu idSiswa)
     useEffect(() => {
         console.log('🔍 DASHBOARD: useEffect triggered');
         console.log('📦 DASHBOARD: Current user object:', user);
-        console.log('🆔 DASHBOARD: user.idSiswa =', user?.idSiswa);
-        console.log('👤 DASHBOARD: user.role =', user?.role);
 
-        const fetchDashboard = async () => {
-            if (!user?.idSiswa) {
-                console.warn('⚠️ DASHBOARD: ID Siswa not found in user object');
-                console.warn('Full user object:', JSON.stringify(user, null, 2));
-                return;
-            }
-
+        const fetchSections = async () => {
             try {
                 setIsLoading(true);
-                console.log('🚀 DASHBOARD: Fetching enrollment data for idSiswa:', user.idSiswa);
-                const response = await siswaService.getEnrollmentDashboard(user.idSiswa);
-                setDashboardData(response.data);
-                setShowProfileModal(response.data.needsProfileCompletion);
+                console.log('🚀 DASHBOARD: Fetching parent1 sections (no filter)...');
+
+                const response = await siswaService.getParent1Sections();
+                console.log('✅ DASHBOARD: Sections received:', response.data);
+
+                setDashboardData({
+                    siswa: {
+                        idSiswa: user?.idSiswa || 0,
+                        namaLengkap: user?.namaLengkap || 'User',
+                        jenjangKelas: undefined,
+                        email: user?.email
+                    },
+                    needsProfileCompletion: false,
+                    sections: response.data
+                });
             } catch (error: any) {
-                console.error('❌ DASHBOARD: Error fetching dashboard:', error);
+                console.error('❌ DASHBOARD: Error fetching sections:', error);
             } finally {
                 setIsLoading(false);
             }
         };
 
-        fetchDashboard();
-    }, [user?.idSiswa]);
+        fetchSections();
+    }, [user]);
 
     const handleProfileComplete = async (data: any) => {
         if (!user?.idSiswa) return;
