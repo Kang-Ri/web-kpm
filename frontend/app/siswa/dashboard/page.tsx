@@ -57,17 +57,34 @@ export default function SiswaDashboardPage() {
                 setIsLoading(true);
                 console.log('🚀 DASHBOARD: Fetching parent1 sections (no filter)...');
 
+                // 1. Fetch public sections
                 const response = await siswaService.getParent1Sections();
                 console.log('✅ DASHBOARD: Sections received:', response.data);
 
+                // 2. Fetch student status if logged in
+                let needsProfile = false;
+                let siswaData = {
+                    idSiswa: user?.idSiswa || 0,
+                    namaLengkap: user?.namaLengkap || 'User',
+                    jenjangKelas: undefined,
+                    email: user?.email
+                };
+
+                if (user?.idSiswa) {
+                    try {
+                        const statusResponse = await siswaService.getEnrollmentDashboard(user.idSiswa);
+                        needsProfile = statusResponse.data.needsProfileCompletion;
+                        if (statusResponse.data.siswa) {
+                            siswaData = statusResponse.data.siswa;
+                        }
+                    } catch (statusError) {
+                        console.error('⚠️ Could not fetch siswa status:', statusError);
+                    }
+                }
+
                 setDashboardData({
-                    siswa: {
-                        idSiswa: user?.idSiswa || 0,
-                        namaLengkap: user?.namaLengkap || 'User',
-                        jenjangKelas: undefined,
-                        email: user?.email
-                    },
-                    needsProfileCompletion: false,
+                    siswa: siswaData,
+                    needsProfileCompletion: needsProfile,
                     sections: response.data.data
                 });
             } catch (error: any) {
@@ -99,8 +116,12 @@ export default function SiswaDashboardPage() {
     };
 
     const handleParent1Click = (idParent1: number, namaParent1: string) => {
-        setSelectedParent1({ id: idParent1, nama: namaParent1 });
-        setShowRuangKelasModal(true);
+        if (dashboardData?.needsProfileCompletion) {
+            setShowProfileModal(true);
+        } else {
+            setSelectedParent1({ id: idParent1, nama: namaParent1 });
+            setShowRuangKelasModal(true);
+        }
     };
 
     const handleLogout = () => {
