@@ -585,7 +585,9 @@ const getParent2ForEnrollment = async (idSiswa, idParent1) => {
                 }
             });
 
-            const tersedia = (p2.kapasitasMaksimal || 0) - enrolledCount;
+            const isUnlimited = p2.kapasitasMaksimal === null || p2.kapasitasMaksimal === undefined;
+            const tersedia = isUnlimited ? null : p2.kapasitasMaksimal - enrolledCount;
+            const isFull = isUnlimited ? false : tersedia <= 0;
 
             return {
                 idParent2: p2.idParent2,
@@ -596,7 +598,7 @@ const getParent2ForEnrollment = async (idSiswa, idParent1) => {
                 kapasitasMaksimal: p2.kapasitasMaksimal,
                 siswaEnrolled: enrolledCount,
                 tersedia,
-                isFull: tersedia <= 0,
+                isFull,
                 kategoriHargaDaftarUlang: p2.kategoriHargaDaftarUlang,
                 hargaDaftarUlang: p2.hargaDaftarUlang
             };
@@ -685,9 +687,10 @@ const enrollToKelas = async (idSiswa, idParent2) => {
         }
     });
 
-    const tersedia = (parent2.kapasitasMaksimal || 0) - enrolledCount;
+    const isUnlimited = parent2.kapasitasMaksimal === null || parent2.kapasitasMaksimal === undefined;
+    const tersedia = isUnlimited ? null : parent2.kapasitasMaksimal - enrolledCount;
 
-    if (tersedia <= 0) {
+    if (!isUnlimited && tersedia <= 0) {
         throw new BadRequestError('Ruang kelas sudah penuh. Silakan pilih ruang kelas lain.');
     }
 
