@@ -73,9 +73,10 @@ export default function SiswaDashboardPage() {
                 if (user?.idSiswa) {
                     try {
                         const statusResponse = await siswaService.getEnrollmentDashboard(user.idSiswa);
-                        needsProfile = statusResponse.data.needsProfileCompletion;
-                        if (statusResponse.data.siswa) {
-                            siswaData = statusResponse.data.siswa;
+                        // FIXED: Access nested data property
+                        needsProfile = statusResponse.data.data.needsProfileCompletion;
+                        if (statusResponse.data.data.siswa) {
+                            siswaData = statusResponse.data.data.siswa;
                         }
                     } catch (statusError) {
                         console.error('⚠️ Could not fetch siswa status:', statusError);

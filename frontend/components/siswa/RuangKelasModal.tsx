@@ -44,7 +44,8 @@ export const RuangKelasModal: FC<RuangKelasModalProps> = ({
         try {
             setIsLoading(true);
             const response = await siswaService.getParent2List(idSiswa, idParent1);
-            setData(response.data);
+            // FIXED: use response.data.data
+            setData(response.data.data);
         } catch (error: any) {
             console.error('Error fetching ruang kelas:', error);
             toast.error(error.response?.data?.message || 'Gagal memuat daftar ruang kelas');
