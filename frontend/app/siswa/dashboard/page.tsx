@@ -320,7 +320,7 @@ export default function SiswaDashboardPage() {
                                 </div>
 
                                 {/* Enrollment Sections */}
-                                {dashboardData && !dashboardData.needsProfileCompletion && (
+                                {dashboardData && (
                                     <>
                                         {/* Kelas Periodik */}
                                         {dashboardData.sections.kelasPeriodik.length > 0 && (
