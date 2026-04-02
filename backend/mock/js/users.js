@@ -6,7 +6,7 @@
   },
   {
     "namaLengkap": "Eka Wijaya (Admin)",
-    "email": "wijayaeka@gmail.com.com",
+    "email": "wijayaeka@gmail.com",
     "password": "rahasiaAdmin456"
   },
   {

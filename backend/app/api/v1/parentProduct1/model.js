@@ -27,6 +27,11 @@ const ParentProduct1 = sequelize.define('ParentProduct1', {
         type: DataTypes.ENUM('Kelas Periodik', 'Kelas Insidental', 'Produk Komersial', '-'),
         defaultValue: '-',
     },
+    tampilDiDashboard: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true,
+        comment: 'Apakah muncul di dashboard siswa',
+    },
 }, {
     // Sequelize secara default mencari kolom createdAt dan updatedAt.
     // Jika tabel Anda menggunakan nama ini, biarkan. Jika tidak, set timestamps: false

@@ -2,6 +2,8 @@ const Siswa = require('../../api/v1/siswa/model');
 const Users = require('../../api/v1/users/model');
 const { NotFoundError, BadRequestError } = require('../../errors');
 const bcrypt = require('bcryptjs');
+const { Op } = require('sequelize');
+const sequelize = require('../../db');
 const XLSX = require('xlsx');
 
 // Helper untuk validasi User
@@ -495,7 +497,7 @@ const getEnrollmentDashboard = async (idSiswa) => {
             as: 'parentProduct2s',
             where: {
                 status: 'Aktif',
-                jenjangKelasIzin: siswa.jenjangKelas
+                [Op.and]: sequelize.literal(`JSON_CONTAINS(parentProduct2s.jenjangKelasIzin, '"${siswa.jenjangKelas}"')`)
             },
             required: false,
             attributes: ['idParent2', 'namaParent2', 'kapasitasMaksimal']
@@ -568,7 +570,7 @@ const getParent2ForEnrollment = async (idSiswa, idParent1) => {
         where: {
             idParent1,
             status: 'Aktif',
-            jenjangKelasIzin: siswa.jenjangKelas
+            [Op.and]: sequelize.literal(`JSON_CONTAINS(jenjangKelasIzin, '"${siswa.jenjangKelas}"')`)
         },
         order: [['namaParent2', 'ASC']]
     });
