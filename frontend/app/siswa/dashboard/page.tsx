@@ -68,7 +68,7 @@ export default function SiswaDashboardPage() {
                         email: user?.email
                     },
                     needsProfileCompletion: false,
-                    sections: response.data
+                    sections: response.data.data
                 });
             } catch (error: any) {
                 console.error('❌ DASHBOARD: Error fetching sections:', error);
