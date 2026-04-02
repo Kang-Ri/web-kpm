@@ -462,7 +462,10 @@ const getEnrollmentDashboard = async (idSiswa) => {
 
     // 1. Get siswa profile
     const siswa = await Siswa.findByPk(idSiswa, {
-        attributes: ['idSiswa', 'namaLengkap', 'jenjangKelas', 'email', 'asalSekolah']
+        attributes: [
+            'idSiswa', 'namaLengkap', 'jenjangKelas', 'email', 'asalSekolah',
+            'tempatLahir', 'tanggalLahir', 'jenisKelamin', 'agama', 'noHp'
+        ]
     });
 
     if (!siswa) {

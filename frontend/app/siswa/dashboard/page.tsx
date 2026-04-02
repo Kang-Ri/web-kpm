@@ -107,7 +107,7 @@ export default function SiswaDashboardPage() {
 
             // Reload dashboard data
             const response = await siswaService.getEnrollmentDashboard(user.idSiswa);
-            setDashboardData(response.data);
+            setDashboardData(response.data.data); // FIXED: response.data.data
             setShowProfileModal(false);
         } catch (error: any) {
             console.error('Error completing profile:', error);
@@ -148,6 +148,7 @@ export default function SiswaDashboardPage() {
                     <ProfileCompletionModal
                         isOpen={showProfileModal}
                         siswaName={dashboardData.siswa.namaLengkap}
+                        initialData={dashboardData.siswa}
                         onComplete={handleProfileComplete}
                         isLoading={isSubmitting}
                     />

@@ -6,6 +6,7 @@ import { X } from 'lucide-react';
 interface ProfileCompletionModalProps {
     isOpen: boolean;
     siswaName: string;
+    initialData?: Partial<CompleteProfileData>;
     onComplete: (data: CompleteProfileData) => void;
     onClose?: () => void;
     isLoading?: boolean;
@@ -24,18 +25,19 @@ export interface CompleteProfileData {
 export const ProfileCompletionModal: FC<ProfileCompletionModalProps> = ({
     isOpen,
     siswaName,
+    initialData,
     onComplete,
     onClose,
     isLoading = false
 }) => {
     const [formData, setFormData] = useState<CompleteProfileData>({
-        tempatLahir: '',
-        tanggalLahir: '',
-        jenisKelamin: undefined,
-        jenjangKelas: '',
-        asalSekolah: '',
-        noHp: '',
-        agama: ''
+        tempatLahir: initialData?.tempatLahir || '',
+        tanggalLahir: initialData?.tanggalLahir ? initialData.tanggalLahir.split('T')[0] : '', // format date for input
+        jenisKelamin: initialData?.jenisKelamin || undefined,
+        jenjangKelas: initialData?.jenjangKelas || '',
+        asalSekolah: initialData?.asalSekolah || '',
+        noHp: initialData?.noHp || '',
+        agama: initialData?.agama || ''
     });
 
     const [errors, setErrors] = useState<{ jenjangKelas?: string }>({});
