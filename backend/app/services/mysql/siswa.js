@@ -585,6 +585,14 @@ const getParent2ForEnrollment = async (idSiswa, idParent1) => {
                 }
             });
 
+            const isEnrolledCheck = await SiswaKelas.findOne({
+                where: {
+                    idSiswa,
+                    idParent2: p2.idParent2,
+                    statusEnrollment: ['Aktif', 'Pending']
+                }
+            });
+
             const isUnlimited = p2.kapasitasMaksimal === null || p2.kapasitasMaksimal === undefined;
             const tersedia = isUnlimited ? null : p2.kapasitasMaksimal - enrolledCount;
             const isFull = isUnlimited ? false : tersedia <= 0;
@@ -599,6 +607,7 @@ const getParent2ForEnrollment = async (idSiswa, idParent1) => {
                 siswaEnrolled: enrolledCount,
                 tersedia,
                 isFull,
+                isEnrolled: !!isEnrolledCheck,
                 kategoriHargaDaftarUlang: p2.kategoriHargaDaftarUlang,
                 hargaDaftarUlang: p2.hargaDaftarUlang
             };

@@ -18,5 +18,10 @@
     "namaLengkap": "Budi Santoso",
     "email": "budi.san@example.com",
     "password": "budi7890"
+  },
+  {
+    "namaLengkap": "Baiqun Ananta Jaya",
+    "email": "baiqunj@gmail.com",
+    "password": "baikBaikSaja"
   }
 ]

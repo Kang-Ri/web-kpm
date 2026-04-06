@@ -36,11 +36,29 @@ export const RuangKelasCard: FC<RuangKelasCardProps> = ({
         siswaEnrolled,
         tersedia,
         isFull,
+        isEnrolled,
         kategoriHargaDaftarUlang,
         hargaDaftarUlang
     } = ruangKelas;
 
-    const isAlmostFull = tersedia <= 5 && tersedia > 0;
+    const isUnlimited = kapasitasMaksimal === null || kapasitasMaksimal === undefined;
+    const isAlmostFull = !isUnlimited && tersedia !== null && tersedia <= 5 && tersedia > 0;
+    
+    // Format array of classes string e.g. ["3", "8"] -> "3, 8"
+    const displayJenjang = () => {
+        try {
+            if (Array.isArray(jenjangKelasIzin)) {
+                return jenjangKelasIzin.join(', ');
+            }
+            // in case it's a stringified JSON array
+            if (jenjangKelasIzin && jenjangKelasIzin.startsWith('[')) {
+                return JSON.parse(jenjangKelasIzin).join(', ');
+            }
+        } catch (e) {
+            // fallback
+        }
+        return jenjangKelasIzin;
+    };
 
     // Format price
     const formatPrice = (price: number) => {
@@ -95,7 +113,7 @@ export const RuangKelasCard: FC<RuangKelasCardProps> = ({
                         <Users className="w-4 h-4 mr-2 text-blue-600" />
                         <span className="font-medium">Kapasitas:</span>
                         <span className="ml-1">
-                            {siswaEnrolled}/{kapasitasMaksimal} siswa
+                            {isUnlimited ? 'Tanpa Batas' : `${siswaEnrolled}/${kapasitasMaksimal} siswa`}
                         </span>
                     </div>
 
@@ -110,7 +128,7 @@ export const RuangKelasCard: FC<RuangKelasCardProps> = ({
                                 isAlmostFull ? 'text-orange-600' :
                                     'text-green-600'
                             }`}>
-                            {tersedia} kursi
+                            {isUnlimited ? 'Terbuka' : `${tersedia} kursi`}
                         </span>
                     </div>
 
@@ -118,7 +136,7 @@ export const RuangKelasCard: FC<RuangKelasCardProps> = ({
                     <div className="flex items-center text-sm text-gray-700">
                         <Calendar className="w-4 h-4 mr-2 text-purple-600" />
                         <span className="font-medium">Kelas:</span>
-                        <span className="ml-1">{jenjangKelasIzin}</span>
+                        <span className="ml-1">{displayJenjang()}</span>
                     </div>
 
                     {/* Year */}
@@ -152,29 +170,39 @@ export const RuangKelasCard: FC<RuangKelasCardProps> = ({
                 </div>
 
                 {/* Enroll Button */}
-                <button
-                    onClick={() => onEnroll(idParent2)}
-                    disabled={isFull || isLoading}
-                    className={`
-                        w-full mt-4 py-3 px-4 rounded-lg font-semibold text-white
-                        transition-all duration-200 flex items-center justify-center gap-2
-                        ${isFull
-                            ? 'bg-gray-400 cursor-not-allowed'
-                            : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover:shadow-lg'
-                        }
-                    `}
-                >
-                    {isLoading ? (
-                        <>
-                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                            <span>Processing...</span>
-                        </>
-                    ) : isFull ? (
-                        <>❌ Kelas Penuh</>
-                    ) : (
-                        <>🎓 Daftar Sekarang</>
-                    )}
-                </button>
+                {isEnrolled ? (
+                    <button
+                        disabled
+                        className="w-full mt-4 py-3 px-4 rounded-lg font-semibold text-gray-700 bg-gray-300 cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                        <CheckCircle className="w-5 h-5" />
+                        Sudah Terdaftar
+                    </button>
+                ) : (
+                    <button
+                        onClick={() => onEnroll(idParent2)}
+                        disabled={isFull || isLoading}
+                        className={`
+                            w-full mt-4 py-3 px-4 rounded-lg font-semibold text-white
+                            transition-all duration-200 flex items-center justify-center gap-2
+                            ${isFull
+                                ? 'bg-gray-400 cursor-not-allowed'
+                                : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover:shadow-lg'
+                            }
+                        `}
+                    >
+                        {isLoading ? (
+                            <>
+                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                                <span>Processing...</span>
+                            </>
+                        ) : isFull ? (
+                            <>❌ Kelas Penuh</>
+                        ) : (
+                            <>🎓 Daftar Sekarang</>
+                        )}
+                    </button>
+                )}
             </div>
         </div>
     );
