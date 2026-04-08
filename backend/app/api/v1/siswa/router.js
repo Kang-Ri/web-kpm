@@ -18,6 +18,7 @@ const {
     parent2List,
     finishProfile,
     enroll,
+    getFormForParent2,
 } = require('./controller');
 
 // Middleware (uncomment when ready)
@@ -144,6 +145,12 @@ router.patch(
 router.post(
     '/siswa/enroll',
     enroll
+);
+
+// Get form for a specific parent2 (ruang kelas)
+router.get(
+    '/siswa/parent2/:idParent2/form',
+    getFormForParent2
 );
 
 module.exports = router;

@@ -20,6 +20,11 @@
     "password": "budi7890"
   },
   {
+    "namaLengkap": "Budi Santoso",
+    "email": "budi@test.com",
+    "password": "budi7890"
+  },
+  {
     "namaLengkap": "Baiqun Ananta Jaya",
     "email": "baiqunj@gmail.com",
     "password": "baikBaikSaja"

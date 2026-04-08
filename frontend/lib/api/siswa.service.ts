@@ -133,4 +133,14 @@ export const siswaService = {
     getParent1Sections: async () => {
         return apiClient.get('/cms/parent1-sections');
     },
+
+    // Get form daftar ulang for a ruang kelas
+    getFormForParent2: async (idParent2: number) => {
+        return apiClient.get(`/cms/siswa/parent2/${idParent2}/form`);
+    },
+
+    // Dummy payment confirmation (Dev Mode)
+    dummyConfirmPayment: async (idOrder: number) => {
+        return apiClient.post(`/cms/payment/dummy-confirm/${idOrder}`);
+    },
 };

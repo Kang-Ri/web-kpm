@@ -252,6 +252,58 @@ const enroll = async (req, res, next) => {
     }
 };
 
+// GET FORM FOR PARENT2 (Ruang Kelas)
+const getFormForParent2 = async (req, res, next) => {
+    try {
+        const { idParent2 } = req.params;
+        const ParentProduct2 = require('../../../api/v1/parentProduct2/model');
+        const Form = require('../../../api/v1/forms/model');
+        const FormField = require('../../../api/v1/formFields/model');
+
+        const parent2 = await ParentProduct2.findByPk(idParent2, {
+            attributes: ['idParent2', 'namaParent2', 'idFormDaftarUlang']
+        });
+
+        if (!parent2) {
+            return res.status(StatusCodes.NOT_FOUND).json({
+                message: `Ruang kelas dengan ID ${idParent2} tidak ditemukan.`
+            });
+        }
+
+        if (!parent2.idFormDaftarUlang) {
+            return res.status(StatusCodes.OK).json({
+                message: 'Tidak ada form untuk ruang kelas ini',
+                data: { hasForm: false, form: null }
+            });
+        }
+
+        const form = await Form.findByPk(parent2.idFormDaftarUlang, {
+            attributes: ['idForm', 'namaForm', 'descForm', 'statusForm'],
+            include: [{
+                model: FormField,
+                as: 'fields',
+                attributes: ['idField', 'namaField', 'tipeField', 'nilaiPilihan', 'required',
+                    'textDescription', 'textWarning', 'placeholder', 'orderIndex'],
+                order: [['orderIndex', 'ASC']]
+            }]
+        });
+
+        if (!form) {
+            return res.status(StatusCodes.OK).json({
+                message: 'Form tidak ditemukan',
+                data: { hasForm: false, form: null }
+            });
+        }
+
+        return res.status(StatusCodes.OK).json({
+            message: 'Form daftar ulang berhasil diambil',
+            data: { hasForm: true, form }
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports = {
     create,
     index,
@@ -268,4 +320,5 @@ module.exports = {
     parent2List,
     finishProfile,
     enroll,
+    getFormForParent2,
 };

@@ -101,10 +101,13 @@ const processPaymentNotification = async (notification) => {
             console.log(`🔓 Materi access granted for Siswa #${order.idSiswa}`);
         }
 
-        // TODO: Handle Daftar Ulang activation
-        // if (order.product?.jenisProduk === 'Daftar Ulang') {
-        //     await SiswaKelasService.activateEnrollment(order.idSiswa, order.idOrder);
-        // }
+        // Handle Daftar Ulang activation
+        const SiswaKelas = require('../siswaKelas/model');
+        await SiswaKelas.update(
+            { statusEnrollment: 'Aktif', tanggalMasuk: new Date() },
+            { where: { idOrderDaftarUlang: idOrder } }
+        );
+        console.log(`✅ SiswaKelas activated for Order #${idOrder}`);
     } else if (notification.transaction_status === 'pending') {
         console.log(`⏳ Payment pending for Order #${idOrder}`);
     } else {
@@ -112,8 +115,61 @@ const processPaymentNotification = async (notification) => {
     }
 };
 
+/**
+ * POST /api/v1/payment/dummy-confirm/:idOrder
+ * Dummy payment confirmation for enrollment (Dev Mode - no Midtrans)
+ */
+const dummyConfirmEnrollment = async (req, res, next) => {
+    try {
+        const { idOrder } = req.params;
+        const Order = require('../order/model');
+        const SiswaKelas = require('../siswaKelas/model');
+
+        // 1. Find order
+        const order = await Order.findByPk(idOrder);
+        if (!order) {
+            return res.status(StatusCodes.NOT_FOUND).json({ message: 'Order tidak ditemukan.' });
+        }
+
+        if (order.statusPembayaran === 'Paid') {
+            return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Order sudah dibayar.' });
+        }
+
+        // 2. Update Order
+        await order.update({
+            statusPembayaran: 'Paid',
+            statusOrder: 'Completed',
+            paidAt: new Date(),
+            paymentMethod: 'Simulasi Dev',
+            midtransTransactionId: `DUMMY-${Date.now()}`,
+        });
+
+        // 3. Activate SiswaKelas linked to this order
+        const [updatedCount] = await SiswaKelas.update(
+            { statusEnrollment: 'Aktif', tanggalMasuk: new Date() },
+            { where: { idOrderDaftarUlang: parseInt(idOrder) } }
+        );
+
+        console.log(`✅ Dummy payment confirmed for Order #${idOrder}, activated ${updatedCount} SiswaKelas`);
+
+        res.status(StatusCodes.OK).json({
+            success: true,
+            message: 'Pembayaran berhasil dikonfirmasi. Anda sekarang terdaftar aktif!',
+            data: {
+                idOrder: order.idOrder,
+                statusPembayaran: 'Paid',
+                statusEnrollment: 'Aktif',
+                activatedCount: updatedCount,
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     initiatePayment,
     simulatePayment,
-    handleWebhook
+    handleWebhook,
+    dummyConfirmEnrollment,
 };

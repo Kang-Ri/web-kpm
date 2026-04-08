@@ -608,6 +608,7 @@ const getParent2ForEnrollment = async (idSiswa, idParent1) => {
                 tersedia,
                 isFull,
                 isEnrolled: !!isEnrolledCheck,
+                userStatus: isEnrolledCheck ? isEnrolledCheck.statusEnrollment : null,
                 kategoriHargaDaftarUlang: p2.kategoriHargaDaftarUlang,
                 hargaDaftarUlang: p2.hargaDaftarUlang
             };
@@ -680,62 +681,101 @@ const enrollToKelas = async (idSiswa, idParent2) => {
         where: {
             idSiswa,
             idParent2,
-            statusEnrollment: ['Aktif', 'Pending']
         }
     });
 
     if (existingEnrollment) {
-        throw new BadRequestError('Anda sudah terdaftar di ruang kelas ini.');
-    }
-
-    // 4. Check capacity
-    const enrolledCount = await SiswaKelas.count({
-        where: {
-            idParent2,
-            statusEnrollment: ['Aktif', 'Pending']
+        // If already Active, definitely throw error
+        if (existingEnrollment.statusEnrollment === 'Aktif') {
+            throw new BadRequestError('Anda sudah terdaftar di ruang kelas ini.');
         }
-    });
-
-    const isUnlimited = parent2.kapasitasMaksimal === null || parent2.kapasitasMaksimal === undefined;
-    const tersedia = isUnlimited ? null : parent2.kapasitasMaksimal - enrolledCount;
-
-    if (!isUnlimited && tersedia <= 0) {
-        throw new BadRequestError('Ruang kelas sudah penuh. Silakan pilih ruang kelas lain.');
+        
+        // If Pending, we don't throw error. We will return this existing record 
+        // to allow the user to continue the flow (Form/Profile/Payment).
     }
 
-    // 5. Determine enrollment status based on price
-    let statusEnrollment = 'Aktif';
-    let requiresPayment = false;
+    // 4. Check capacity (only for NEW enrollments, or handle count logic carefully)
+    if (!existingEnrollment) {
+        const enrolledCount = await SiswaKelas.count({
+            where: {
+                idParent2,
+                statusEnrollment: ['Aktif', 'Pending']
+            }
+        });
 
-    if (parent2.kategoriHargaDaftarUlang === 'Bernominal' && parent2.hargaDaftarUlang > 0) {
-        statusEnrollment = 'Pending'; // Wait for payment
-        requiresPayment = true;
+        const isUnlimited = parent2.kapasitasMaksimal === null || parent2.kapasitasMaksimal === undefined;
+        const tersedia = isUnlimited ? null : parent2.kapasitasMaksimal - enrolledCount;
+
+        if (!isUnlimited && tersedia <= 0) {
+            throw new BadRequestError('Ruang kelas sudah penuh. Silakan pilih ruang kelas lain.');
+        }
     }
 
-    // 6. Create enrollment record
-    const enrollment = await SiswaKelas.create({
-        idSiswa,
-        idParent2,
-        statusEnrollment,
-        tanggalDaftar: new Date()
-    });
+    // 5. Check if profile is complete (required for enrollment)
+    const profileFields = ['tempatLahir', 'tanggalLahir', 'jenisKelamin', 'jenjangKelas', 'asalSekolah'];
+    const needsProfileCompletion = profileFields.some(field => !siswa[field]);
+
+    // 6. Check if form exists for this ruang kelas
+    const hasForm = !!(parent2.idFormDaftarUlang);
+    const idForm = parent2.idFormDaftarUlang || null;
+    const kategoriHarga = parent2.kategoriHargaDaftarUlang;
+    const hargaDaftarUlang = parseFloat(parent2.hargaDaftarUlang) || 0;
+
+    // 7. Determine initial enrollment status:
+    //    - If no form AND profile complete AND free → directly 'Aktif'
+    //    - Otherwise → 'Pending' (waiting for form submission or payment)
+    const isGratis = kategoriHarga === 'Gratis';
+    const directlyActive = !hasForm && !needsProfileCompletion && isGratis;
+    const statusEnrollment = directlyActive ? 'Aktif' : 'Pending';
+
+    // 8. Create or use existing enrollment record
+    let enrollment = existingEnrollment;
+    if (!enrollment) {
+        enrollment = await SiswaKelas.create({
+            idSiswa,
+            idParent2,
+            statusEnrollment,
+            tanggalDaftar: new Date()
+        });
+    } else if (statusEnrollment === 'Aktif' && enrollment.statusEnrollment === 'Pending') {
+        // If it was pending but now qualifies for 'Aktif' (e.g. profile just completed)
+        await enrollment.update({ statusEnrollment: 'Aktif' });
+    }
 
     return {
-        enrollment: {
-            idSiswaKelas: enrollment.idSiswaKelas,
-            statusEnrollment: enrollment.statusEnrollment,
-            tanggalDaftar: enrollment.tanggalDaftar
+        idSiswaKelas: enrollment.idSiswaKelas,
+        statusEnrollment: enrollment.statusEnrollment,
+        // Form info
+        hasForm,
+        idForm,
+        // Profile
+        needsProfileCompletion,
+        siswaProfile: {
+            namaLengkap: siswa.namaLengkap,
+            email: siswa.email,
+            noHp: siswa.noHp,
+            nisn: siswa.nisn, // NEW: for form prefill
+            tempatLahir: siswa.tempatLahir,
+            tanggalLahir: siswa.tanggalLahir,
+            jenisKelamin: siswa.jenisKelamin,
+            jenjangKelas: siswa.jenjangKelas,
+            asalSekolah: siswa.asalSekolah,
+            agama: siswa.agama,
         },
+        // Payment
+        kategoriHarga,
+        hargaDaftarUlang,
+        requiresPayment: kategoriHarga === 'Bernominal' && hargaDaftarUlang > 0,
+        // Ruang kelas info
         ruangKelas: {
             idParent2: parent2.idParent2,
             namaParent2: parent2.namaParent2,
-            kategoriHargaDaftarUlang: parent2.kategoriHargaDaftarUlang,
-            hargaDaftarUlang: parent2.hargaDaftarUlang
         },
-        requiresPayment,
-        message: requiresPayment
-            ? 'Pendaftaran berhasil! Silakan lakukan pembayaran untuk mengaktifkan kelas.'
-            : 'Pendaftaran berhasil! Anda sudah terdaftar di kelas ini.'
+        // Result
+        directlyActive: enrollment.statusEnrollment === 'Aktif',
+        message: enrollment.statusEnrollment === 'Aktif'
+            ? 'Pendaftaran berhasil! Anda sudah terdaftar di kelas ini.'
+            : 'Pendaftaran berhasil. Silakan lengkapi form daftar ulang.',
     };
 };
 
