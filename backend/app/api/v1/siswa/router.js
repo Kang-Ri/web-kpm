@@ -19,6 +19,8 @@ const {
     finishProfile,
     enroll,
     getFormForParent2,
+    getMyActiveClasses,
+    getClassroomMaterials,
 } = require('./controller');
 
 // Middleware (uncomment when ready)
@@ -151,6 +153,18 @@ router.post(
 router.get(
     '/siswa/parent2/:idParent2/form',
     getFormForParent2
+);
+
+// Get student's active classes
+router.get(
+    '/siswa/:idSiswa/my-classes',
+    getMyActiveClasses
+);
+
+// Get classroom content (materials)
+router.get(
+    '/siswa/:idSiswa/kelas/:idParent2/content',
+    getClassroomMaterials
 );
 
 module.exports = router;

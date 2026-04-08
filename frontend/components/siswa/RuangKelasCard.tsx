@@ -16,6 +16,8 @@ interface RuangKelasCardProps {
         isFull: boolean;
         isEnrolled: boolean;
         userStatus: 'Aktif' | 'Pending' | null;
+        statusPembayaran?: 'Unpaid' | 'Paid' | 'Refunded' | 'Failed' | null;
+        statusOrder?: 'Pending' | 'Confirmed' | 'Processing' | 'Completed' | 'Cancelled' | null;
         kategoriHargaDaftarUlang: 'Gratis' | 'Seikhlasnya' | 'Bernominal';
         hargaDaftarUlang: number;
     };
@@ -39,6 +41,8 @@ export const RuangKelasCard: FC<RuangKelasCardProps> = ({
         tersedia,
         isFull,
         userStatus,
+        statusPembayaran,
+        statusOrder,
         kategoriHargaDaftarUlang,
         hargaDaftarUlang,
     } = ruangKelas;
@@ -157,25 +161,33 @@ export const RuangKelasCard: FC<RuangKelasCardProps> = ({
                         )}
                     </div>
 
+                    {/* Action Button */}
                     {isAktif ? (
                         <button
-                            disabled
-                            className="w-full py-3 px-4 rounded-xl font-bold text-gray-400 bg-gray-100/80 border-2 border-gray-200 cursor-not-allowed flex items-center justify-center gap-2 text-sm shadow-inner"
+                            onClick={() => window.location.href = `/siswa/kelas/${idParent2}`}
+                            className="w-full mt-4 py-3 px-4 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm"
                         >
-                            <CheckCircle className="w-4 h-4" />
-                            Sudah Terdaftar
+                            <GraduationCap className="w-4 h-4" />
+                            Masuk Kelas
                         </button>
-                    ) : isPending ? (
+                    ) : isPending && statusPembayaran !== 'Failed' ? (
                         <button
                             onClick={() => onEnroll(idParent2)}
                             disabled={isLoading}
-                            className="w-full py-3 px-4 rounded-xl font-bold text-white bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 shadow-lg shadow-orange-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm"
+                            className="w-full mt-4 py-3 px-4 rounded-xl font-bold text-orange-600 bg-orange-50 border border-orange-200 hover:bg-orange-100 transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm shadow-sm cursor-pointer"
                         >
-                            {isLoading ? <LoaderIcon /> : (
-                                <>
-                                    <Info className="w-4 h-4" />
-                                    Lanjutkan Pendaftaran
-                                </>
+                            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
+                                statusPembayaran === 'Paid' ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+                                        Menunggu Konfirmasi
+                                    </>
+                                ) : (
+                                    <>
+                                        <Info className="w-4 h-4 text-orange-500" />
+                                        Lanjutkan Pembayaran
+                                    </>
+                                )
                             )}
                         </button>
                     ) : (
@@ -183,10 +195,10 @@ export const RuangKelasCard: FC<RuangKelasCardProps> = ({
                             onClick={() => onEnroll(idParent2)}
                             disabled={isFull || isLoading}
                             className={`
-                                w-full py-3 px-4 rounded-xl font-bold text-white transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm shadow-lg
+                                w-full mt-4 py-3 px-4 rounded-xl font-bold text-white transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm shadow-lg
                                 ${isFull 
-                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none' 
-                                    : 'bg-gradient-to-r from-blue-600 to-indigo-700 hover:shadow-blue-200'
+                                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none' 
+                                    : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 hover:shadow-blue-200'
                                 }
                             `}
                         >

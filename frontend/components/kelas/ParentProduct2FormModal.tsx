@@ -56,7 +56,7 @@ export const ParentProduct2FormModal: React.FC<ParentProduct2FormModalProps> = (
         const loadForms = async () => {
             try {
                 setLoadingForms(true);
-                const response = await formService.getAll();
+                const response = await formService.getAll({ formType: 'template' });
                 const forms = (response.data as any).data || response.data || [];
                 // Filter only active forms
                 setAvailableForms(forms.filter((f: Form) => f.statusForm === 'Aktif'));

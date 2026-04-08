@@ -132,7 +132,8 @@ function RuangKelasContent() {
                 showSuccess('Ruang kelas berhasil diperbarui');
             } else {
                 const response = await parentProduct2Service.create(submitData);
-                entityId = response.data.idParent2;
+                // The API response structure is { data: { data: { idParent2: ... } } } with Axios
+                entityId = (response.data as any).data.idParent2;
                 showSuccess('Ruang kelas baru berhasil ditambahkan');
             }
 
@@ -352,7 +353,9 @@ function RuangKelasContent() {
                                                             <span className="text-xs text-gray-600">
                                                                 {ruangKelas.kategoriHargaDaftarUlang === 'Gratis'
                                                                     ? 'Gratis'
-                                                                    : `Rp ${ruangKelas.hargaDaftarUlang?.toLocaleString('id-ID') || 0}`
+                                                                    : ruangKelas.kategoriHargaDaftarUlang === 'Seikhlasnya'
+                                                                        ? 'Seikhlasnya'
+                                                                        : `Rp ${ruangKelas.hargaDaftarUlang?.toLocaleString('id-ID') || 0}`
                                                                 }
                                                             </span>
                                                         </div>

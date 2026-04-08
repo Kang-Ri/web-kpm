@@ -27,7 +27,7 @@ const materiButtonIncludes = [
 // --- 1. CREATE BUTTON (create) ---
 const createButton = async (req) => {
     const {
-        idProduk, namaButton, linkTujuan, deskripsiButton,
+        idProduk, judulButton, namaButton, linkTujuan, deskripsiButton,
         tanggalPublish, tanggalExpire, statusButton, orderIndex
     } = req.body;
 
@@ -42,6 +42,7 @@ const createButton = async (req) => {
     // Buat Button
     const newButton = await MateriButton.create({
         idProduk,
+        judulButton,
         namaButton,
         linkTujuan,
         deskripsiButton,

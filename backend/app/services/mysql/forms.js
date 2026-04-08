@@ -3,8 +3,10 @@ const { Op } = require('sequelize');
 
 // Sesuaikan path import model agar sesuai dengan struktur umum:
 const Form = require('../../api/v1/forms/model');
-const Product = require('../../api/v1/product/model'); // Asumsi path model Product benar
+const Product = require('../../api/v1/product/model');
 const FormField = require('../../api/v1/formFields/model');
+const SiswaKelas = require('../../api/v1/siswaKelas/model');
+const ParentProduct2 = require('../../api/v1/parentProduct2/model');
 
 const productInclude = {
     model: Product,
@@ -213,7 +215,7 @@ const submitForm = async (idForm, idSiswa, responses, idSiswaKelas = null) => {
             include: [{
                 model: ParentProduct2,
                 as: 'parentProduct2',
-                attributes: ['idParent2', 'namaParent2'],
+                attributes: ['idParent2', 'namaParent2', 'kategoriHargaDaftarUlang', 'hargaDaftarUlang'],
                 include: [{
                     model: Product,
                     as: 'products',
@@ -232,13 +234,20 @@ const submitForm = async (idForm, idSiswa, responses, idSiswaKelas = null) => {
         }
 
         // Get Daftar Ulang Product from ruang kelas
+        const category = siswaKelas.parentProduct2?.kategoriHargaDaftarUlang;
+        const basePrice = parseFloat(siswaKelas.parentProduct2?.hargaDaftarUlang) || 0;
+
         if (siswaKelas.parentProduct2?.products && siswaKelas.parentProduct2.products.length > 0) {
             daftarUlangProduct = siswaKelas.parentProduct2.products[0];
             hargaDaftarUlang = daftarUlangProduct.hargaJual || 0;
             namaKelas = daftarUlangProduct.namaProduk;
         } else {
-            // Fallback: no Product found, use form name
-            namaKelas = `Daftar Ulang - ${form.namaForm}`;
+            // Fallback: no Product found, use ParentProduct2 data
+            hargaDaftarUlang = basePrice;
+            namaKelas = `Daftar Ulang - ${siswaKelas.parentProduct2?.namaParent2 || form.namaForm}`;
+            
+            // Critical fix: mock a product-like object for category check below
+            daftarUlangProduct = { kategoriHarga: category };
         }
     }
 
@@ -257,18 +266,23 @@ const submitForm = async (idForm, idSiswa, responses, idSiswaKelas = null) => {
         diskon: 0,
         hargaFinal: hargaDaftarUlang,
         statusOrder: 'Pending',
-        statusPembayaran: hargaDaftarUlang > 0 ? 'Unpaid' : 'Paid',
+        statusPembayaran: (hargaDaftarUlang > 0 || (daftarUlangProduct && daftarUlangProduct.kategoriHarga === 'Seikhlasnya')) ? 'Unpaid' : 'Paid',
         paymentMethod: null,
         tglOrder: new Date()
     });
 
-    // 6. Link Order to SiswaKelas
+    // 6. Link Order to SiswaKelas and Activate if Free
     if (idSiswaKelas) {
         const SiswaKelas = require('../../api/v1/siswaKelas/model');
-        await SiswaKelas.update(
-            { idOrderDaftarUlang: newOrder.idOrder },
-            { where: { idSiswaKelas } }
-        );
+        const updatePayload = { idOrderDaftarUlang: newOrder.idOrder };
+        
+        // If free (status Paid), activate immediately
+        if (newOrder.statusPembayaran === 'Paid') {
+            updatePayload.statusEnrollment = 'Aktif';
+            updatePayload.tanggalMasuk = new Date();
+        }
+        
+        await SiswaKelas.update(updatePayload, { where: { idSiswaKelas } });
     }
 
     // 7. Get complete user data for purchase history
@@ -347,7 +361,7 @@ const submitForm = async (idForm, idSiswa, responses, idSiswaKelas = null) => {
         statusOrder: newOrder.statusOrder,
         statusPembayaran: newOrder.statusPembayaran,
         hargaFinal: newOrder.hargaFinal,
-        needsPayment: hargaDaftarUlang > 0,
+        needsPayment: hargaDaftarUlang > 0 || (daftarUlangProduct && daftarUlangProduct.kategoriHarga === 'Seikhlasnya'),
         formData: responses
     };
 };

@@ -4,16 +4,16 @@ const { initiatePayment, simulatePayment, handleWebhook, dummyConfirmEnrollment 
 const { authenticatedUser } = require('../../../middlewares/auth');
 
 // Initiate payment (get snap token)
-router.post('/payment/initiate', initiatePayment);
+router.post('/initiate', initiatePayment);
 
 // Simulate payment (for simulator mode)
-router.post('/payment/simulate', simulatePayment);
+router.post('/simulate', simulatePayment);
 
 // Webhook endpoint (for real Midtrans notifications)
-router.post('/payment/webhook', handleWebhook);
+router.post('/webhook', handleWebhook);
 
 // Dummy payment confirmation for enrollment (Dev Mode)
-router.post('/payment/dummy-confirm/:idOrder', authenticatedUser, dummyConfirmEnrollment);
+router.post('/dummy-confirm/:idOrder', authenticatedUser, dummyConfirmEnrollment);
 
 module.exports = router;
 

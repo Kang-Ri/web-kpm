@@ -15,6 +15,7 @@ interface RuangKelasModalProps {
     idSiswa: number;
     idParent1: number;
     namaParent1: string;
+    onSuccess?: () => void;
 }
 
 interface RuangKelasData {
@@ -41,6 +42,7 @@ interface EnrollmentState {
     idParent2: number | null;
     orderData: any | null;
     directlyActive: boolean;
+    statusEnrollment: string | null;
 }
 
 export const RuangKelasModal: FC<RuangKelasModalProps> = ({
@@ -48,7 +50,8 @@ export const RuangKelasModal: FC<RuangKelasModalProps> = ({
     onClose,
     idSiswa,
     idParent1,
-    namaParent1
+    namaParent1,
+    onSuccess
 }) => {
     const [data, setData] = useState<RuangKelasData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -68,6 +71,7 @@ export const RuangKelasModal: FC<RuangKelasModalProps> = ({
         idParent2: null,
         orderData: null,
         directlyActive: false,
+        statusEnrollment: null,
     });
 
     useEffect(() => {
@@ -117,8 +121,19 @@ export const RuangKelasModal: FC<RuangKelasModalProps> = ({
                 idParent2,
                 orderData: null,
                 directlyActive: enrollResult.directlyActive,
+                statusEnrollment: enrollResult.statusEnrollment,
             };
             setEnrollState(newState);
+
+            // Special Case: Resume enrollment if order data exists
+            if (enrollResult.orderData) {
+                console.log('🔄 Resume detected, attaching order data:', enrollResult.orderData);
+                setEnrollState(prev => ({ 
+                    ...prev, 
+                    orderData: enrollResult.orderData,
+                    statusEnrollment: enrollResult.statusEnrollment || prev.statusEnrollment 
+                }));
+            }
 
             // Step 2: Determine next step
             if (enrollResult.directlyActive) {
@@ -141,7 +156,8 @@ export const RuangKelasModal: FC<RuangKelasModalProps> = ({
             }
 
             // No form, but requires payment check (for Seikhlasnya/Bernominal)
-            if (enrollResult.requiresPayment || enrollResult.kategoriHarga === 'Seikhlasnya') {
+            if (!enrollResult.hasForm && (enrollResult.requiresPayment || enrollResult.kategoriHarga === 'Seikhlasnya')) {
+                console.log('💳 Jumping directly to payment step...');
                 setEnrollStep('payment');
                 return;
             }
@@ -179,6 +195,7 @@ export const RuangKelasModal: FC<RuangKelasModalProps> = ({
 
     // After form is submitted
     const handleFormSubmitted = (orderResult: any) => {
+        console.log('📝 Form Submitted, Order Result:', orderResult);
         setEnrollState(prev => ({ ...prev, orderData: orderResult }));
 
         if (!orderResult.needsPayment) {
@@ -186,6 +203,7 @@ export const RuangKelasModal: FC<RuangKelasModalProps> = ({
             toast.success('Pendaftaran berhasil dan sudah aktif!');
             setEnrollStep('done');
             fetchRuangKelas();
+            onSuccess?.(); // Trigger dashboard refresh
             setTimeout(onClose, 2000);
         } else {
             // Needs payment
@@ -197,6 +215,7 @@ export const RuangKelasModal: FC<RuangKelasModalProps> = ({
     const handlePaymentSuccess = () => {
         setEnrollStep('done');
         fetchRuangKelas();
+        onSuccess?.(); // Trigger dashboard refresh
         toast.success('Pendaftaran aktif! Selamat bergabung!');
         setTimeout(onClose, 2000);
     };
@@ -305,6 +324,7 @@ export const RuangKelasModal: FC<RuangKelasModalProps> = ({
                         namaKelas: enrollState.namaKelas,
                         kategoriHarga: enrollState.kategoriHarga as any,
                         hargaDaftarUlang: enrollState.hargaDaftarUlang,
+                        statusEnrollment: enrollState.statusEnrollment || 'Pending',
                     }}
                     onPaymentSuccess={handlePaymentSuccess}
                 />

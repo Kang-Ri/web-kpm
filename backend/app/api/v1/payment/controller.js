@@ -135,14 +135,22 @@ const dummyConfirmEnrollment = async (req, res, next) => {
             return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Order sudah dibayar.' });
         }
 
-        // 2. Update Order
-        await order.update({
+// 2. Update Order with nominal if provided (for Seikhlasnya)
+        const { nominal } = req.body;
+        const updateData = {
             statusPembayaran: 'Paid',
             statusOrder: 'Completed',
             paidAt: new Date(),
             paymentMethod: 'Simulasi Dev',
             midtransTransactionId: `DUMMY-${Date.now()}`,
-        });
+        };
+
+        if (nominal !== undefined && nominal !== null) {
+            updateData.hargaFinal = parseFloat(nominal);
+            updateData.hargaTransaksi = parseFloat(nominal);
+        }
+
+        await order.update(updateData);
 
         // 3. Activate SiswaKelas linked to this order
         const [updatedCount] = await SiswaKelas.update(

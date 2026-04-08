@@ -15,6 +15,8 @@ const {
     getParent2ForEnrollment,
     completeProfile,
     enrollToKelas,
+    getMyClasses,
+    getClassroomContent,
 } = require('../../../services/mysql/siswa');
 
 // CREATE Siswa
@@ -304,6 +306,36 @@ const getFormForParent2 = async (req, res, next) => {
     }
 };
 
+// GET MY ACTIVE CLASSES
+const getMyActiveClasses = async (req, res, next) => {
+    try {
+        const { idSiswa } = req.params;
+        const result = await getMyClasses(parseInt(idSiswa));
+
+        res.status(StatusCodes.OK).json({
+            message: 'Berhasil mengambil daftar kelas aktif Anda',
+            data: result,
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// GET CLASSROOM MATERIALS (CONTENT)
+const getClassroomMaterials = async (req, res, next) => {
+    try {
+        const { idSiswa, idParent2 } = req.params;
+        const result = await getClassroomContent(parseInt(idSiswa), parseInt(idParent2));
+
+        res.status(StatusCodes.OK).json({
+            message: 'Berhasil mengambil materi ruang kelas',
+            data: result,
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports = {
     create,
     index,
@@ -321,4 +353,6 @@ module.exports = {
     finishProfile,
     enroll,
     getFormForParent2,
+    getMyActiveClasses,
+    getClassroomMaterials,
 };

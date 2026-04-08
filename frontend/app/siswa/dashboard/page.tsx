@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Home, BookOpen, Trophy, Info, Menu, X, LogOut, Loader2 } from 'lucide-react';
+import { Home, BookOpen, Trophy, Info, Menu, X, LogOut, Loader2, Calendar } from 'lucide-react';
 import { useAuthStore } from '@/lib/store/authStore';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { ProfileCompletionModal } from '@/components/siswa/ProfileCompletionModal';
@@ -39,6 +39,7 @@ export default function SiswaDashboardPage() {
 
     // Enrollment state
     const [dashboardData, setDashboardData] = useState<EnrollmentDashboardData | null>(null);
+    const [myClasses, setMyClasses] = useState<any[]>([]);
     const [showProfileModal, setShowProfileModal] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -47,56 +48,48 @@ export default function SiswaDashboardPage() {
     const [showRuangKelasModal, setShowRuangKelasModal] = useState(false);
     const [selectedParent1, setSelectedParent1] = useState<{ id: number; nama: string } | null>(null);
 
-    // Fetch parent1 sections (NO FILTER - tidak perlu idSiswa)
-    useEffect(() => {
-        console.log('🔍 DASHBOARD: useEffect triggered');
-        console.log('📦 DASHBOARD: Current user object:', user);
+    // Fetch dashboard data (reusable)
+    const fetchDashboardData = useCallback(async () => {
+        if (!user?.idSiswa) return;
 
-        const fetchSections = async () => {
-            try {
-                setIsLoading(true);
-                console.log('🚀 DASHBOARD: Fetching parent1 sections (no filter)...');
+        try {
+            setIsLoading(true);
+            console.log('🚀 DASHBOARD: Fetching sections & status...');
 
-                // 1. Fetch public sections
-                const response = await siswaService.getParent1Sections();
-                console.log('✅ DASHBOARD: Sections received:', response.data);
+            // 1. Fetch public sections
+            const response = await (async () => {
+                // To avoid fetchSections duplication, I'll just use the service directly
+                return await siswaService.getParent1Sections();
+            })();
 
-                // 2. Fetch student status if logged in
-                let needsProfile = false;
-                let siswaData = {
-                    idSiswa: user?.idSiswa || 0,
-                    namaLengkap: user?.namaLengkap || 'User',
-                    jenjangKelas: undefined,
-                    email: user?.email
-                };
+            // 2. Fetch student status
+            const statusResponse = await siswaService.getEnrollmentDashboard(user.idSiswa);
+            const needsProfile = statusResponse.data.data.needsProfileCompletion;
+            const siswaData = statusResponse.data.data.siswa || {
+                idSiswa: user.idSiswa,
+                namaLengkap: user.namaLengkap || 'User',
+                email: user.email
+            };
 
-                if (user?.idSiswa) {
-                    try {
-                        const statusResponse = await siswaService.getEnrollmentDashboard(user.idSiswa);
-                        // FIXED: Access nested data property
-                        needsProfile = statusResponse.data.data.needsProfileCompletion;
-                        if (statusResponse.data.data.siswa) {
-                            siswaData = statusResponse.data.data.siswa;
-                        }
-                    } catch (statusError) {
-                        console.error('⚠️ Could not fetch siswa status:', statusError);
-                    }
-                }
+            // 3. Fetch My Enrolled Classes
+            const myClassesResp = await siswaService.getMyClasses(user.idSiswa);
+            setMyClasses(myClassesResp.data.data);
 
-                setDashboardData({
-                    siswa: siswaData,
-                    needsProfileCompletion: needsProfile,
-                    sections: response.data.data
-                });
-            } catch (error: any) {
-                console.error('❌ DASHBOARD: Error fetching sections:', error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchSections();
+            setDashboardData({
+                siswa: siswaData,
+                needsProfileCompletion: needsProfile,
+                sections: response.data.data
+            });
+        } catch (error: any) {
+            console.error('❌ DASHBOARD: Error fetching sections:', error);
+        } finally {
+            setIsLoading(false);
+        }
     }, [user]);
+
+    useEffect(() => {
+        fetchDashboardData();
+    }, [fetchDashboardData]);
 
     const handleProfileComplete = async (data: any) => {
         if (!user?.idSiswa) return;
@@ -162,6 +155,7 @@ export default function SiswaDashboardPage() {
                         idSiswa={user.idSiswa}
                         idParent1={selectedParent1.id}
                         namaParent1={selectedParent1.nama}
+                        onSuccess={fetchDashboardData}
                     />
                 )}
 
@@ -319,6 +313,58 @@ export default function SiswaDashboardPage() {
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* My Active Classes (QUICK ACCESS) */}
+                                {myClasses.length > 0 && (
+                                    <div className="mb-8">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h3 className="text-xl font-extrabold text-gray-900 flex items-center gap-2">
+                                                <Trophy className="w-6 h-6 text-yellow-500" />
+                                                Kelas Saya
+                                            </h3>
+                                            <span className="text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
+                                                {myClasses.length} Kelas Aktif
+                                            </span>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                            {myClasses.map((item) => {
+                                                const kelas = item.parentProduct2;
+                                                return (
+                                                    <button
+                                                        key={kelas.idParent2}
+                                                        onClick={() => router.push(`/siswa/kelas/${kelas.idParent2}`)}
+                                                        className="group bg-white rounded-2xl shadow-sm border border-gray-200 p-6 text-left hover:shadow-xl hover:border-blue-500/50 transition-all duration-300 flex flex-col h-full relative overflow-hidden"
+                                                    >
+                                                        {/* Decorative Background */}
+                                                        <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-blue-50 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500"></div>
+                                                        
+                                                        <div className="relative">
+                                                            <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white mb-4 group-hover:scale-110 transition-transform">
+                                                                <BookOpen className="w-6 h-6" />
+                                                            </div>
+                                                            <h4 className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors mb-2 text-lg leading-tight">
+                                                                {kelas.namaParent2}
+                                                            </h4>
+                                                            <p className="text-sm text-gray-500 mb-4 line-clamp-2 leading-relaxed">
+                                                                {kelas.descParent2 || 'Akses materi belajar dan informasi kelas Anda di sini.'}
+                                                            </p>
+                                                            
+                                                            <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between">
+                                                                <div className="flex items-center gap-2 text-xs text-gray-500">
+                                                                    <Calendar className="w-3.5 h-3.5" />
+                                                                    {kelas.tahunAjaran || '2023/2024'}
+                                                                </div>
+                                                                <span className="text-sm font-bold text-blue-600 group-hover:translate-x-1 transition-transform flex items-center gap-1">
+                                                                    Masuk <span className="text-lg">→</span>
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Enrollment Sections */}
                                 {dashboardData && (

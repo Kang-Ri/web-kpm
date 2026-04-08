@@ -28,10 +28,10 @@ const authenticatedUser = async (req, res, next) => {
 
         next();
     } catch (error) {
-        // Jika verifikasi gagal (token expired, signature salah), throw UnauthenticatedError
-        throw new UnauthenticatedError(
+        // Use next(error) instead of throw for async middleware in Express 4
+        return next(new UnauthenticatedError(
             "Autentikasi gagal. Token tidak valid atau kedaluwarsa."
-        );
+        ));
     }
 };
 

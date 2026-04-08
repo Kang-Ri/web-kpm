@@ -86,7 +86,7 @@ app.use(`${v1}/cms`, productRouter);
 app.use(`${v1}/cms`, orderRouter);
 
 // Payment Router (Simulator + Real Midtrans)
-app.use(`${v1}`, paymentRouter);
+app.use(`${v1}/cms/payment`, paymentRouter);
 
 // Test Router (Development only - remove in production)
 app.use(`${v1}/test`, testRouter);

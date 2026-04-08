@@ -113,7 +113,7 @@ export const siswaService = {
     // === ENROLLMENT METHODS ===
 
     getEnrollmentDashboard: async (idSiswa: number) => {
-        return apiClient.get(`/cms/siswa/${idSiswa}/enrollment-dashboard`);
+        return apiClient.get(`/cms/siswa/${idSiswa}/enrollment-dashboard?_t=${Date.now()}`);
     },
 
     getParent2List: async (idSiswa: number, idParent1: number) => {
@@ -140,7 +140,17 @@ export const siswaService = {
     },
 
     // Dummy payment confirmation (Dev Mode)
-    dummyConfirmPayment: async (idOrder: number) => {
-        return apiClient.post(`/cms/payment/dummy-confirm/${idOrder}`);
+    dummyConfirmPayment: async (idOrder: number, nominal?: number | string) => {
+        return apiClient.post(`/cms/payment/dummy-confirm/${idOrder}`, { nominal });
+    },
+
+    // Get student's enrolled (active) classes
+    getMyClasses: async (idSiswa: number) => {
+        return apiClient.get(`/cms/siswa/${idSiswa}/my-classes`);
+    },
+
+    // Get classroom content (materials)
+    getClassroomContent: async (idSiswa: number, idParent2: number) => {
+        return apiClient.get(`/cms/siswa/${idSiswa}/kelas/${idParent2}/content`);
     },
 };

@@ -28,5 +28,10 @@
     "namaLengkap": "Baiqun Ananta Jaya",
     "email": "baiqunj@gmail.com",
     "password": "baikBaikSaja"
+  },
+  {
+    "namaLengkap": "Taufiq An Nahwa",
+    "email": "annahwatau@gmail.com",
+    "password": "baikBaikSaja"
   }
 ]

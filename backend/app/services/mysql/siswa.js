@@ -1,5 +1,6 @@
 const Siswa = require('../../api/v1/siswa/model');
 const Users = require('../../api/v1/users/model');
+const Order = require('../../api/v1/order/model');
 const { NotFoundError, BadRequestError } = require('../../errors');
 const bcrypt = require('bcryptjs');
 const { Op } = require('sequelize');
@@ -548,6 +549,7 @@ const getParent2ForEnrollment = async (idSiswa, idParent1) => {
     const ParentProduct1 = require('../../api/v1/parentProduct1/model');
     const ParentProduct2 = require('../../api/v1/parentProduct2/model');
     const SiswaKelas = require('../../api/v1/siswaKelas/model');
+    // Order model now imported globally at the top
 
     // 1. Get siswa to check jenjangKelas
     const siswa = await Siswa.findByPk(idSiswa);
@@ -590,7 +592,12 @@ const getParent2ForEnrollment = async (idSiswa, idParent1) => {
                     idSiswa,
                     idParent2: p2.idParent2,
                     statusEnrollment: ['Aktif', 'Pending']
-                }
+                },
+                include: [{
+                    model: Order,
+                    as: 'orderDaftarUlang',
+                    attributes: ['statusPembayaran', 'statusOrder']
+                }]
             });
 
             const isUnlimited = p2.kapasitasMaksimal === null || p2.kapasitasMaksimal === undefined;
@@ -609,6 +616,8 @@ const getParent2ForEnrollment = async (idSiswa, idParent1) => {
                 isFull,
                 isEnrolled: !!isEnrolledCheck,
                 userStatus: isEnrolledCheck ? isEnrolledCheck.statusEnrollment : null,
+                statusPembayaran: isEnrolledCheck?.orderDaftarUlang?.statusPembayaran || null,
+                statusOrder: isEnrolledCheck?.orderDaftarUlang?.statusOrder || null,
                 kategoriHargaDaftarUlang: p2.kategoriHargaDaftarUlang,
                 hargaDaftarUlang: p2.hargaDaftarUlang
             };
@@ -663,6 +672,7 @@ const completeProfile = async (idSiswa, data) => {
 const enrollToKelas = async (idSiswa, idParent2) => {
     const ParentProduct2 = require('../../api/v1/parentProduct2/model');
     const SiswaKelas = require('../../api/v1/siswaKelas/model');
+    // Order model now imported globally at the top
 
     // 1. Validate siswa exists
     const siswa = await Siswa.findByPk(idSiswa);
@@ -678,10 +688,12 @@ const enrollToKelas = async (idSiswa, idParent2) => {
 
     // 3. Check if already enrolled
     const existingEnrollment = await SiswaKelas.findOne({
-        where: {
-            idSiswa,
-            idParent2,
-        }
+        where: { idSiswa, idParent2 },
+        include: [{
+            model: Order,
+            as: 'orderDaftarUlang',
+            attributes: ['statusPembayaran', 'statusOrder']
+        }]
     });
 
     if (existingEnrollment) {
@@ -716,7 +728,8 @@ const enrollToKelas = async (idSiswa, idParent2) => {
     const needsProfileCompletion = profileFields.some(field => !siswa[field]);
 
     // 6. Check if form exists for this ruang kelas
-    const hasForm = !!(parent2.idFormDaftarUlang);
+    // If we have an existing enrollment with an order, we skip the form
+    const hasForm = !!(parent2.idFormDaftarUlang) && !(existingEnrollment && existingEnrollment.idOrderDaftarUlang);
     const idForm = parent2.idFormDaftarUlang || null;
     const kategoriHarga = parent2.kategoriHargaDaftarUlang;
     const hargaDaftarUlang = parseFloat(parent2.hargaDaftarUlang) || 0;
@@ -765,18 +778,91 @@ const enrollToKelas = async (idSiswa, idParent2) => {
         // Payment
         kategoriHarga,
         hargaDaftarUlang,
-        requiresPayment: kategoriHarga === 'Bernominal' && hargaDaftarUlang > 0,
+        requiresPayment: (kategoriHarga === 'Bernominal' && hargaDaftarUlang > 0) || kategoriHarga === 'Seikhlasnya',
         // Ruang kelas info
         ruangKelas: {
             idParent2: parent2.idParent2,
             namaParent2: parent2.namaParent2,
+            kategoriHargaDaftarUlang: kategoriHarga,
+            hargaDaftarUlang
         },
+        // Existing order data if any
+        orderData: existingEnrollment?.orderDaftarUlang ? {
+            idOrder: existingEnrollment.idOrderDaftarUlang,
+            statusPembayaran: existingEnrollment.orderDaftarUlang.statusPembayaran,
+            statusOrder: existingEnrollment.orderDaftarUlang.statusOrder,
+            needsPayment: true // If we reach here and it's Seikhlasnya/Unpaid
+        } : null,
         // Result
         directlyActive: enrollment.statusEnrollment === 'Aktif',
         message: enrollment.statusEnrollment === 'Aktif'
             ? 'Pendaftaran berhasil! Anda sudah terdaftar di kelas ini.'
             : 'Pendaftaran berhasil. Silakan lengkapi form daftar ulang.',
     };
+};
+
+// --- 14. GET MY ACTIVE CLASSES ---
+const getMyClasses = async (idSiswa) => {
+    const SiswaKelas = require('../../api/v1/siswaKelas/model');
+    const ParentProduct2 = require('../../api/v1/parentProduct2/model');
+
+    const enrollments = await SiswaKelas.findAll({
+        where: {
+            idSiswa,
+            statusEnrollment: 'Aktif'
+        },
+        include: [{
+            model: ParentProduct2,
+            as: 'parentProduct2',
+            attributes: ['idParent2', 'namaParent2', 'descParent2', 'tahunAjaran']
+        }],
+        order: [['createdAt', 'DESC']]
+    });
+
+    return enrollments;
+};
+
+// --- 15. GET CLASSROOM CONTENT (FOR STUDENT) ---
+const getClassroomContent = async (idSiswa, idParent2) => {
+    const SiswaKelas = require('../../api/v1/siswaKelas/model');
+    const ParentProduct2 = require('../../api/v1/parentProduct2/model');
+    const Product = require('../../api/v1/product/model');
+    const MateriButton = require('../../api/v1/materiButton/model');
+
+    // 1. Verify access (student must be active in this class)
+    const checkAccess = await SiswaKelas.findOne({
+        where: { idSiswa, idParent2, statusEnrollment: 'Aktif' }
+    });
+
+    if (!checkAccess) {
+        throw new BadRequestError('Anda tidak memiliki akses ke ruang kelas ini atau pendaftaran belum aktif.');
+    }
+
+    // 2. Fetch classroom info + materials
+    const classroom = await ParentProduct2.findByPk(idParent2, {
+        attributes: ['idParent2', 'namaParent2', 'descParent2', 'tahunAjaran'],
+        include: [{
+            model: Product,
+            as: 'products',
+            where: {
+                statusProduk: 'Publish',
+                jenisProduk: 'Materi'
+            },
+            required: false,
+            attributes: ['idProduk', 'namaProduk', 'descProduk', 'tanggalPublish'],
+            include: [{
+                model: MateriButton,
+                as: 'buttons',
+                attributes: ['idButton', 'judulButton', 'namaButton', 'linkTujuan', 'orderIndex']
+            }]
+        }],
+        order: [
+            [{ model: Product, as: 'products' }, 'idProduk', 'ASC'],
+            [{ model: Product, as: 'products' }, { model: MateriButton, as: 'buttons' }, 'orderIndex', 'ASC']
+        ]
+    });
+
+    return classroom;
 };
 
 module.exports = {
@@ -795,4 +881,7 @@ module.exports = {
     getParent2ForEnrollment,
     completeProfile,
     enrollToKelas,
+    // Student Access
+    getMyClasses,
+    getClassroomContent,
 };

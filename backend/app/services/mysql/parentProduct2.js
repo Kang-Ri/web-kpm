@@ -63,7 +63,21 @@ const getOneParentProduct2 = async (req) => {
 
 // --- 3. CREATE PARENT PRODUCT 2 (create) ---
 const createParentProduct2 = async (req) => {
-    const { idParent1, namaParent2, descParent2, tglPublish, status, tautanProduk } = req.body;
+    const {
+        idParent1,
+        namaParent2,
+        descParent2,
+        tglPublish,
+        status,
+        tautanProduk,
+        tahunAjaran,
+        kapasitasMaksimal,
+        jenjangKelasIzin,
+        daftarUlangAktif,
+        kategoriHargaDaftarUlang,
+        hargaDaftarUlang,
+        idFormDaftarUlang
+    } = req.body;
 
     // 1. Cek keberadaan ParentProduct1
     await checkingParentProduct1(idParent1);
@@ -81,6 +95,13 @@ const createParentProduct2 = async (req) => {
         tglPublish,
         status,
         tautanProduk,
+        tahunAjaran,
+        kapasitasMaksimal,
+        jenjangKelasIzin,
+        daftarUlangAktif,
+        kategoriHargaDaftarUlang,
+        hargaDaftarUlang,
+        idFormDaftarUlang
     });
 
     return result;

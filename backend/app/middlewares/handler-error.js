@@ -1,4 +1,6 @@
 const { StatusCodes } = require('http-status-codes');
+const fs = require('fs');
+const path = require('path');
 
 const errorHandleMiddleware = (err, req, res, next) => {
     let customError = {
@@ -57,7 +59,7 @@ const errorHandleMiddleware = (err, req, res, next) => {
     }
 
     // -------------------------
-    // 6. Default fallback
+    // 7. Default fallback
     // -------------------------
     customError.msg = customError.msg || err.sqlMessage || 'Database error occurred';
 
