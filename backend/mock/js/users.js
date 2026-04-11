@@ -22,7 +22,7 @@
   {
     "namaLengkap": "Budi Santoso",
     "email": "budi@test.com",
-    "password": "budi7890"
+    "password": "r"
   },
   {
     "namaLengkap": "Baiqun Ananta Jaya",

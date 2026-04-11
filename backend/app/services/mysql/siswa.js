@@ -1,11 +1,17 @@
-const Siswa = require('../../api/v1/siswa/model');
-const Users = require('../../api/v1/users/model');
-const Order = require('../../api/v1/order/model');
-const { NotFoundError, BadRequestError } = require('../../errors');
 const bcrypt = require('bcryptjs');
 const { Op } = require('sequelize');
 const sequelize = require('../../db');
 const XLSX = require('xlsx');
+
+// Model Imports
+const Siswa = require('../../api/v1/siswa/model');
+const Users = require('../../api/v1/users/model');
+const Order = require('../../api/v1/order/model');
+const Product = require('../../api/v1/product/model');
+const MateriButton = require('../../api/v1/materiButton/model');
+const SiswaKelas = require('../../api/v1/siswaKelas/model');
+const ParentProduct2 = require('../../api/v1/parentProduct2/model');
+const { NotFoundError, BadRequestError } = require('../../errors');
 
 // Helper untuk validasi User
 const checkingUser = async (idUser) => {
@@ -824,36 +830,31 @@ const getMyClasses = async (idSiswa) => {
 
 // --- 15. GET CLASSROOM CONTENT (FOR STUDENT) ---
 const getClassroomContent = async (idSiswa, idParent2) => {
-    const SiswaKelas = require('../../api/v1/siswaKelas/model');
-    const ParentProduct2 = require('../../api/v1/parentProduct2/model');
-    const Product = require('../../api/v1/product/model');
-    const MateriButton = require('../../api/v1/materiButton/model');
-
     // 1. Verify access (student must be active in this class)
-    const checkAccess = await SiswaKelas.findOne({
+    const access = await SiswaKelas.findOne({
         where: { idSiswa, idParent2, statusEnrollment: 'Aktif' }
     });
 
-    if (!checkAccess) {
-        throw new BadRequestError('Anda tidak memiliki akses ke ruang kelas ini atau pendaftaran belum aktif.');
+    if (!access) {
+        throw new NotFoundError('Anda belum terdaftar aktif di ruang kelas ini.');
     }
 
-    // 2. Fetch classroom info + materials
+    // 2. Fetch User ID for Order lookup
+    const student = await Siswa.findByPk(idSiswa, { attributes: ['idUser'] });
+    const idUser = student?.idUser;
+
+    // 3. Fetch Classroom Info with Products
     const classroom = await ParentProduct2.findByPk(idParent2, {
         attributes: ['idParent2', 'namaParent2', 'descParent2', 'tahunAjaran'],
         include: [{
             model: Product,
             as: 'products',
-            where: {
-                statusProduk: 'Publish',
-                jenisProduk: 'Materi'
-            },
+            where: { statusProduk: 'Publish', jenisProduk: 'Materi' },
             required: false,
-            attributes: ['idProduk', 'namaProduk', 'descProduk', 'tanggalPublish'],
             include: [{
                 model: MateriButton,
                 as: 'buttons',
-                attributes: ['idButton', 'judulButton', 'namaButton', 'linkTujuan', 'orderIndex']
+                attributes: ['idButton', 'judulButton', 'namaButton', 'linkTujuan', 'deskripsiButton', 'statusButton', 'tanggalPublish', 'tanggalExpire', 'orderIndex']
             }]
         }],
         order: [
@@ -862,7 +863,181 @@ const getClassroomContent = async (idSiswa, idParent2) => {
         ]
     });
 
-    return classroom;
+    if (!classroom) {
+        throw new NotFoundError('Ruang kelas tidak ditemukan.');
+    }
+
+    // 4. Fetch AksesMateri status for this student & products in this classroom
+    const productIds = classroom.products.map(p => p.idProduk);
+    const AksesMateri = require('../../api/v1/aksesMateri/model');
+    const aksesMateriList = await AksesMateri.findAll({
+        where: {
+            idSiswa,
+            idProduk: productIds
+        }
+    });
+
+    const accessMap = new Map();
+    aksesMateriList.forEach(am => {
+        accessMap.set(am.idProduk, am.statusAkses);
+    });
+
+    // 5. Enhance products with lock status
+    const enhancedProducts = classroom.products.map(product => {
+        const isFree = product.kategoriHarga === 'Gratis' || (parseFloat(product.hargaJual) <= 0 && product.kategoriHarga !== 'Seikhlasnya');
+        const statusAkses = accessMap.get(product.idProduk);
+        
+        let isLocked = true;
+        
+        // Materi HANYA terbuka jika ada record AksesMateri dengan status 'Unlocked'.
+        // Jika Admin me-revoke akses, statusnya menjadi 'Locked' dan isLocked akan menjadi true.
+        if (statusAkses === 'Unlocked') {
+            isLocked = false;
+        }
+        
+        return {
+            ...product.toJSON(),
+            isLocked
+        };
+    });
+
+    return {
+        ...classroom.toJSON(),
+        products: enhancedProducts
+    };
+};
+
+/**
+ * --- 12. CREATE MATERI ORDER (Checkout Materi Satuan) ---
+ */
+const createMateriOrder = async (idSiswa, idProduk) => {
+    // 1. Check Product & Student
+    const product = await Product.findByPk(idProduk);
+    if (!product) throw new NotFoundError('Materi tidak ditemukan.');
+
+    const student = await Siswa.findByPk(idSiswa, { attributes: ['idSiswa', 'idUser', 'namaLengkap', 'email', 'noHp'] });
+    const idUser = student.idUser;
+
+    // 2. Check existing paid order
+    const existingPaid = idUser ? await Order.findOne({
+        where: { idUser, idProduk, statusPembayaran: 'Paid' }
+    }) : null;
+
+    if (existingPaid) {
+        // Check AksesMateri for revocation
+        const AksesMateri = require('../../api/v1/aksesMateri/model');
+        const akses = await AksesMateri.findOne({ where: { idSiswa, idProduk } });
+        
+        if (akses && akses.statusAkses === 'Locked') {
+            const { BadRequestError } = require('../../errors');
+            throw new BadRequestError('Anda sudah pernah membayar materi ini, namun akses Anda telah dicabut oleh Admin.');
+        }
+
+        return {
+            alreadyPaid: true,
+            statusPembayaran: 'Paid',
+            message: 'Anda sudah memiliki akses ke materi ini.'
+        };
+    }
+
+    // 3. Check for existing pending order
+    const existingPending = idUser ? await Order.findOne({
+        where: { idUser, idProduk, statusPembayaran: 'Unpaid' }
+    }) : null;
+
+    if (existingPending) {
+        // Auto-fix: if order has hargaFinal=0 but product has a real price, sync it
+        let hargaFinal = existingPending.hargaFinal;
+        if (parseFloat(hargaFinal) === 0 && parseFloat(product.hargaJual) > 0) {
+            await existingPending.update({
+                hargaProduk: product.hargaJual,
+                hargaTransaksi: product.hargaJual,
+                hargaFinal: product.hargaJual
+            });
+            hargaFinal = product.hargaJual;
+        }
+        return {
+            idOrder: existingPending.idOrder,
+            statusPembayaran: existingPending.statusPembayaran,
+            needsPayment: true,
+            kategoriHarga: product.kategoriHarga,
+            hargaFinal: hargaFinal,
+            orderData: {
+                idOrder: existingPending.idOrder,
+                statusPembayaran: existingPending.statusPembayaran,
+                needsPayment: true
+            }
+        };
+    }
+
+    // 4. Handle auto-activation for Gratis
+    const isGratis = product.kategoriHarga === 'Gratis' || (parseFloat(product.hargaJual) <= 0 && product.kategoriHarga !== 'Seikhlasnya');
+    
+    if (isGratis) {
+        // Create auto-paid order for Gratis
+        const order = await Order.create({
+            idUser,
+            idProduk,
+            namaProduk: product.namaProduk,
+            hargaProduk: 0,
+            namaPembeli: student.namaLengkap,
+            emailPembeli: student.email,
+            noHpPembeli: student.noHp || '-',
+            jumlahBeli: 1,
+            hargaTransaksi: 0,
+            hargaFinal: 0,
+            statusOrder: 'Completed',
+            statusPembayaran: 'Paid',
+            paidAt: new Date()
+        });
+
+        // Grant access immediately
+        const AksesMateriService = require('./aksesMateri');
+        await AksesMateriService.grantAccess({
+            body: {
+                idSiswa: parseInt(idSiswa),
+                idProduk: parseInt(idProduk),
+                idOrder: order.idOrder
+            }
+        });
+
+        return {
+            directlyActive: true,
+            idOrder: order.idOrder,
+            statusPembayaran: 'Paid',
+            message: 'Materi berhasil diaktifkan!'
+        };
+    }
+
+    // 5. Create new pending order for Paid/Seikhlasnya
+    const hargaJual = parseFloat(product.hargaJual) || 0;
+    const order = await Order.create({
+        idUser,
+        idProduk,
+        namaProduk: product.namaProduk,
+        hargaProduk: hargaJual,
+        namaPembeli: student.namaLengkap,
+        emailPembeli: student.email,
+        noHpPembeli: student.noHp || '-',
+        jumlahBeli: 1,
+        hargaTransaksi: hargaJual,
+        hargaFinal: hargaJual,
+        statusOrder: 'Pending',
+        statusPembayaran: 'Unpaid'
+    });
+
+    return {
+        idOrder: order.idOrder,
+        statusPembayaran: 'Unpaid',
+        needsPayment: true,
+        kategoriHarga: product.kategoriHarga,
+        hargaFinal: order.hargaFinal,
+        orderData: {
+            idOrder: order.idOrder,
+            statusPembayaran: 'Unpaid',
+            needsPayment: true
+        }
+    };
 };
 
 module.exports = {
@@ -884,4 +1059,5 @@ module.exports = {
     // Student Access
     getMyClasses,
     getClassroomContent,
+    createMateriOrder,
 };

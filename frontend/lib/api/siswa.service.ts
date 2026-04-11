@@ -105,7 +105,6 @@ export const siswaService = {
         return response.data;
     },
 
-
     resetPassword: async (id: number): Promise<{ message: string }> => {
         return apiClient.post(`/cms/siswa/${id}/reset-password`);
     },
@@ -152,5 +151,9 @@ export const siswaService = {
     // Get classroom content (materials)
     getClassroomContent: async (idSiswa: number, idParent2: number) => {
         return apiClient.get(`/cms/siswa/${idSiswa}/kelas/${idParent2}/content`);
+    },
+
+    buyMateri: async (idSiswa: number, idProduk: number) => {
+        return apiClient.post('/cms/siswa/buy-materi', { idSiswa, idProduk });
     },
 };

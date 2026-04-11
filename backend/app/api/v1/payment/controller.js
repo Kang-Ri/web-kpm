@@ -91,14 +91,18 @@ const processPaymentNotification = async (notification) => {
 
         // Auto-unlock access based on product type
         if (order.product?.jenisProduk === 'Materi') {
-            await AksesMateriService.grantAccess({
-                body: {
-                    idSiswa: order.idSiswa,
-                    idProduk: order.idProduk,
-                    idOrder: order.idOrder
-                }
-            });
-            console.log(`🔓 Materi access granted for Siswa #${order.idSiswa}`);
+            const Siswa = require('../siswa/model');
+            const targetSiswa = await Siswa.findOne({ where: { idUser: order.idUser } });
+            if (targetSiswa) {
+                await AksesMateriService.grantAccess({
+                    body: {
+                        idSiswa: targetSiswa.idSiswa,
+                        idProduk: order.idProduk,
+                        idOrder: order.idOrder
+                    }
+                });
+                console.log(`🔓 Materi access granted for Siswa #${targetSiswa.idSiswa}`);
+            }
         }
 
         // Handle Daftar Ulang activation
@@ -126,7 +130,10 @@ const dummyConfirmEnrollment = async (req, res, next) => {
         const SiswaKelas = require('../siswaKelas/model');
 
         // 1. Find order
-        const order = await Order.findByPk(idOrder);
+        const Product = require('../product/model');
+        const order = await Order.findByPk(idOrder, {
+            include: [{ model: Product, as: 'product', attributes: ['jenisProduk'] }]
+        });
         if (!order) {
             return res.status(StatusCodes.NOT_FOUND).json({ message: 'Order tidak ditemukan.' });
         }
@@ -158,11 +165,32 @@ const dummyConfirmEnrollment = async (req, res, next) => {
             { where: { idOrderDaftarUlang: parseInt(idOrder) } }
         );
 
-        console.log(`✅ Dummy payment confirmed for Order #${idOrder}, activated ${updatedCount} SiswaKelas`);
+        // 4. Auto-unlock Materi if applicable
+        if (order.product?.jenisProduk === 'Materi') {
+            const AksesMateriService = require('../../../services/mysql/aksesMateri');
+            const Siswa = require('../siswa/model');
+            try {
+                const targetSiswa = await Siswa.findOne({ where: { idUser: order.idUser } });
+                if (targetSiswa) {
+                    await AksesMateriService.grantAccess({
+                        body: {
+                            idSiswa: targetSiswa.idSiswa, 
+                            idProduk: order.idProduk,
+                            idOrder: order.idOrder
+                        }
+                    });
+                    console.log(`🔓 Dummy Materi access granted for Siswa #${targetSiswa.idSiswa}`);
+                }
+            } catch (err) {
+                console.error('Error auto-granting materi access in dummy payment:', err.message);
+            }
+        }
 
         res.status(StatusCodes.OK).json({
             success: true,
-            message: 'Pembayaran berhasil dikonfirmasi. Anda sekarang terdaftar aktif!',
+            message: order.product?.jenisProduk === 'Materi' 
+                ? 'Pembayaran materi berhasil dikonfirmasi. Materi siap diakses!'
+                : 'Pembayaran berhasil dikonfirmasi. Anda sekarang terdaftar aktif!',
             data: {
                 idOrder: order.idOrder,
                 statusPembayaran: 'Paid',

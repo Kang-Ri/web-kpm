@@ -58,7 +58,8 @@ const find = async (req, res, next) => {
 // GET Siswa by Materi (for display in modal)
 const getSiswaList = async (req, res, next) => {
     try {
-        const { idProduk } = req.params;
+        const idProduk = req.params.idProduk || req.query.idProduk;
+        if (!idProduk) throw new Error('idProduk required');
         const result = await getSiswaByMateri(parseInt(idProduk));
 
         res.status(StatusCodes.OK).json({

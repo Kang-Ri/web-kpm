@@ -76,7 +76,9 @@ const exportSiswaByMateri = async (idProduk) => {
  */
 const getSiswaByMateri = async (idProduk) => {
     const { Sequelize } = require('sequelize');
-    const sequelize = require('../../db/index');
+    const sequelize = require('../../db/sequelizeConfig');
+
+    try {
 
     // Get the materi's parent first
     const materi = await Product.findOne({
@@ -113,7 +115,14 @@ const getSiswaByMateri = async (idProduk) => {
         LEFT JOIN siswa s ON sk.idSiswa = s.idSiswa
         LEFT JOIN parentProduct2 pp2 ON sk.idParent2 = pp2.idParent2
         LEFT JOIN aksesMateri am ON sk.idSiswa = am.idSiswa AND am.idProduk = :idProduk
-        LEFT JOIN \`order\` o ON am.idOrder = o.idOrder
+        LEFT JOIN (
+            SELECT o1.* FROM \`order\` o1
+            INNER JOIN (
+                SELECT idUser, idProduk, MAX(idOrder) as maxId
+                FROM \`order\`
+                GROUP BY idUser, idProduk
+            ) o2 ON o1.idUser = o2.idUser AND o1.idProduk = o2.idProduk AND o1.idOrder = o2.maxId
+        ) o ON s.idUser = o.idUser AND o.idProduk = :idProduk
         WHERE sk.idParent2 = :idParent2
             AND sk.statusEnrollment = 'Aktif'
             AND s.idSiswa IS NOT NULL
@@ -152,6 +161,10 @@ const getSiswaByMateri = async (idProduk) => {
             namaParent2: row.namaParent2
         }
     }));
+    } catch (error) {
+        console.error('🔥 ERROR getSiswaByMateri:', error);
+        throw error;
+    }
 };
 
 module.exports = {

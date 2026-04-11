@@ -21,6 +21,7 @@ const {
     getFormForParent2,
     getMyActiveClasses,
     getClassroomMaterials,
+    buyMateri,
 } = require('./controller');
 
 // Middleware (uncomment when ready)
@@ -165,6 +166,12 @@ router.get(
 router.get(
     '/siswa/:idSiswa/kelas/:idParent2/content',
     getClassroomMaterials
+);
+
+// Buy specific material (product)
+router.post(
+    '/siswa/buy-materi',
+    buyMateri
 );
 
 module.exports = router;

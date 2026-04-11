@@ -131,7 +131,9 @@ export const RuangKelasCard: FC<RuangKelasCardProps> = ({
                     <div className="flex items-center text-sm text-gray-600">
                         <Calendar className="w-4 h-4 mr-3 text-purple-500" />
                         <span className="font-medium mr-1 underline decoration-purple-100 underline-offset-4">Kelas:</span>
-                        <span className="font-semibold text-gray-900">{jenjangKelasIzin}</span>
+                        <span className="font-semibold text-gray-900">
+                            {Array.isArray(jenjangKelasIzin) ? jenjangKelasIzin.join(', ') : jenjangKelasIzin}
+                        </span>
                     </div>
 
                     {/* School Year */}

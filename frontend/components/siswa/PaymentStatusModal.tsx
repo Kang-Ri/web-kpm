@@ -15,6 +15,7 @@ interface OrderData {
 
 interface EnrollmentInfo {
     namaKelas: string;
+    namaMateri: string;
     kategoriHarga: 'Gratis' | 'Seikhlasnya' | 'Bernominal';
     hargaDaftarUlang: number;
     statusEnrollment: string;
@@ -39,7 +40,8 @@ export const PaymentStatusModal: FC<PaymentStatusModalProps> = ({
     const [isPaid, setIsPaid] = useState(false);
     const [nominalSeikhlasnya, setNominalSeikhlasnya] = useState('');
 
-    const { namaKelas, kategoriHarga, hargaDaftarUlang } = enrollmentInfo;
+    const { namaKelas, namaMateri, kategoriHarga, hargaDaftarUlang } = enrollmentInfo;
+    const harga = Number(hargaDaftarUlang) || 0;
 
     const formatRupiah = (amount: number) => {
         return new Intl.NumberFormat('id-ID', {
@@ -74,10 +76,15 @@ export const PaymentStatusModal: FC<PaymentStatusModalProps> = ({
     if (!isOpen) return null;
 
     // Derived states
-    const isPaymentConfirmed = isPaid || orderData?.statusPembayaran === 'Paid' || (orderData && !orderData.needsPayment);
+    const isPaymentConfirmed = isPaid || orderData?.statusPembayaran === 'Paid' || (orderData && orderData.needsPayment === false);
     const isReallyActive = isPaymentConfirmed && enrollmentInfo.statusEnrollment === 'Aktif';
     const isWaitingAdmin = isPaymentConfirmed && enrollmentInfo.statusEnrollment === 'Pending';
     const isSuccessState = isReallyActive || isWaitingAdmin;
+
+    // Secret Rp 5.000 rule for Seikhlasnya
+    const canPay = kategoriHarga === 'Seikhlasnya'
+        ? (parseInt(nominalSeikhlasnya) >= 5000)
+        : true;
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 z-[70] flex items-center justify-center p-4">
@@ -126,7 +133,7 @@ export const PaymentStatusModal: FC<PaymentStatusModalProps> = ({
                                 )}
                             </div>
                             <h2 className="text-xl font-bold text-white">Konfirmasi Pendaftaran</h2>
-                            <p className="text-blue-100 text-sm mt-1">{namaKelas}</p>
+                            <p className="text-blue-100 text-sm mt-1">{namaMateri}</p>
                         </div>
                     )}
                 </div>
@@ -172,7 +179,7 @@ export const PaymentStatusModal: FC<PaymentStatusModalProps> = ({
                                     <div className="flex justify-between items-center border-t border-gray-200 pt-2 mt-2">
                                         <span className="text-gray-700 font-medium">Total</span>
                                         <span className="text-xl font-bold text-orange-600">
-                                            {formatRupiah(hargaDaftarUlang)}
+                                            {formatRupiah(harga)}
                                         </span>
                                     </div>
                                 )}
@@ -182,20 +189,19 @@ export const PaymentStatusModal: FC<PaymentStatusModalProps> = ({
                             {kategoriHarga === 'Seikhlasnya' && (
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Nominal Donasi (opsional)
+                                        Nominal Donasi
                                     </label>
                                     <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-300">
                                         <span className="px-3 py-2 bg-gray-100 text-gray-500 text-sm border-r border-gray-300">Rp</span>
                                         <input
                                             type="number"
                                             min="0"
-                                            placeholder="0 (Seikhlasnya)"
+                                            placeholder="5000"
                                             value={nominalSeikhlasnya}
                                             onChange={e => setNominalSeikhlasnya(e.target.value)}
                                             className="flex-1 px-3 py-2 text-sm outline-none"
                                         />
                                     </div>
-                                    <p className="text-xs text-gray-400 mt-1">Masukkan 0 jika tidak ingin berdonasi</p>
                                 </div>
                             )}
 
@@ -240,7 +246,7 @@ export const PaymentStatusModal: FC<PaymentStatusModalProps> = ({
                             </button>
                             <button
                                 onClick={handleDummyPay}
-                                disabled={isConfirming}
+                                disabled={isConfirming || !canPay}
                                 className="flex-1 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                             >
                                 {isConfirming ? (

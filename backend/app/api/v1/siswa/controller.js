@@ -17,6 +17,7 @@ const {
     enrollToKelas,
     getMyClasses,
     getClassroomContent,
+    createMateriOrder,
 } = require('../../../services/mysql/siswa');
 
 // CREATE Siswa
@@ -336,6 +337,28 @@ const getClassroomMaterials = async (req, res, next) => {
     }
 };
 
+// BUY SPECIFIC MATERIAL (PRODUCT)
+const buyMateri = async (req, res, next) => {
+    try {
+        const { idSiswa, idProduk } = req.body;
+
+        if (!idSiswa || !idProduk) {
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                message: 'idSiswa dan idProduk wajib diisi'
+            });
+        }
+
+        const result = await createMateriOrder(parseInt(idSiswa), parseInt(idProduk));
+
+        res.status(StatusCodes.OK).json({
+            message: result.message || 'Proses pembelian materi berhasil dimulai',
+            data: result,
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports = {
     create,
     index,
@@ -355,4 +378,5 @@ module.exports = {
     getFormForParent2,
     getMyActiveClasses,
     getClassroomMaterials,
+    buyMateri,
 };

@@ -38,6 +38,13 @@ router.get(
     exportSiswa
 );
 
+// Alias for un-refreshed frontend caches sending ?idProduk=3
+router.get(
+    '/akses-materi/siswa',
+    authenticatedUser,
+    getSiswaList
+);
+
 // GET ONE Access
 router.get(
     '/akses-materi/:idAkses',
