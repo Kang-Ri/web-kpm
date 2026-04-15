@@ -6,7 +6,7 @@ import { DashboardLayout } from '@/components/layouts';
 import { Card, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Plus, Edit, Trash2, FileText, Upload, FileUp, DollarSign } from 'lucide-react';
+import { Plus, Edit, Trash2, FileText, Upload, FileUp, DollarSign, Download } from 'lucide-react';
 import { productService, Product, CreateProductDto } from '@/lib/api/product.service';
 import { parentProduct2Service } from '@/lib/api/parentProduct2.service';
 import { parentProduct1Service } from '@/lib/api/parentProduct1.service';
@@ -130,6 +130,46 @@ function MateriContent() {
 
     const handleNavigateBack = () => {
         router.push(`/admin/kelas/${tipe}/${idParent1}/ruang-kelas`);
+    };
+
+    const handleDownloadClicks = async () => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+            const url = `${baseUrl}/cms/materi/clicks/export?idParent2=${idParent2}`;
+
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                }
+            });
+
+            if (response.status === 200) {
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const result = await response.json();
+                    showSuccess(result.message || 'Belum ada data klik untuk ruang kelas ini');
+                    return;
+                }
+
+                const blob = await response.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = `log-klik-materi-${ruangKelasName.replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(downloadUrl);
+                document.body.removeChild(a);
+                showSuccess('Log klik berhasil didownload');
+            } else {
+                const result = await response.json();
+                showError(result.message || 'Gagal download log klik');
+            }
+        } catch (error) {
+            console.error('Download failed:', error);
+            showError('Terjadi kesalahan saat mendownload log klik');
+        }
     };
 
     const handleCreate = () => {
@@ -280,6 +320,9 @@ function MateriContent() {
                 <div className="flex items-center gap-3">
                     <Button variant="secondary" icon={FileUp} onClick={() => setIsBulkImportButtonModalOpen(true)}>
                         Import Button
+                    </Button>
+                    <Button variant="secondary" icon={Download} onClick={handleDownloadClicks}>
+                        Download Log Klik
                     </Button>
                     <Button variant="secondary" icon={Upload} onClick={() => setIsImportModalOpen(true)}>
                         Import Excel

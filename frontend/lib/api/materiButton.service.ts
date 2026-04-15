@@ -69,9 +69,14 @@ export const materiButtonService = {
         return apiClient.patch(`/cms/materi/${idProduk}/buttons/reorder`, { buttonIds });
     },
 
-    // Get analytics for a button (admin)
+    // Get analytics for a button (admin) - Legacy
     getAnalytics: async (idProduk: number, idButton: number): Promise<{ data: any }> => {
         return apiClient.get(`/cms/product/${idProduk}/buttons/${idButton}/analytics`);
+    },
+
+    // Get click logs for a button (admin) - New
+    getButtonClicks: async (idButton: number): Promise<{ data: any }> => {
+        return apiClient.get(`/cms/buttons/${idButton}/clicks`);
     },
 
     // Track button click (student)

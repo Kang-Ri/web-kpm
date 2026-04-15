@@ -41,9 +41,11 @@ export const SiswaListModal: React.FC<SiswaListModalProps> = ({
     const fetchSiswa = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`/api/v1/cms/materi/${idProduk}/siswa`, {
+            const token = localStorage.getItem('accessToken');
+            const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+            const response = await fetch(`${baseUrl}/cms/materi/${idProduk}/siswa`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Authorization': `Bearer ${token}`,
                 }
             });
             const result = await response.json();

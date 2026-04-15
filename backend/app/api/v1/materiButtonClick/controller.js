@@ -5,6 +5,7 @@ const MateriButton = require('../materiButton/model');
 const Siswa = require('../siswa/model');
 const Product = require('../product/model');
 const AksesMateri = require('../aksesMateri/model');
+const { exportClicksByClassroom } = require('../../../services/mysql/materiButtonClickExport');
 
 /**
  * TRACK Button Click
@@ -57,62 +58,45 @@ const trackClick = async (req, res, next) => {
 };
 
 /**
- * GET Button Analytics
- * GET /cms/product/:idProduk/buttons/:idButton/analytics
+ * GET Button Click Logs (for Admin modal)
+ * GET /cms/buttons/:idButton/clicks
  */
-const getAnalytics = async (req, res, next) => {
+const getButtonClicks = async (req, res, next) => {
     try {
         const { idButton } = req.params;
 
-        // Get all clicks for this button
+        const button = await MateriButton.findByPk(idButton);
+        if (!button) throw new NotFoundError('Button tidak ditemukan');
+
         const clicks = await MateriButtonClick.findAll({
             where: { idButton },
             include: [{
                 model: Siswa,
                 as: 'siswa',
-                attributes: ['idSiswa', 'namaLengkap', 'kelas', 'asalSekolah']
+                attributes: ['idSiswa', 'namaLengkap', 'nisn', 'email']
             }],
             order: [['tanggalKlik', 'DESC']]
         });
 
-        // Calculate metrics
         const totalClicks = clicks.length;
         const uniqueUsers = [...new Set(clicks.map(c => c.idSiswa))].length;
 
-        // Group by date
-        const clicksByDate = clicks.reduce((acc, click) => {
-            const date = click.tanggalKlik.toISOString().split('T')[0];
-            acc[date] = (acc[date] || 0) + 1;
-            return acc;
-        }, {});
-
-        // Top clickers
-        const clicksByUser = clicks.reduce((acc, click) => {
-            const userId = click.idSiswa;
-            if (!acc[userId]) {
-                acc[userId] = {
-                    idSiswa: click.siswa.idSiswa,
-                    namaLengkap: click.siswa.namaLengkap,
-                    kelas: click.siswa.kelas,
-                    clickCount: 0
-                };
-            }
-            acc[userId].clickCount++;
-            return acc;
-        }, {});
-
-        const topClickers = Object.values(clicksByUser)
-            .sort((a, b) => b.clickCount - a.clickCount)
-            .slice(0, 10);
-
         res.status(StatusCodes.OK).json({
-            message: 'Analytics retrieved successfully',
+            message: 'Data klik berhasil diambil',
             data: {
+                idButton: button.idButton,
+                namaButton: button.namaButton,
+                judulButton: button.judulButton,
                 totalClicks,
                 uniqueUsers,
-                clicksByDate,
-                topClickers,
-                recentClicks: clicks.slice(0, 20) // Last 20 clicks
+                clicks: clicks.map(c => ({
+                    idClick: c.idClick,
+                    idSiswa: c.idSiswa,
+                    nisn: c.siswa?.nisn || '-',
+                    namaLengkap: c.siswa?.namaLengkap || 'Unknown',
+                    email: c.siswa?.email || '-',
+                    tanggalKlik: c.tanggalKlik,
+                }))
             }
         });
     } catch (err) {
@@ -178,8 +162,45 @@ const getProductAnalytics = async (req, res, next) => {
     }
 };
 
+/**
+ * EXPORT Click Logs to Excel (Admin)
+ * GET /cms/materi/clicks/export?idParent2=5
+ */
+const exportClicks = async (req, res, next) => {
+    try {
+        const { idParent2 } = req.query;
+
+        if (!idParent2) {
+            throw new BadRequestError('idParent2 (ID Ruang Kelas) is required');
+        }
+
+        const buffer = await exportClicksByClassroom(parseInt(idParent2));
+
+        if (!buffer) {
+            return res.status(StatusCodes.OK).json({
+                message: 'Belum ada data klik untuk ruang kelas ini',
+                data: null
+            });
+        }
+
+        res.setHeader(
+            'Content-Type',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        );
+        res.setHeader(
+            'Content-Disposition',
+            `attachment; filename=log-klik-materi-${Date.now()}.xlsx`
+        );
+
+        res.send(buffer);
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports = {
     trackClick,
-    getAnalytics,
-    getProductAnalytics
+    getButtonClicks,
+    getProductAnalytics,
+    exportClicks
 };

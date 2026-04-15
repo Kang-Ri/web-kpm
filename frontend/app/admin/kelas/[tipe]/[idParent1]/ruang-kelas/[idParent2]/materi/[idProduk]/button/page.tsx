@@ -12,6 +12,7 @@ import { productService } from '@/lib/api/product.service';
 import { showSuccess, showError } from '@/lib/utils/toast';
 import { MateriButtonFormModal } from '@/components/kelas/MateriButtonFormModal';
 import { SiswaListModal } from '@/components/kelas/SiswaListModal';
+import { ButtonClickModal } from '@/components/kelas/ButtonClickModal';
 
 function ButtonContent() {
     const params = useParams();
@@ -33,6 +34,10 @@ function ButtonContent() {
 
     // Siswa modal state
     const [isSiswaModalOpen, setIsSiswaModalOpen] = useState(false);
+
+    // Click Tracking modal state
+    const [isClickModalOpen, setIsClickModalOpen] = useState(false);
+    const [activeButtonForClicks, setActiveButtonForClicks] = useState<MateriButton | null>(null);
 
     useEffect(() => {
         setMounted(true);
@@ -133,8 +138,9 @@ function ButtonContent() {
     };
 
     const handleDownloadSiswa = () => {
-        const token = localStorage.getItem('token');
-        const url = `/api/v1/cms/materi/${idProduk}/siswa/export?materiName=${encodeURIComponent(materiName)}`;
+        const token = localStorage.getItem('accessToken');
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+        const url = `${baseUrl}/cms/materi/${idProduk}/siswa/export?materiName=${encodeURIComponent(materiName)}`;
 
         fetch(url, {
             headers: {
@@ -160,6 +166,11 @@ function ButtonContent() {
 
     const handleViewSiswa = () => {
         setIsSiswaModalOpen(true);
+    };
+
+    const handleViewClickLogs = (button: MateriButton) => {
+        setActiveButtonForClicks(button);
+        setIsClickModalOpen(true);
     };
 
     const isScheduled = (button: MateriButton) => {
@@ -346,8 +357,8 @@ function ButtonContent() {
                                                 <div className="flex items-center gap-2">
                                                     <button
                                                         className="p-2 hover:bg-green-50 rounded"
-                                                        title="Lihat Siswa"
-                                                        onClick={handleViewSiswa}
+                                                        title="Lihat Log Akses"
+                                                        onClick={() => handleViewClickLogs(button)}
                                                     >
                                                         <Eye className="h-4 w-4 text-green-600" />
                                                     </button>
@@ -385,12 +396,12 @@ function ButtonContent() {
                 isLoading={isSubmitting}
             />
 
-            {/* Siswa List Modal */}
-            <SiswaListModal
-                isOpen={isSiswaModalOpen}
-                onClose={() => setIsSiswaModalOpen(false)}
-                idProduk={idProduk}
-                materiName={materiName}
+            {/* Button Click Logs Modal */}
+            <ButtonClickModal
+                isOpen={isClickModalOpen}
+                onClose={() => setIsClickModalOpen(false)}
+                idButton={activeButtonForClicks?.idButton || null}
+                buttonName={activeButtonForClicks?.namaButton || ''}
             />
         </div>
     );

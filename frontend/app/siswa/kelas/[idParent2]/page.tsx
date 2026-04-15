@@ -25,6 +25,7 @@ import { siswaService } from '@/lib/api/siswa.service';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { PaymentStatusModal } from '@/components/siswa/PaymentStatusModal';
 import { useAuthStore } from '@/lib/store/authStore';
+import { materiButtonService } from '@/lib/api/materiButton.service';
 
 export default function ClassroomPage() {
     const params = useParams();
@@ -327,7 +328,11 @@ export default function ClassroomPage() {
                                                                 <button
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
-                                                                        isActive && window.open(btn.linkTujuan, '_blank');
+                                                                        if (isActive) {
+                                                                            // Track the click in background
+                                                                            materiButtonService.trackClick(product.idProduk, btn.idButton).catch(console.error);
+                                                                            window.open(btn.linkTujuan, '_blank');
+                                                                        }
                                                                     }}
                                                                     disabled={!isActive}
                                                                     className={`
