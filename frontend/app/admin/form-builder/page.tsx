@@ -9,24 +9,86 @@ import { Button } from '@/components/ui/Button';
 
 export default function FormBuilderPage() {
     const router = useRouter();
-    const [forms, setForms] = useState<Form[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [templateForms, setTemplateForms] = useState<Form[]>([]);
+    const [productForms, setProductForms] = useState<Form[]>([]);
+    
+    // Loading states
+    const [loadingTemplates, setLoadingTemplates] = useState(true);
+    const [loadingProducts, setLoadingProducts] = useState(true);
+
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('');
 
-    useEffect(() => {
-        fetchForms();
-    }, []);
+    // Pagination for product forms
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(10);
+    const [totalItems, setTotalItems] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
 
-    const fetchForms = async () => {
+    // Debounce search term
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearchTerm(searchTerm);
+            setPage(1); // Reset page on search
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
+    // Fetch templates whenever search/status change
+    useEffect(() => {
+        fetchTemplateForms();
+    }, [debouncedSearchTerm, statusFilter]);
+
+    // Fetch products whenever search/status/page/limit change
+    useEffect(() => {
+        fetchProductForms();
+    }, [debouncedSearchTerm, statusFilter, page, limit]);
+
+    const fetchTemplateForms = async () => {
         try {
-            setLoading(true);
-            const response = await formService.getAll();
-            setForms(response.data.data || []);
+            setLoadingTemplates(true);
+            const params: any = { formType: 'template' };
+            if (debouncedSearchTerm) params.keyword = debouncedSearchTerm;
+            if (statusFilter) params.statusForm = statusFilter;
+
+            const response = await formService.getAll(params);
+            const data = response.data as any;
+            setTemplateForms(data.data || []);
         } catch (error: any) {
-            showError(error.message || 'Gagal memuat data form');
+            showError(error.message || 'Gagal memuat template form');
         } finally {
-            setLoading(false);
+            setLoadingTemplates(false);
+        }
+    };
+
+    const fetchProductForms = async () => {
+        try {
+            setLoadingProducts(true);
+            const params: any = { 
+                formType: 'product,daftar_ulang',
+                page,
+                limit
+            };
+            if (debouncedSearchTerm) params.keyword = debouncedSearchTerm;
+            if (statusFilter) params.statusForm = statusFilter;
+
+            const response = await formService.getAll(params);
+            const result = response.data as any;
+            
+            if (result.totalItems !== undefined) {
+                setProductForms(result.data || []);
+                setTotalItems(result.totalItems);
+                setTotalPages(result.totalPages);
+            } else {
+                setProductForms(result.data || []);
+                setTotalItems(result.data?.length || 0);
+                setTotalPages(1);
+            }
+        } catch (error: any) {
+            showError(error.message || 'Gagal memuat product form');
+        } finally {
+            setLoadingProducts(false);
         }
     };
 
@@ -36,21 +98,12 @@ export default function FormBuilderPage() {
         try {
             await formService.delete(idForm);
             showSuccess('Form berhasil dihapus');
-            fetchForms();
+            fetchTemplateForms();
+            fetchProductForms();
         } catch (error: any) {
             showError(error.message || 'Gagal menghapus form');
         }
     };
-
-    const filteredForms = forms.filter(form => {
-        const matchesSearch = form.namaForm.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = !statusFilter || form.statusForm === statusFilter;
-        return matchesSearch && matchesStatus;
-    });
-
-    // Split forms by type
-    const templateForms = filteredForms.filter(form => form.formType === 'template');
-    const productForms = filteredForms.filter(form => form.formType === 'product' || form.formType === 'daftar_ulang');
 
     const getStatusBadge = (status: string) => {
         const styles = {
@@ -81,7 +134,7 @@ export default function FormBuilderPage() {
                             <td className="py-4 px-6 text-gray-600 text-sm max-w-md truncate">
                                 {form.descForm || '-'}
                             </td>
-                            <td className="py-4 px-6 text-gray-600">{form.fields?.length || 0}</td>
+                            <td className="py-4 px-6 text-gray-600">{form.formfield?.length || 0}</td>
                             <td className="py-4 px-6 text-gray-600">
                                 {type === 'template' ? 'Belum digunakan' :
                                     form.formType === 'daftar_ulang' ? 'Daftar Ulang' : 'Produk'}
@@ -173,7 +226,7 @@ export default function FormBuilderPage() {
                     <p className="text-sm text-gray-600 mt-1">Template form yang bisa diduplikasi untuk produk</p>
                 </div>
 
-                {loading ? (
+                {loadingTemplates ? (
                     <div className="p-12 text-center text-gray-500">Loading...</div>
                 ) : templateForms.length === 0 ? (
                     <div className="p-12 text-center text-gray-500">Belum ada form template</div>
@@ -191,32 +244,67 @@ export default function FormBuilderPage() {
 
             {/* Product Forms Section */}
             <div className="bg-white rounded-lg border border-gray-200">
-                <div className="border-b border-gray-200 bg-blue-50 px-6 py-4">
-                    <h2 className="text-lg font-semibold text-gray-900">Product Forms</h2>
-                    <p className="text-sm text-gray-600 mt-1">Form yang terhubung dengan produk/materi</p>
+                <div className="border-b border-gray-200 bg-blue-50 px-6 py-4 flex items-center justify-between">
+                    <div>
+                        <h2 className="text-lg font-semibold text-gray-900">Product Forms</h2>
+                        <p className="text-sm text-gray-600 mt-1">Form yang terhubung dengan produk/materi</p>
+                    </div>
+                    {/* Items per page selector */}
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">Tampilkan:</span>
+                        <select
+                            value={limit}
+                            onChange={(e) => {
+                                setLimit(Number(e.target.value));
+                                setPage(1);
+                            }}
+                            className="text-sm border border-gray-300 rounded-md py-1.5 px-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                            <option value={10}>10 Baris</option>
+                            <option value={50}>50 Baris</option>
+                            <option value={100}>100 Baris</option>
+                            <option value={200}>200 Baris</option>
+                        </select>
+                    </div>
                 </div>
 
-                {loading ? (
+                {loadingProducts ? (
                     <div className="p-12 text-center text-gray-500">Loading...</div>
                 ) : productForms.length === 0 ? (
                     <div className="p-12 text-center text-gray-500">Belum ada form produk</div>
                 ) : (
-                    renderTable(productForms, 'product')
-                )}
-
-                {/* Stats */}
-                <div className="border-t border-gray-200 bg-gray-50 px-6 py-3 flex items-center justify-between">
-                    <div className="text-sm text-gray-600">
-                        Total Forms: <span className="font-semibold text-gray-900">{productForms.length}</span>
-                    </div>
-                    <div className="flex gap-2">
-                        <div className="text-xs text-gray-500">
-                            Draft: <span className="font-medium">{productForms.filter(f => f.statusForm === 'Draft').length}</span>
+                    <>
+                        {renderTable(productForms, 'product')}
+                        
+                        {/* Pagination Controls */}
+                        <div className="border-t border-gray-200 bg-gray-50 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div className="text-sm text-gray-600">
+                                Menampilkan <span className="font-semibold text-gray-900">{(page - 1) * limit + 1}</span> sampai <span className="font-semibold text-gray-900">{Math.min(page * limit, totalItems)}</span> dari <span className="font-semibold text-gray-900">{totalItems}</span> form
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Button 
+                                    variant="secondary" 
+                                    size="sm" 
+                                    disabled={page <= 1} 
+                                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                                >
+                                    Sebelumnya
+                                </Button>
+                                <div className="text-sm font-medium px-4 py-1.5 bg-white border border-gray-300 rounded-md">
+                                    Halaman {page} / {totalPages}
+                                </div>
+                                <Button 
+                                    variant="secondary" 
+                                    size="sm" 
+                                    disabled={page >= totalPages} 
+                                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                >
+                                    Selanjutnya
+                                </Button>
+                            </div>
                         </div>
-                        <div className="text-xs text-gray-500">· Non-Aktif: <span className="font-medium">{productForms.filter(f => f.statusForm === 'Non-Aktif').length}</span></div>
-                    </div>
-                </div>
-            </div>
+                    </>
+                )}
         </div>
     );
 }

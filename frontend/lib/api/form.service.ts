@@ -18,9 +18,16 @@ export interface Form {
     }[];
 }
 
+export interface PaginatedFormResponse {
+    data: Form[];
+    totalItems: number;
+    totalPages: number;
+    currentPage: number;
+}
+
 export const formService = {
     // Get all forms
-    getAll: async (params?: { formType?: string }): Promise<{ data: { data: Form[] } | Form[] }> => {
+    getAll: async (params?: { formType?: string; page?: number; limit?: number; keyword?: string; statusForm?: string }): Promise<{ data: { data: Form[] } | PaginatedFormResponse }> => {
         return apiClient.get('/cms/forms', { params });
     },
 

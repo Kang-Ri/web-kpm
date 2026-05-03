@@ -48,24 +48,54 @@ const createForm = async (req) => {
 // --- 2. GET ALL FORMS (readAll) ---
 const getAllForms = async (req) => {
     // Support filtering by formType (e.g., 'template', 'product', 'daftar_ulang')
-    const { formType } = req?.query || {};
+    const { formType, page, limit, keyword, statusForm } = req?.query || {};
 
     let whereClause = {};
+
     if (formType) {
-        whereClause.formType = formType;
+        if (formType.includes(',')) {
+            whereClause.formType = { [Op.in]: formType.split(',') };
+        } else {
+            whereClause.formType = formType;
+        }
     }
 
-    // Hanya mengambil data Form. Kita tidak perlu menyebutkan atribut jika ingin mengambil semua:
-    const result = await Form.findAll({
+    if (statusForm) {
+        whereClause.statusForm = statusForm;
+    }
+
+    if (keyword) {
+        whereClause.namaForm = { [Op.like]: `%${keyword}%` };
+    }
+
+    const queryOptions = {
         where: whereClause,
         attributes: ['idForm', 'namaForm', 'descForm', 'statusForm', 'formType', 'tglDibuat', 'formfield'],
-        include: [
-            productInclude
-        ],
+        include: [productInclude],
         order: [['idForm', 'DESC']],
-    });
+        distinct: true // To handle includes correctly with count
+    };
 
-    return result;
+    if (page && limit) {
+        const pageNumber = parseInt(page, 10) || 1;
+        const limitNumber = parseInt(limit, 10) || 10;
+        const offset = (pageNumber - 1) * limitNumber;
+
+        queryOptions.limit = limitNumber;
+        queryOptions.offset = offset;
+
+        const { count, rows } = await Form.findAndCountAll(queryOptions);
+
+        return {
+            data: rows,
+            totalItems: count,
+            totalPages: Math.ceil(count / limitNumber),
+            currentPage: pageNumber,
+        };
+    }
+
+    const result = await Form.findAll(queryOptions);
+    return { data: result };
 };
 
 // --- 3. GET ONE FORM DETAIL (readOne) ---
