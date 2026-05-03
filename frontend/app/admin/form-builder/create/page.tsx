@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Eye, Plus, ChevronUp, ChevronDown } from 'lucide-react';
-import { formService, formFieldService, FormField } from '@/lib/api/form.service';
+import { formService } from '@/lib/api/form.service';
 import { variableTemplateService, VariableTemplate } from '@/lib/api/variableTemplate.service';
 import { showSuccess, showError } from '@/lib/utils/toast';
 import { Button } from '@/components/ui/Button';
@@ -32,7 +32,7 @@ export default function CreateFormPage() {
     const [statusForm, setStatusForm] = useState<'Aktif' | 'Non-Aktif' | 'Draft'>('Draft');
 
     // Fields
-    const [fields, setFields] = useState<Partial<FormField>[]>([]);
+    const [fields, setFields] = useState<any[]>([]);
     const [editingField, setEditingField] = useState<number | null>(null);
 
     // Variable Templates
@@ -60,22 +60,22 @@ export default function CreateFormPage() {
     };
 
     const addField = (tipeField: string) => {
-        const newField: Partial<FormField> & { tempId?: string } = {
-            tempId: `temp_${Date.now()}_${Math.random()}`, // Unique temp ID for React key
-            namaField: `field_${fields.length + 1}`,
-            tipeField: tipeField as any,
-            textDescription: '',
+        const newField = {
+            tempId: `temp_${Date.now()}_${Math.random()}`,
+            urutan: fields.length + 1,
+            namaLabel: `Field ${fields.length + 1}`,
+            deskripsiLabel: '',
+            jenisField: tipeField,
             placeholder: '',
+            status: 'enable',
             required: false,
-            orderIndex: fields.length,
-            // CRITICAL: Always set nilaiPilihan to avoid NOT NULL constraint
-            nilaiPilihan: (tipeField === 'select' || tipeField === 'radio' || tipeField === 'checkbox') ? '[]' : '',
+            pilihan: (tipeField === 'select' || tipeField === 'radio' || tipeField === 'checkbox') ? [] : undefined,
         };
         setFields([...fields, newField]);
         setEditingField(fields.length);
     };
 
-    const updateField = (index: number, updates: Partial<FormField>) => {
+    const updateField = (index: number, updates: any) => {
         const updated = [...fields];
         updated[index] = { ...updated[index], ...updates };
         setFields(updated);
@@ -89,8 +89,8 @@ export default function CreateFormPage() {
         if (index === 0) return; // Already at top
         const newFields = [...fields];
         [newFields[index - 1], newFields[index]] = [newFields[index], newFields[index - 1]];
-        // Update orderIndex
-        newFields.forEach((field, idx) => field.orderIndex = idx);
+        // Update urutan
+        newFields.forEach((field, idx) => field.urutan = idx + 1);
         setFields(newFields);
         setEditingField(index - 1); // Follow the moved field
     };
@@ -99,8 +99,8 @@ export default function CreateFormPage() {
         if (index === fields.length - 1) return; // Already at bottom
         const newFields = [...fields];
         [newFields[index], newFields[index + 1]] = [newFields[index + 1], newFields[index]];
-        // Update orderIndex
-        newFields.forEach((field, idx) => field.orderIndex = idx);
+        // Update urutan
+        newFields.forEach((field, idx) => field.urutan = idx + 1);
         setFields(newFields);
         setEditingField(index + 1); // Follow the moved field
     };
@@ -114,46 +114,25 @@ export default function CreateFormPage() {
         try {
             setSaving(true);
 
-            // 1. Create form
-            console.log('Creating form...', { namaForm, descForm, statusForm });
+            // Format fields for JSON column
+            const formfieldData = fields.map((f, idx) => {
+                const { tempId, ...rest } = f;
+                return {
+                    ...rest,
+                    urutan: idx + 1
+                };
+            });
+
+            // 1. Create form with JSON formfield
+            console.log('Creating form...', { namaForm, descForm, statusForm, formfield: formfieldData });
             const formResponse = await formService.create({
                 namaForm: namaForm.trim(),
                 descForm: descForm.trim() || undefined,
                 statusForm,
-            });
+                formfield: formfieldData
+            } as any);
 
             console.log('Form created:', formResponse);
-            const idForm = (formResponse.data as any).data.idForm; // Note: response has nested data
-
-            // 2. Add fields
-            if (fields.length > 0) {
-                console.log(`Adding ${fields.length} fields...`);
-                for (let i = 0; i < fields.length; i++) {
-                    const originalField = fields[i];
-
-                    // Create new field object with normalizations (don't mutate original)
-                    const fieldToSave = {
-                        ...originalField,
-                        tipeField: originalField.tipeField?.toLowerCase() as any,
-                        nilaiPilihan: originalField.nilaiPilihan
-                            ? originalField.nilaiPilihan
-                                .replace(/[\u201C\u201D]/g, '"')
-                                .replace(/[\u2018\u2019]/g, "'")
-                            : originalField.nilaiPilihan
-                    };
-
-                    console.log(`Adding field ${i + 1}/${fields.length}:`, fieldToSave);
-
-                    try {
-                        await formFieldService.create(idForm, fieldToSave);
-                        console.log(`Field ${i + 1} added successfully`);
-                    } catch (fieldError: any) {
-                        console.error(`Error adding field ${i + 1}:`, fieldError);
-                        showError(`Gagal menambahkan field "${originalField.namaField}": ${fieldError.response?.data?.message || fieldError.message}`);
-                        // Continue with other fields
-                    }
-                }
-            }
 
             showSuccess('Form berhasil dibuat!');
             router.push('/admin/form-builder');
@@ -291,18 +270,18 @@ export default function CreateFormPage() {
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2 flex-wrap">
                                                     <span className="text-sm font-medium text-gray-900">
-                                                        {field.textDescription || field.namaField}
+                                                        {field.namaLabel || `Field ${index + 1}`}
                                                     </span>
                                                     {field.required && (
                                                         <span className="text-red-600 text-xs">*</span>
                                                     )}
                                                     {/* Field Type Badge */}
                                                     <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">
-                                                        {FIELD_TYPES.find(t => t.value === field.tipeField)?.label || field.tipeField}
+                                                        {FIELD_TYPES.find(t => t.value === field.jenisField)?.label || field.jenisField}
                                                     </span>
                                                 </div>
                                                 <div className="text-xs text-gray-500 mt-1">
-                                                    Variable: {field.namaField}
+                                                    Label: {field.deskripsiLabel || '-'}
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-1">
@@ -356,23 +335,23 @@ export default function CreateFormPage() {
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Nama Variabel <span className="text-red-600">*</span>
+                                        Nama Label <span className="text-red-600">*</span>
                                     </label>
                                     <ComboBox
                                         options={templates.map(t => ({
-                                            value: t.namaVariable,
+                                            value: t.label, // Use label as the value to display
                                             label: t.label,
                                             color: t.color,
                                             category: t.category
                                         }))}
-                                        value={fields[editingField].namaField || ''}
-                                        onChange={(value) => updateField(editingField, { namaField: value })}
+                                        value={fields[editingField].namaLabel || ''}
+                                        onChange={(value) => updateField(editingField, { namaLabel: value })}
                                         placeholder="Pilih template atau ketik custom..."
                                         allowCustom={true}
                                     />
                                     <p className="text-xs text-gray-500 mt-1 flex items-center justify-between">
                                         <span>
-                                            {loadingTemplates ? 'Loading templates...' : `${templates.length} templates tersedia • Atau ketik custom variable`}
+                                            {loadingTemplates ? 'Loading templates...' : `${templates.length} templates tersedia • Atau ketik custom label`}
                                         </span>
                                         <button
                                             type="button"
@@ -386,31 +365,19 @@ export default function CreateFormPage() {
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Label <span className="text-red-600">*</span>
+                                        Deskripsi Label
                                     </label>
                                     <input
                                         type="text"
-                                        value={fields[editingField].textDescription || ''}
-                                        onChange={(e) => updateField(editingField, { textDescription: e.target.value })}
-                                        placeholder="Nama Lengkap"
+                                        value={fields[editingField].deskripsiLabel || ''}
+                                        onChange={(e) => updateField(editingField, { deskripsiLabel: e.target.value })}
+                                        placeholder="Masukkan teks bantuan / deskripsi singkat..."
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                                     />
-                                    <p className="text-xs text-gray-500 mt-1">Teks yang ditampilkan di atas input</p>
+                                    <p className="text-xs text-gray-500 mt-1">Teks bantuan yang ditampilkan di bawah label</p>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Deskripsi (opsional)
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={fields[editingField].textWarning || ''}
-                                        onChange={(e) => updateField(editingField, { textWarning: e.target.value })}
-                                        placeholder="Penulisan nama harus lengkap dengan gelar"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                    />
-                                    <p className="text-xs text-gray-500 mt-1 italic">Helper text di bawah label (font lebih kecil, miring)</p>
-                                </div>
+
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -438,21 +405,28 @@ export default function CreateFormPage() {
                                     </label>
                                 </div>
 
-                                {(fields[editingField].tipeField?.toLowerCase() === 'select' ||
-                                    fields[editingField].tipeField?.toLowerCase() === 'radio' ||
-                                    fields[editingField].tipeField?.toLowerCase() === 'checkbox') && (
+                                {(fields[editingField].jenisField === 'select' ||
+                                    fields[editingField].jenisField === 'radio' ||
+                                    fields[editingField].jenisField === 'checkbox') && (
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                                 Pilihan (Options)
                                             </label>
                                             <textarea
-                                                value={fields[editingField].nilaiPilihan || '[]'}
-                                                onChange={(e) => updateField(editingField, { nilaiPilihan: e.target.value })}
-                                                placeholder='["Pilihan 1", "Pilihan 2", "Pilihan 3"]'
-                                                rows={3}
+                                                value={JSON.stringify(fields[editingField].pilihan || [], null, 2)}
+                                                onChange={(e) => {
+                                                    try {
+                                                        updateField(editingField, { pilihan: JSON.parse(e.target.value) });
+                                                    } catch (err) {
+                                                        // Fallback to storing string temporarily if invalid JSON while typing
+                                                        // Or just handle structured input. For now keep simple
+                                                    }
+                                                }}
+                                                placeholder='[{"posisi": "1", "value": "Kelas A", "lainnya": false}]'
+                                                rows={5}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm"
                                             />
-                                            <p className="text-xs text-gray-500 mt-1">Format JSON array. Gunakan tanda kutip lurus (" bukan ") untuk menghindari error.</p>
+                                            <p className="text-xs text-gray-500 mt-1">Format JSON array.</p>
                                         </div>
                                     )}
                             </div>

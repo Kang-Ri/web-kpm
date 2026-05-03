@@ -63,6 +63,11 @@ const Form = sequelize.define('Form', {
         allowNull: true,
         comment: 'FK to form table - reference to original template (for tracking duplication source)'
     },
+    formfield: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        comment: 'JSON array of form fields',
+    },
 }, {
     timestamps: false, // Tidak menggunakan createdAt dan updatedAt
     tableName: 'form',

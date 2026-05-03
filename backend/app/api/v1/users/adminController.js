@@ -10,11 +10,14 @@ const {
 
 const index = async (req, res, next) => {
     try {
-        const result = await getAllUsers();
+        const result = await getAllUsers(req);
 
         res.status(200).json({
-            message: 'Berhasil mendapatkan semua data user',
-            data: result,
+            message: 'Berhasil mendapatkan data user',
+            data: result.data,
+            totalItems: result.total,
+            totalPages: result.pages,
+            currentPage: result.page,
         });
     } catch (err) {
         next(err);

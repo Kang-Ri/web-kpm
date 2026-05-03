@@ -16,7 +16,14 @@ function SiswaListContent() {
     const [siswaList, setSiswaList] = useState<Siswa[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('');
+
+    // Pagination states
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(10);
+    const [totalItems, setTotalItems] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
 
     // Modal states
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -28,6 +35,15 @@ function SiswaListContent() {
     const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
 
+    // Debounce search term
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearchTerm(searchTerm);
+            setPage(1); // Reset page on search
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
     // Ensure client-side only rendering
     useEffect(() => {
         setMounted(true);
@@ -37,18 +53,27 @@ function SiswaListContent() {
         if (mounted) {
             fetchSiswa();
         }
-    }, [statusFilter, mounted]);
+    }, [statusFilter, debouncedSearchTerm, page, limit, mounted]);
 
     const fetchSiswa = async () => {
         try {
             setLoading(true);
-            const params = statusFilter ? { statusAktif: statusFilter } : undefined;
+            const params: any = { page, limit };
+            if (statusFilter) params.statusAktif = statusFilter;
+            if (debouncedSearchTerm) params.search = debouncedSearchTerm;
+
             const response = await siswaService.getAll(params);
-            // setSiswaList(response.data);
-            if (response.data && Array.isArray(response.data)) {
-                setSiswaList(response.data);
-            } else if (response.data?.data && Array.isArray(response.data.data)) {
-                setSiswaList(response.data.data);
+            const result = response.data as any; // Due to PaginatedSiswaResponse
+
+            if (result && Array.isArray(result.data)) {
+                setSiswaList(result.data);
+                setTotalItems(result.totalItems || 0);
+                setTotalPages(result.totalPages || 1);
+            } else if (result?.data && Array.isArray(result.data.data)) {
+                // Handling nested data just in case
+                setSiswaList(result.data.data);
+                setTotalItems(result.data.totalItems || 0);
+                setTotalPages(result.data.totalPages || 1);
             }
 
         } catch (error: any) {
@@ -202,26 +227,12 @@ function SiswaListContent() {
     };
 
     const handleSelectAll = () => {
-        if (selectedIds.length === filteredSiswa.length) {
+        if (selectedIds.length === siswaList.length && siswaList.length > 0) {
             setSelectedIds([]);
         } else {
-            setSelectedIds(filteredSiswa.map(s => s.idSiswa));
+            setSelectedIds(siswaList.map(s => s.idSiswa));
         }
     };
-
-    // Filter by search term
-    const filteredSiswa = useMemo(() => {
-        if (!Array.isArray(siswaList)) return [];
-
-        return siswaList.filter((siswa) => {
-            const search = searchTerm.toLowerCase();
-            return (
-                siswa.namaLengkap?.toLowerCase().includes(search) ||
-                siswa.email?.toLowerCase().includes(search) ||
-                siswa.nisn?.toLowerCase().includes(search)
-            );
-        });
-    }, [siswaList, searchTerm]);
 
     // Prevent hydration mismatch by ensuring client-side only rendering
     if (!mounted) {
@@ -276,8 +287,8 @@ function SiswaListContent() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card>
                     <CardBody>
-                        <p className="text-sm text-gray-600">Total Siswa</p>
-                        <p className="text-3xl font-bold text-gray-900 mt-1">{siswaList.length}</p>
+                        <p className="text-sm text-gray-600">Total Siswa (Keseluruhan)</p>
+                        <p className="text-3xl font-bold text-gray-900 mt-1">{totalItems}</p>
                     </CardBody>
                 </Card>
                 <Card>
@@ -320,95 +331,145 @@ function SiswaListContent() {
                             </div>
                             <select
                                 value={statusFilter}
-                                onChange={(e) => setStatusFilter(e.target.value)}
+                                onChange={(e) => {
+                                    setStatusFilter(e.target.value);
+                                    setPage(1);
+                                }}
                                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             >
                                 <option value="">Semua Status</option>
                                 <option value="Aktif">Aktif</option>
                                 <option value="Non-Aktif">Non-Aktif</option>
                             </select>
+                            <select
+                                value={limit}
+                                onChange={(e) => {
+                                    setLimit(Number(e.target.value));
+                                    setPage(1);
+                                }}
+                                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                                <option value={10}>10 Baris</option>
+                                <option value={50}>50 Baris</option>
+                                <option value={100}>100 Baris</option>
+                                <option value={200}>200 Baris</option>
+                            </select>
                         </div>
 
                         {/* Table */}
                         {loading ? (
                             <div className="text-center py-8 text-gray-500">Loading...</div>
-                        ) : filteredSiswa.length === 0 ? (
+                        ) : siswaList.length === 0 ? (
                             <div className="text-center py-8 text-gray-500">Tidak ada data siswa</div>
                         ) : (
-                            <table className="w-full">
-                                <thead>
-                                    <tr className="border-b border-gray-200">
-                                        <th className="text-left py-3 px-4 font-semibold text-gray-700 w-12">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedIds.length === filteredSiswa.length && filteredSiswa.length > 0}
-                                                onChange={handleSelectAll}
-                                                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                            />
-                                        </th>
-                                        <th className="text-left py-3 px-4 font-semibold text-gray-700">NISN</th>
-                                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Nama Lengkap</th>
-                                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Email</th>
-                                        <th className="text-left py-3 px-4 font-semibold text-gray-700">No HP</th>
-                                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Jenis Kelamin</th>
-                                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
-                                        <th className="text-left py-3 px-4 font-semibold text-gray-700">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {filteredSiswa.map((siswa) => (
-                                        <tr
-                                            key={siswa.idSiswa}
-                                            className={`border-b border-gray-100 hover:bg-gray-50 ${selectedIds.includes(siswa.idSiswa) ? 'bg-blue-50' : ''
-                                                }`}
+                            <>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full">
+                                        <thead>
+                                            <tr className="border-b border-gray-200 bg-gray-50">
+                                                <th className="text-left py-3 px-4 font-semibold text-gray-700 w-12">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedIds.length === siswaList.length && siswaList.length > 0}
+                                                        onChange={handleSelectAll}
+                                                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                    />
+                                                </th>
+                                                <th className="text-left py-3 px-4 font-semibold text-gray-700">No</th>
+                                                <th className="text-left py-3 px-4 font-semibold text-gray-700">NISN</th>
+                                                <th className="text-left py-3 px-4 font-semibold text-gray-700">Nama Lengkap</th>
+                                                <th className="text-left py-3 px-4 font-semibold text-gray-700">Email</th>
+                                                <th className="text-left py-3 px-4 font-semibold text-gray-700">No HP</th>
+                                                <th className="text-left py-3 px-4 font-semibold text-gray-700">Jenis Kelamin</th>
+                                                <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
+                                                <th className="text-left py-3 px-4 font-semibold text-gray-700">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {siswaList.map((siswa, index) => (
+                                                <tr
+                                                    key={siswa.idSiswa}
+                                                    className={`border-b border-gray-100 hover:bg-gray-50 ${selectedIds.includes(siswa.idSiswa) ? 'bg-blue-50' : ''
+                                                        }`}
+                                                >
+                                                    <td className="py-3 px-4">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedIds.includes(siswa.idSiswa)}
+                                                            onChange={() => handleSelectSiswa(siswa.idSiswa)}
+                                                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                        />
+                                                    </td>
+                                                    <td className="py-3 px-4">{index + 1}</td>
+                                                    <td className="py-3 px-4">{siswa.nisn || '-'}</td>
+                                                    <td className="py-3 px-4">{siswa.namaLengkap}</td>
+                                                    <td className="py-3 px-4">{siswa.email || '-'}</td>
+                                                    <td className="py-3 px-4">{siswa.noHp || '-'}</td>
+                                                    <td className="py-3 px-4">{siswa.jenisKelamin || '-'}</td>
+                                                    <td className="py-3 px-4">
+                                                        <Badge variant={siswa.statusAktif === 'Aktif' ? 'success' : 'info'}>
+                                                            {siswa.statusAktif}
+                                                        </Badge>
+                                                    </td>
+                                                    <td className="py-3 px-4">
+                                                        <div className="flex items-center gap-2">
+                                                            <button
+                                                                className="p-2 hover:bg-blue-50 rounded"
+                                                                title="Edit"
+                                                                onClick={() => handleEdit(siswa)}
+                                                            >
+                                                                <Edit className="h-4 w-4 text-blue-600" />
+                                                            </button>
+                                                            <button
+                                                                className="p-2 hover:bg-orange-50 rounded"
+                                                                title="Reset Password"
+                                                                onClick={() => handleResetPassword(siswa.idSiswa, siswa.namaLengkap)}
+                                                            >
+                                                                <RotateCcw className="h-4 w-4 text-orange-600" />
+                                                            </button>
+                                                            <button
+                                                                className="p-2 hover:bg-red-50 rounded"
+                                                                title="Delete"
+                                                                onClick={() => handleDelete(siswa.idSiswa)}
+                                                            >
+                                                                <Trash2 className="h-4 w-4 text-red-600" />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* Pagination Controls */}
+                                <div className="flex items-center justify-between mt-4 py-3 border-t border-gray-100">
+                                    <div className="text-sm text-gray-500">
+                                        Menampilkan <span className="font-medium">{(page - 1) * limit + 1}</span> sampai <span className="font-medium">{Math.min(page * limit, totalItems)}</span> dari <span className="font-medium">{totalItems}</span> siswa
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            variant="secondary"
+                                            size="sm"
+                                            disabled={page === 1}
+                                            onClick={() => setPage(p => Math.max(1, p - 1))}
                                         >
-                                            <td className="py-3 px-4">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedIds.includes(siswa.idSiswa)}
-                                                    onChange={() => handleSelectSiswa(siswa.idSiswa)}
-                                                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                                />
-                                            </td>
-                                            <td className="py-3 px-4">{siswa.nisn || '-'}</td>
-                                            <td className="py-3 px-4">{siswa.namaLengkap}</td>
-                                            <td className="py-3 px-4">{siswa.email || '-'}</td>
-                                            <td className="py-3 px-4">{siswa.noHp || '-'}</td>
-                                            <td className="py-3 px-4">{siswa.jenisKelamin || '-'}</td>
-                                            <td className="py-3 px-4">
-                                                <Badge variant={siswa.statusAktif === 'Aktif' ? 'success' : 'info'}>
-                                                    {siswa.statusAktif}
-                                                </Badge>
-                                            </td>
-                                            <td className="py-3 px-4">
-                                                <div className="flex items-center gap-2">
-                                                    <button
-                                                        className="p-2 hover:bg-blue-50 rounded"
-                                                        title="Edit"
-                                                        onClick={() => handleEdit(siswa)}
-                                                    >
-                                                        <Edit className="h-4 w-4 text-blue-600" />
-                                                    </button>
-                                                    <button
-                                                        className="p-2 hover:bg-orange-50 rounded"
-                                                        title="Reset Password"
-                                                        onClick={() => handleResetPassword(siswa.idSiswa, siswa.namaLengkap)}
-                                                    >
-                                                        <RotateCcw className="h-4 w-4 text-orange-600" />
-                                                    </button>
-                                                    <button
-                                                        className="p-2 hover:bg-red-50 rounded"
-                                                        title="Delete"
-                                                        onClick={() => handleDelete(siswa.idSiswa)}
-                                                    >
-                                                        <Trash2 className="h-4 w-4 text-red-600" />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                            Sebelumnya
+                                        </Button>
+                                        <div className="text-sm font-medium px-4 py-1.5 bg-gray-100 rounded-md">
+                                            Halaman {page} / {totalPages}
+                                        </div>
+                                        <Button
+                                            variant="secondary"
+                                            size="sm"
+                                            disabled={page >= totalPages}
+                                            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                        >
+                                            Selanjutnya
+                                        </Button>
+                                    </div>
+                                </div>
+                            </>
                         )}
                     </div>
                 </CardBody>

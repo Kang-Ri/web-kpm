@@ -4,7 +4,6 @@ const { Op } = require('sequelize');
 // Sesuaikan path import model agar sesuai dengan struktur umum:
 const Form = require('../../api/v1/forms/model');
 const Product = require('../../api/v1/product/model');
-const FormField = require('../../api/v1/formFields/model');
 const SiswaKelas = require('../../api/v1/siswaKelas/model');
 const ParentProduct2 = require('../../api/v1/parentProduct2/model');
 
@@ -40,10 +39,8 @@ const createForm = async (req) => {
         namaForm,
         descForm, // Menggunakan nama atribut model
         statusForm: statusForm || 'Draft', // Default status, menggunakan nama atribut model
-        // tglDibuat dihandle oleh defaultValue: DataTypes.NOW di model, tidak perlu di sini
+        formfield: req.body.formfield || null, // JSON structure
     });
-
-    // PERHATIAN: Di sini, Anda akan menambahkan FormField di masa depan.
 
     return newForm;
 };
@@ -61,18 +58,11 @@ const getAllForms = async (req) => {
     // Hanya mengambil data Form. Kita tidak perlu menyebutkan atribut jika ingin mengambil semua:
     const result = await Form.findAll({
         where: whereClause,
-        // Sesuaikan nama atribut sesuai Model: deskripsi dan status
-        attributes: ['idForm', 'namaForm', 'descForm', 'statusForm', 'formType', 'tglDibuat'],
+        attributes: ['idForm', 'namaForm', 'descForm', 'statusForm', 'formType', 'tglDibuat', 'formfield'],
         include: [
-            productInclude,
-            {
-                model: FormField,
-                as: 'fields',
-                order: [['orderIndex', 'ASC']]
-            }
+            productInclude
         ],
         order: [['idForm', 'DESC']],
-        // Di masa depan, di sini Anda bisa menambahkan 'include: [FormField]'
     });
 
     return result;
@@ -85,14 +75,8 @@ const getFormDetail = async (idForm) => {
     const result = await Form.findOne({
         where: { idForm: idForm },
         include: [
-            productInclude,
-            {
-                model: FormField,
-                as: 'fields',
-                order: [['orderIndex', 'ASC']]
-            }
+            productInclude
         ],
-        // Di masa depan, di sini Anda bisa menambahkan 'include: [FormField]'
     });
 
     if (!result) {
@@ -105,8 +89,7 @@ const getFormDetail = async (idForm) => {
 // --- 4. UPDATE STATUS FORM (update) ---
 // Controller akan meneruskan idForm dan data update (bukan req)
 const updateForm = async (idForm, data) => {
-    // Gunakan nama atribut model yang benar: deskripsi (bukan descForm) dan status (bukan statusForm)
-    const { namaForm, descForm, statusForm } = data;
+    const { namaForm, descForm, statusForm, formfield } = data;
 
     // 1. Cek Keberadaan Form
     const checkForm = await Form.findOne({ where: { idForm: idForm } });
@@ -127,11 +110,11 @@ const updateForm = async (idForm, data) => {
         }
     }
 
-    // 3. Update Form
     await checkForm.update({
-        namaForm,
-        descForm,
-        statusForm
+        namaForm: namaForm !== undefined ? namaForm : checkForm.namaForm,
+        descForm: descForm !== undefined ? descForm : checkForm.descForm,
+        statusForm: statusForm !== undefined ? statusForm : checkForm.statusForm,
+        formfield: formfield !== undefined ? formfield : checkForm.formfield,
     });
 
     // 4. Dapatkan data yang sudah di-update
@@ -165,13 +148,6 @@ const submitForm = async (idForm, idSiswa, responses, idSiswaKelas = null) => {
     // 1. Validasi Form exists & active
     const form = await Form.findOne({
         where: { idForm },
-        include: [
-            {
-                model: FormField,
-                as: 'fields',
-                attributes: ['idField', 'namaField', 'tipeField', 'required', 'nilaiPilihan']
-            }
-        ]
     });
 
     if (!form) {
@@ -183,19 +159,20 @@ const submitForm = async (idForm, idSiswa, responses, idSiswaKelas = null) => {
     }
 
     // 2. Validasi semua required fields terisi
-    const requiredFields = form.fields.filter(f => f.required);
+    const fieldsArray = form.formfield || [];
+    const requiredFields = fieldsArray.filter(f => f.required === true);
     for (const field of requiredFields) {
-        if (!responses[field.namaField] || responses[field.namaField] === '') {
-            throw new BadRequestError(`Field "${field.namaField}" wajib diisi.`);
+        if (!responses[field.namaLabel] || responses[field.namaLabel] === '') {
+            throw new BadRequestError(`Field "${field.namaLabel}" wajib diisi.`);
         }
     }
 
     // 3. Validasi format email
-    for (const field of form.fields) {
-        if (field.tipeField === 'email' && responses[field.namaField]) {
+    for (const field of fieldsArray) {
+        if (field.jenisField === 'email' && responses[field.namaLabel]) {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(responses[field.namaField])) {
-                throw new BadRequestError(`Format email pada field "${field.namaField}" tidak valid.`);
+            if (!emailRegex.test(responses[field.namaLabel])) {
+                throw new BadRequestError(`Format email pada field "${field.namaLabel}" tidak valid.`);
             }
         }
     }
@@ -366,11 +343,9 @@ const submitForm = async (idForm, idSiswa, responses, idSiswaKelas = null) => {
     };
 };
 
-// --- 7. DUPLICATE FORM (duplicateForm) ---
 const duplicateForm = async (idForm, newName = null) => {
     const originalForm = await Form.findOne({
         where: { idForm },
-        include: [{ model: FormField, as: 'fields', attributes: { exclude: ['idField'] } }]
     });
 
     if (!originalForm) throw new NotFoundError(`Form dengan ID ${idForm} tidak ditemukan.`);
@@ -378,28 +353,11 @@ const duplicateForm = async (idForm, newName = null) => {
     const duplicatedForm = await Form.create({
         namaForm: newName || `${originalForm.namaForm} (Copy)`,
         descForm: originalForm.descForm,
-        statusForm: 'Draft'
+        statusForm: 'Draft',
+        formfield: originalForm.formfield,
     });
 
-    if (originalForm.fields && originalForm.fields.length > 0) {
-        const fieldsData = originalForm.fields.map(field => ({
-            idForm: duplicatedForm.idForm,
-            namaField: field.namaField,
-            tipeField: field.tipeField,
-            nilaiPilihan: field.nilaiPilihan,
-            required: field.required,
-            textDescription: field.textDescription,
-            textWarning: field.textWarning,
-            placeholder: field.placeholder,
-            orderIndex: field.orderIndex
-        }));
-        await FormField.bulkCreate(fieldsData);
-    }
-
-    return await Form.findOne({
-        where: { idForm: duplicatedForm.idForm },
-        include: [{ model: FormField, as: 'fields' }]
-    });
+    return duplicatedForm;
 };
 
 // --- 8. DUPLICATE FORM FOR PRODUCT (duplicateFormForProduct) ---
@@ -432,50 +390,15 @@ const duplicateFormForProduct = async (idProduk, idFormTemplate, formType = 'pro
         throw new NotFoundError(`Form template dengan ID ${idFormTemplate} tidak ditemukan.`);
     }
 
-    // 3. Create duplicated form
     const duplicatedForm = await Form.create({
         namaForm: `${templateForm.namaForm} - ${product.namaProduk}`,
         descForm: templateForm.descForm,
         statusForm: templateForm.statusForm,
         formType: formType, // 'product' or 'daftar_ulang'
         idProdukLinked: idProduk, // Link to product
-        idFormTemplate: idFormTemplate // Reference to template
+        idFormTemplate: idFormTemplate, // Reference to template
+        formfield: templateForm.formfield, // Duplicate JSON field
     });
-
-    console.log('📋 Template form loaded:', {
-        idForm: templateForm.idForm,
-        namaForm: templateForm.namaForm,
-        fieldsCount: templateForm.fields ? templateForm.fields.length : 0,
-        fields: templateForm.fields
-    });
-
-    // 4. Duplicate form fields
-    if (templateForm.fields && templateForm.fields.length > 0) {
-        console.log(`📝 Duplicating ${templateForm.fields.length} fields...`);
-
-        const fieldsData = templateForm.fields.map(field => ({
-            idForm: duplicatedForm.idForm,
-            namaField: field.namaField, // REQUIRED
-            labelField: field.labelField,
-            placeholderField: field.placeholderField,
-            typeField: field.typeField,
-            optionsField: field.optionsField,
-            isRequiredField: field.isRequiredField,
-            validationField: field.validationField,
-            defaultValueField: field.defaultValueField,
-            orderField: field.orderField,
-            isActiveField: field.isActiveField,
-            descField: field.descField,
-            warningField: field.warningField
-        }));
-
-        console.log('📊 Fields to create:', fieldsData);
-
-        const createdFields = await FormField.bulkCreate(fieldsData);
-        console.log(`✅ Created ${createdFields.length} fields successfully`);
-    } else {
-        console.log('⚠️ No fields to duplicate - templateForm.fields is empty or null');
-    }
 
     // 5. Update product.idForm
     await product.update({ idForm: duplicatedForm.idForm });
@@ -483,11 +406,6 @@ const duplicateFormForProduct = async (idProduk, idFormTemplate, formType = 'pro
     // 6. Return duplicated form with fields
     const result = await Form.findByPk(duplicatedForm.idForm, {
         include: [
-            {
-                model: FormField,
-                as: 'fields',
-                required: false
-            },
             {
                 model: Product,
                 as: 'linkedProduct',

@@ -36,7 +36,6 @@ const parentProduct2Router = require("./app/api/v1/parentProduct2/router");
 const productRouter = require("./app/api/v1/product/router");
 const formsRouter = require("./app/api/v1/forms/router");
 const orderRouter = require("./app/api/v1/order/router");
-const formFieldsRouter = require("./app/api/v1/formFields/router");
 
 // LMS Routers (New)
 const siswaRouter = require("./app/api/v1/siswa/router");
@@ -74,7 +73,6 @@ app.use(`${v1}`, materiButtonClickRouter); // Click tracking routes (student + c
 
 // Forms & Fields (Specific paths)
 app.use(`${v1}/cms`, formsRouter);
-app.use(`${v1}/cms`, formFieldsRouter);
 app.use(`${v1}/cms`, variableTemplatesRouter);
 
 // Product Routes (May have :id params - after specific routes)

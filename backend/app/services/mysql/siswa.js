@@ -113,7 +113,7 @@ const createSiswa = async (req) => {
 
 // --- 2. GET ALL SISWA (readAll) ---
 const getAllSiswa = async (req) => {
-    const { statusAktif, kota, provinsi } = req.query;
+    const { statusAktif, kota, provinsi, search, page = 1, limit = 10 } = req.query;
 
     let whereClause = {};
 
@@ -129,13 +129,35 @@ const getAllSiswa = async (req) => {
         whereClause.provinsi = provinsi;
     }
 
-    const result = await Siswa.findAll({
+    if (search) {
+        whereClause = {
+            ...whereClause,
+            [Op.or]: [
+                { namaLengkap: { [Op.like]: `%${search}%` } },
+                { email: { [Op.like]: `%${search}%` } },
+                { nisn: { [Op.like]: `%${search}%` } }
+            ]
+        };
+    }
+
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+    const offset = (pageNumber - 1) * limitNumber;
+
+    const result = await Siswa.findAndCountAll({
         where: whereClause,
         include: siswaIncludes,
         order: [['namaLengkap', 'ASC']],
+        limit: limitNumber,
+        offset: offset,
     });
 
-    return result;
+    return {
+        data: result.rows,
+        total: result.count,
+        pages: Math.ceil(result.count / limitNumber),
+        page: pageNumber,
+    };
 };
 
 // --- 3. GET ONE SISWA (readOne) ---

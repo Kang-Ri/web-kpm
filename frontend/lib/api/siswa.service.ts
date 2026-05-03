@@ -60,8 +60,15 @@ export interface BulkDeleteResponse {
     total: number;
 }
 
+export interface PaginatedSiswaResponse {
+    data: Siswa[];
+    totalItems: number;
+    totalPages: number;
+    currentPage: number;
+}
+
 export const siswaService = {
-    getAll: async (params?: { statusAktif?: string; kota?: string }): Promise<{ data: Siswa[] }> => {
+    getAll: async (params?: { statusAktif?: string; kota?: string; search?: string; page?: number; limit?: number }): Promise<{ data: PaginatedSiswaResponse }> => {
         return apiClient.get('/cms/siswa', { params });
     },
 

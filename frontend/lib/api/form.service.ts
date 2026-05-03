@@ -9,26 +9,13 @@ export interface Form {
     formType?: 'template' | 'product' | 'daftar_ulang';
     idProdukLinked?: number;
     idFormTemplate?: number;
-    fields?: FormField[];
+    formfield?: any[]; // JSON array of fields
     products?: {
         idProduk: number;
         namaProduk: string;
         hargaModal: number;
         hargaJual: number;
     }[];
-}
-
-export interface FormField {
-    idField: number;
-    idForm: number;
-    namaField: string;
-    tipeField: 'text' | 'email' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'file' | 'date';
-    nilaiPilihan: string | null;
-    required: boolean;
-    textDescription: string | null;
-    textWarning: string | null;
-    placeholder: string | null;
-    orderIndex: number;
 }
 
 export const formService = {
@@ -48,7 +35,7 @@ export const formService = {
     },
 
     // Update form
-    update: async (idForm: number, data: { namaForm?: string; descForm?: string; statusForm?: string }): Promise<{ data: Form }> => {
+    update: async (idForm: number, data: { namaForm?: string; descForm?: string; statusForm?: string; formfield?: any[] }): Promise<{ data: Form }> => {
         return apiClient.patch(`/cms/forms/${idForm}`, data);
     },
 
@@ -94,32 +81,5 @@ export const formService = {
             idFormTemplate,
             formType
         });
-    },
-};
-
-export const formFieldService = {
-    // Get fields by form ID
-    getByForm: async (idForm: number): Promise<{ data: FormField[] }> => {
-        return apiClient.get(`/cms/forms/${idForm}/fields`);
-    },
-
-    // Add field to form
-    create: async (idForm: number, data: Partial<FormField>): Promise<{ data: FormField }> => {
-        return apiClient.post(`/cms/forms/${idForm}/fields`, data);
-    },
-
-    // Update field
-    update: async (idField: number, data: Partial<FormField>): Promise<{ data: FormField }> => {
-        return apiClient.patch(`/cms/form-fields/${idField}`, data);
-    },
-
-    // Delete field
-    delete: async (idField: number): Promise<{ message: string }> => {
-        return apiClient.delete(`/cms/form-fields/${idField}`);
-    },
-
-    // Reorder fields
-    reorder: async (idForm: number, fieldOrders: { idField: number; orderIndex: number }[]): Promise<{ message: string }> => {
-        return apiClient.patch(`/cms/forms/${idForm}/fields/reorder`, { fieldOrders });
     },
 };

@@ -40,8 +40,11 @@ const index = async (req, res, next) => {
         const result = await getAllSiswa(req);
 
         res.status(StatusCodes.OK).json({
-            message: 'Berhasil mengambil semua data siswa',
-            data: result,
+            message: 'Berhasil mengambil data siswa',
+            data: result.data,
+            totalItems: result.total,
+            totalPages: result.pages,
+            currentPage: result.page,
         });
     } catch (err) {
         next(err);

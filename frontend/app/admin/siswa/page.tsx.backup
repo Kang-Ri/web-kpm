@@ -216,6 +216,7 @@ function SiswaListContent() {
                             <table className="table">
                                 <thead>
                                     <tr>
+                                        <th>No</th>
                                         <th>NISN</th>
                                         <th>Nama Lengkap</th>
                                         <th>Email</th>
@@ -226,8 +227,9 @@ function SiswaListContent() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filteredSiswa.map((siswa) => (
+                                    {filteredSiswa.map((siswa, index) => (
                                         <tr key={siswa.idSiswa}>
+                                            <td className="font-mono text-sm">{index + 1}</td>
                                             <td className="font-mono text-sm">{siswa.nisn || '-'}</td>
                                             <td className="font-medium text-gray-900">{siswa.namaLengkap}</td>
                                             <td className="text-sm">{siswa.email || '-'}</td>

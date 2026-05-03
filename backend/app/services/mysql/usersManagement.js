@@ -2,6 +2,7 @@ const Users = require('../../api/v1/users/model');
 const Roles = require('../../api/v1/roles/model'); // Asumsi model Roles sudah dibuat
 const { NotFoundError, BadRequestError } = require('../../errors');
 const bcrypt = require('bcryptjs');
+const { Op } = require('sequelize');
 
 /**
  * Memastikan ID Role yang dimasukkan user ada di database.
@@ -16,21 +17,56 @@ const checkRoleExistence = async (idRole) => {
 };
 
 /**
- * 1. Mendapatkan semua daftar user (Read All)
- * @returns {Array} Daftar semua user tanpa password.
+ * 1. Mendapatkan semua daftar user dengan pagination & filter
  */
-const getAllUsers = async () => {
-    // Ambil semua user, join dengan Roles untuk menampilkan nama role
-    const result = await Users.findAll({
-        attributes: { exclude: ['password'] }, // Jangan tampilkan password
+const getAllUsers = async (req) => {
+    const { search, role, page = 1, limit = 10 } = req.query;
+
+    let whereClause = {};
+
+    if (search) {
+        whereClause = {
+            ...whereClause,
+            [Op.or]: [
+                { namaLengkap: { [Op.like]: `%${search}%` } },
+                { email: { [Op.like]: `%${search}%` } }
+            ]
+        };
+    }
+
+    let roleClause = {};
+    if (role) {
+        if (role.includes(',')) {
+            roleClause.namaRole = { [Op.in]: role.split(',') };
+        } else {
+            roleClause.namaRole = role; // Contoh: 'Guru' atau 'Admin'
+        }
+    }
+
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+    const offset = (pageNumber - 1) * limitNumber;
+
+    const result = await Users.findAndCountAll({
+        where: whereClause,
+        attributes: { exclude: ['password'] },
         include: {
             model: Roles,
             as: 'role',
             attributes: ['idRole', 'namaRole'],
+            where: Object.keys(roleClause).length > 0 ? roleClause : undefined,
         },
+        order: [['namaLengkap', 'ASC']],
+        limit: limitNumber,
+        offset: offset,
     });
 
-    return result;
+    return {
+        data: result.rows,
+        total: result.count,
+        pages: Math.ceil(result.count / limitNumber),
+        page: pageNumber,
+    };
 };
 
 /**

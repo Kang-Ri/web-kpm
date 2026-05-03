@@ -1,6 +1,5 @@
 // Form Models (Penambahan)
 const Form = require('../api/v1/forms/model');
-const FormField = require('../api/v1/formFields/model');
 const OrderFormResponse = require('../api/v1/orderFormResponses/model');
 const Order = require('../api/v1/order/model');
 
@@ -96,18 +95,8 @@ const defineAssociations = () => {
     // C. FORM BUILDER & PRODUCT ASSOCIATIONS
     // --------------------------------------------------
 
-    // 5. Relasi Form <-> FormField (One-to-Many)
-    Form.hasMany(FormField, {
-        foreignKey: 'idForm',
-        as: 'fields',
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE'
-    });
+    // 5. Removed Form <-> FormField (Moved to JSON column in Form)
 
-    FormField.belongsTo(Form, {
-        foreignKey: 'idForm',
-        as: 'form'
-    });
 
     // 6. Relasi Product <-> Form (One-to-One/Many)
     Product.belongsTo(Form, {
@@ -146,16 +135,9 @@ const defineAssociations = () => {
         onUpdate: 'CASCADE'
     });
 
-    // 7. Relasi OrderFormResponse <-> FormField (One-to-Many)
-    OrderFormResponse.belongsTo(FormField, {
-        foreignKey: 'idField',
-        as: 'formField'
-    });
+    // 7. Relasi OrderFormResponse <-> FormField is removed because FormField is dropped
+    // Instead OrderFormResponse will store json values
 
-    FormField.hasMany(OrderFormResponse, {
-        foreignKey: 'idField',
-        as: 'responses'
-    });
 
     // 8. Relasi Order <-> Users (Many-to-One)
     Order.belongsTo(Users, {
