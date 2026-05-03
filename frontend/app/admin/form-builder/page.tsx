@@ -53,8 +53,8 @@ export default function FormBuilderPage() {
             if (statusFilter) params.statusForm = statusFilter;
 
             const response = await formService.getAll(params);
-            const data = response.data as any;
-            setTemplateForms(data.data || []);
+            const payload = response.data.data as any;
+            setTemplateForms(payload?.data || []);
         } catch (error: any) {
             showError(error.message || 'Gagal memuat template form');
         } finally {
@@ -74,15 +74,15 @@ export default function FormBuilderPage() {
             if (statusFilter) params.statusForm = statusFilter;
 
             const response = await formService.getAll(params);
-            const result = response.data as any;
+            const payload = response.data.data as any;
             
-            if (result.totalItems !== undefined) {
-                setProductForms(result.data || []);
-                setTotalItems(result.totalItems);
-                setTotalPages(result.totalPages);
+            if (payload?.totalItems !== undefined) {
+                setProductForms(payload.data || []);
+                setTotalItems(payload.totalItems);
+                setTotalPages(payload.totalPages);
             } else {
-                setProductForms(result.data || []);
-                setTotalItems(result.data?.length || 0);
+                setProductForms(payload?.data || []);
+                setTotalItems(payload?.data?.length || 0);
                 setTotalPages(1);
             }
         } catch (error: any) {
