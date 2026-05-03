@@ -11,7 +11,7 @@ export default function FormBuilderPage() {
     const router = useRouter();
     const [templateForms, setTemplateForms] = useState<Form[]>([]);
     const [productForms, setProductForms] = useState<Form[]>([]);
-    
+
     // Loading states
     const [loadingTemplates, setLoadingTemplates] = useState(true);
     const [loadingProducts, setLoadingProducts] = useState(true);
@@ -65,7 +65,7 @@ export default function FormBuilderPage() {
     const fetchProductForms = async () => {
         try {
             setLoadingProducts(true);
-            const params: any = { 
+            const params: any = {
                 formType: 'product,daftar_ulang',
                 page,
                 limit
@@ -75,7 +75,7 @@ export default function FormBuilderPage() {
 
             const response = await formService.getAll(params);
             const payload = response.data.data as any;
-            
+
             if (payload?.totalItems !== undefined) {
                 setProductForms(payload.data || []);
                 setTotalItems(payload.totalItems);
@@ -119,6 +119,7 @@ export default function FormBuilderPage() {
             <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
+                        <th className="text-left py-3 px-6 text-sm font-semibold text-gray-700">No.</th>
                         <th className="text-left py-3 px-6 text-sm font-semibold text-gray-700">NAMA FORM</th>
                         <th className="text-left py-3 px-6 text-sm font-semibold text-gray-700">DESKRIPSI</th>
                         <th className="text-left py-3 px-6 text-sm font-semibold text-gray-700">FIELDS</th>
@@ -128,8 +129,9 @@ export default function FormBuilderPage() {
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                    {formList.map((form) => (
+                    {formList.map((form, index) => (
                         <tr key={form.idForm} className="hover:bg-gray-50">
+                            <td className="py-4 px-6 font-medium text-gray-900">{(page - 1) * limit + index + 1}.</td>
                             <td className="py-4 px-6 font-medium text-gray-900">{form.namaForm}</td>
                             <td className="py-4 px-6 text-gray-600 text-sm max-w-md truncate">
                                 {form.descForm || '-'}
@@ -275,17 +277,17 @@ export default function FormBuilderPage() {
                 ) : (
                     <>
                         {renderTable(productForms, 'product')}
-                        
+
                         {/* Pagination Controls */}
                         <div className="border-t border-gray-200 bg-gray-50 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
                             <div className="text-sm text-gray-600">
                                 Menampilkan <span className="font-semibold text-gray-900">{(page - 1) * limit + 1}</span> sampai <span className="font-semibold text-gray-900">{Math.min(page * limit, totalItems)}</span> dari <span className="font-semibold text-gray-900">{totalItems}</span> form
                             </div>
                             <div className="flex items-center gap-2">
-                                <Button 
-                                    variant="secondary" 
-                                    size="sm" 
-                                    disabled={page <= 1} 
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    disabled={page <= 1}
                                     onClick={() => setPage(p => Math.max(1, p - 1))}
                                 >
                                     Sebelumnya
@@ -293,10 +295,10 @@ export default function FormBuilderPage() {
                                 <div className="text-sm font-medium px-4 py-1.5 bg-white border border-gray-300 rounded-md">
                                     Halaman {page} / {totalPages}
                                 </div>
-                                <Button 
-                                    variant="secondary" 
-                                    size="sm" 
-                                    disabled={page >= totalPages} 
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    disabled={page >= totalPages}
                                     onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                 >
                                     Selanjutnya

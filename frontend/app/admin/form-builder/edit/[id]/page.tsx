@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Save, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
-import { formService, formFieldService, FormField } from '@/lib/api/form.service';
+import { formService } from '@/lib/api/form.service';
 import { variableTemplateService, VariableTemplate } from '@/lib/api/variableTemplate.service';
 import { showSuccess, showError } from '@/lib/utils/toast';
 import { Button } from '@/components/ui/Button';
@@ -36,9 +36,8 @@ export default function EditFormPage() {
     const [statusForm, setStatusForm] = useState<'Aktif' | 'Non-Aktif' | 'Draft'>('Draft');
 
     // Fields
-    const [fields, setFields] = useState<Partial<FormField>[]>([]);
+    const [fields, setFields] = useState<any[]>([]);
     const [editingField, setEditingField] = useState<number | null>(null);
-    const [deletedFieldIds, setDeletedFieldIds] = useState<number[]>([]);
 
     // Variable Templates
     const [templates, setTemplates] = useState<VariableTemplate[]>([]);
@@ -74,11 +73,18 @@ export default function EditFormPage() {
             setDescForm(formData.descForm || '');
             setStatusForm(formData.statusForm);
 
-            // Sort fields by orderIndex to maintain order
-            const sortedFields = (formData.fields || []).sort((a: any, b: any) =>
-                (a.orderIndex ?? 0) - (b.orderIndex ?? 0)
+            // Sort fields by urutan to maintain order
+            const sortedFields = (formData.formfield || []).sort((a: any, b: any) =>
+                (a.urutan ?? 0) - (b.urutan ?? 0)
             );
-            setFields(sortedFields);
+            
+            // Assign tempId to existing fields so React keys work
+            const fieldsWithId = sortedFields.map((f: any) => ({
+                ...f,
+                tempId: f.tempId || `temp_${Date.now()}_${Math.random()}`
+            }));
+            
+            setFields(fieldsWithId);
         } catch (error: any) {
             showError(error.message || 'Gagal memuat form');
             router.push('/admin/form-builder');
@@ -88,32 +94,28 @@ export default function EditFormPage() {
     };
 
     const addField = (tipeField: string) => {
-        const newField: Partial<FormField> & { tempId?: string } = {
+        const newField = {
             tempId: `temp_${Date.now()}_${Math.random()}`, // Unique temp ID for React key
-            namaField: `field_${fields.length + 1}`,
-            tipeField: tipeField as any,
-            textDescription: '',
+            urutan: fields.length + 1,
+            namaLabel: `Field ${fields.length + 1}`,
+            deskripsiLabel: '',
+            jenisField: tipeField,
             placeholder: '',
+            status: 'enable',
             required: false,
-            orderIndex: fields.length,
-            nilaiPilihan: (tipeField === 'select' || tipeField === 'radio' || tipeField === 'checkbox') ? '[]' : '',
+            pilihan: (tipeField === 'select' || tipeField === 'radio' || tipeField === 'checkbox') ? [] : undefined,
         };
         setFields([...fields, newField]);
         setEditingField(fields.length);
     };
 
-    const updateField = (index: number, updates: Partial<FormField>) => {
+    const updateField = (index: number, updates: any) => {
         const updated = [...fields];
         updated[index] = { ...updated[index], ...updates };
         setFields(updated);
     };
 
     const deleteField = (index: number) => {
-        const field = fields[index];
-        if (field.idField) {
-            // Existing field - mark for deletion
-            setDeletedFieldIds([...deletedFieldIds, field.idField]);
-        }
         setFields(fields.filter((_, i) => i !== index));
     };
 
@@ -121,7 +123,7 @@ export default function EditFormPage() {
         if (index === 0) return;
         const newFields = [...fields];
         [newFields[index - 1], newFields[index]] = [newFields[index], newFields[index - 1]];
-        newFields.forEach((field, idx) => field.orderIndex = idx);
+        newFields.forEach((field, idx) => field.urutan = idx + 1);
         setFields(newFields);
         setEditingField(index - 1);
     };
@@ -130,7 +132,7 @@ export default function EditFormPage() {
         if (index === fields.length - 1) return;
         const newFields = [...fields];
         [newFields[index], newFields[index + 1]] = [newFields[index + 1], newFields[index]];
-        newFields.forEach((field, idx) => field.orderIndex = idx);
+        newFields.forEach((field, idx) => field.urutan = idx + 1);
         setFields(newFields);
         setEditingField(index + 1);
     };
@@ -144,40 +146,22 @@ export default function EditFormPage() {
         try {
             setSaving(true);
 
-            // 1. Update form metadata
+            // Format fields for JSON column
+            const formfieldData = fields.map((f, idx) => {
+                const { tempId, ...rest } = f;
+                return {
+                    ...rest,
+                    urutan: idx + 1
+                };
+            });
+
+            // 1. Update form metadata and formfield
             await formService.update(idForm, {
                 namaForm: namaForm.trim(),
                 descForm: descForm.trim() || undefined,
                 statusForm,
-            });
-
-            // 2. Delete removed fields
-            for (const fieldId of deletedFieldIds) {
-                await formFieldService.delete(fieldId);
-            }
-
-            // 3. Update/Create fields
-            for (const field of fields) {
-                // Normalize tipeField to lowercase (DB ENUM is lowercase)
-                if (field.tipeField) {
-                    field.tipeField = field.tipeField.toLowerCase() as any;
-                }
-
-                // Normalize smart quotes in nilaiPilihan
-                if (field.nilaiPilihan) {
-                    field.nilaiPilihan = field.nilaiPilihan
-                        .replace(/[\u201C\u201D]/g, '"')
-                        .replace(/[\u2018\u2019]/g, "'");
-                }
-
-                if (field.idField) {
-                    // Update existing field
-                    await formFieldService.update(field.idField, field);
-                } else {
-                    // Create new field
-                    await formFieldService.create(idForm, field);
-                }
-            }
+                formfield: formfieldData
+            } as any);
 
             showSuccess('Form berhasil diperbarui!');
             router.push('/admin/form-builder');
@@ -321,23 +305,18 @@ export default function EditFormPage() {
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2 flex-wrap">
                                                     <span className="text-sm font-medium text-gray-900">
-                                                        {field.textDescription || field.namaField}
+                                                        {field.deskripsiLabel || field.namaLabel}
                                                     </span>
                                                     {field.required && (
                                                         <span className="text-red-600 text-xs">*</span>
                                                     )}
                                                     {/* Field Type Badge */}
                                                     <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">
-                                                        {FIELD_TYPES.find(t => t.value === field.tipeField?.toLowerCase())?.label || field.tipeField}
+                                                        {FIELD_TYPES.find(t => t.value === field.jenisField?.toLowerCase())?.label || field.jenisField}
                                                     </span>
-                                                    {field.idField && (
-                                                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-                                                            ID: {field.idField}
-                                                        </span>
-                                                    )}
                                                 </div>
                                                 <div className="text-xs text-gray-500 mt-1">
-                                                    Variable: {field.namaField}
+                                                    Variable: {field.namaLabel}
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-1">
@@ -400,8 +379,8 @@ export default function EditFormPage() {
                                             color: t.color,
                                             category: t.category
                                         }))}
-                                        value={fields[editingField].namaField || ''}
-                                        onChange={(value) => updateField(editingField, { namaField: value })}
+                                        value={fields[editingField].namaLabel || ''}
+                                        onChange={(value) => updateField(editingField, { namaLabel: value })}
                                         placeholder="Pilih template atau ketik custom..."
                                         allowCustom={true}
                                     />
@@ -425,8 +404,8 @@ export default function EditFormPage() {
                                     </label>
                                     <input
                                         type="text"
-                                        value={fields[editingField].textDescription || ''}
-                                        onChange={(e) => updateField(editingField, { textDescription: e.target.value })}
+                                        value={fields[editingField].deskripsiLabel || ''}
+                                        onChange={(e) => updateField(editingField, { deskripsiLabel: e.target.value })}
                                         placeholder="Nama Lengkap"
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                                     />
@@ -439,8 +418,8 @@ export default function EditFormPage() {
                                     </label>
                                     <input
                                         type="text"
-                                        value={fields[editingField].textWarning || ''}
-                                        onChange={(e) => updateField(editingField, { textWarning: e.target.value })}
+                                        value={fields[editingField].deskripsiTambahan || ''}
+                                        onChange={(e) => updateField(editingField, { deskripsiTambahan: e.target.value })}
                                         placeholder="Penulisan nama harus lengkap dengan gelar"
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                                     />
@@ -473,16 +452,24 @@ export default function EditFormPage() {
                                     </label>
                                 </div>
 
-                                {(fields[editingField].tipeField?.toLowerCase() === 'select' ||
-                                    fields[editingField].tipeField?.toLowerCase() === 'radio' ||
-                                    fields[editingField].tipeField?.toLowerCase() === 'checkbox') && (
+                                {(fields[editingField].jenisField?.toLowerCase() === 'select' ||
+                                    fields[editingField].jenisField?.toLowerCase() === 'radio' ||
+                                    fields[editingField].jenisField?.toLowerCase() === 'checkbox') && (
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                                 Pilihan (Options)
                                             </label>
                                             <textarea
-                                                value={fields[editingField].nilaiPilihan || '[]'}
-                                                onChange={(e) => updateField(editingField, { nilaiPilihan: e.target.value })}
+                                                value={Array.isArray(fields[editingField].pilihan) ? JSON.stringify(fields[editingField].pilihan) : (fields[editingField].pilihan || '[]')}
+                                                onChange={(e) => {
+                                                    try {
+                                                        const parsed = JSON.parse(e.target.value);
+                                                        updateField(editingField, { pilihan: parsed });
+                                                    } catch (err) {
+                                                        // Just store string temporarily while editing if it's invalid JSON
+                                                        updateField(editingField, { pilihan: e.target.value });
+                                                    }
+                                                }}
                                                 placeholder='["Pilihan 1", "Pilihan 2", "Pilihan 3"]'
                                                 rows={3}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm"
