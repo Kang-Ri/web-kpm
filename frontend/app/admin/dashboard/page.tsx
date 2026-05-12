@@ -22,16 +22,18 @@ export default function AdminDashboardPage() {
             setIsLoading(true);
             try {
                 // Fetch recent orders
+                console.log("opo iki => ");
                 const res = await orderService.getAll();
+                console.log("opo iki => ", res);
                 const orders: Order[] = res.data.data;
-                
+
                 // We'll just slice the latest 10 orders for the "Recent Transactions" table
                 setRecentOrders(orders.slice(0, 10));
 
                 // Quick mock calculation for basic DB Stats based on order history
                 // (In a real massive app, you'd use a dedicated /cms/stats endpoint)
                 const paidOrders = orders.filter(o => o.statusPembayaran === 'Paid');
-                
+
                 setStats([
                     { label: 'Total Transaksi (Semua)', value: orders.length.toString(), icon: ShoppingBag, color: 'bg-blue-100 text-blue-600' },
                     { label: 'Transaksi Paid', value: paidOrders.length.toString(), icon: Users, color: 'bg-green-100 text-green-600' },
@@ -120,7 +122,7 @@ export default function AdminDashboardPage() {
                                                 <td className="max-w-[200px] truncate" title={(order as any).product?.namaProduk || order.namaProduk}>
                                                     {(order as any).product?.namaProduk || order.namaProduk || 'Unknown Product'}
                                                 </td>
-                                                <td>{new Date(order.tglOrder).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' })}</td>
+                                                <td>{new Date(order.tglOrder).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
                                                 <td className="font-medium">{formatCurrency(order.hargaFinal)}</td>
                                                 <td>
                                                     <Badge variant={order.statusPembayaran === 'Paid' ? 'success' : 'warning'}>

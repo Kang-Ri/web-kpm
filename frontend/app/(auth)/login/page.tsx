@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { LogIn, Mail, Lock, AlertCircle } from 'lucide-react';
+import { LogIn, Mail, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useAuthStore } from '@/lib/store/authStore';
 import { authService } from '@/lib/api/auth.service';
@@ -22,6 +22,7 @@ export default function LoginPage() {
     const setAuth = useAuthStore((state) => state.setAuth);
     const [error, setError] = useState<string>('');
     const [isLoading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const {
         register,
@@ -134,11 +135,22 @@ export default function LoginPage() {
                                     </div>
                                     <input
                                         {...register('password')}
-                                        type="password"
+                                        type={showPassword ? 'text' : 'password'}
                                         id="password"
-                                        className={`input pl-10 ${errors.password ? 'border-danger-500 focus:ring-danger-500' : ''}`}
+                                        className={`input pl-10 pr-10 ${errors.password ? 'border-danger-500 focus:ring-danger-500' : ''}`}
                                         placeholder="••••••••"
                                     />
+
+                                    <div
+                                        className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                    >
+                                        {showPassword ? (
+                                            <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600 transition" />
+                                        ) : (
+                                            <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600 transition" />
+                                        )}
+                                    </div>
                                 </div>
                                 {errors.password && (
                                     <p className="mt-1 text-sm text-danger-600">{errors.password.message}</p>

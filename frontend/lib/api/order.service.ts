@@ -22,7 +22,7 @@ export interface Order {
 }
 
 export const orderService = {
-    getAll: (params?: any) => api.get('/cms/order', { params }),
+    getAll: (params?: any) => api.get('/cms/orders', { params }),
     getById: (id: number) => api.get(`/cms/order/${id}`),
     updateStatus: (id: number, data: any) => api.patch(`/cms/order/${id}/status`, data),
     updatePaymentStatus: (id: number, statusPembayaran: string) =>

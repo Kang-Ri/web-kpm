@@ -127,8 +127,8 @@ const createOrder = async (req) => {
 
 // --- 2. GET ALL ORDERS (readAll) ---
 const getAllOrders = async (req) => {
-    const { idUser, statusOrder, statusPembayaran } = req.query;
 
+    const { idUser, statusOrder, statusPembayaran } = req.query;
     let whereClause = {};
 
     if (idUser) {

@@ -81,7 +81,7 @@ app.use(`${v1}/cms`, parentProduct2Router);
 app.use(`${v1}/cms`, productRouter);
 
 // Order Router (Has :id param - MUST be last)
-app.use(`${v1}/cms`, orderRouter);
+app.use(`${v1}/cms/orders`, orderRouter);
 
 // Payment Router (Simulator + Real Midtrans)
 app.use(`${v1}/cms/payment`, paymentRouter);
